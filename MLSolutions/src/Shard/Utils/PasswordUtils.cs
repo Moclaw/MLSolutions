@@ -1,9 +1,10 @@
-﻿namespace Shard.Utils
+﻿// ReSharper disable All
+namespace Shard.Utils
 {
     /// <summary>
     /// Provides utility methods for password hashing, verification, and generation.
     /// </summary>
-    public static struct PasswordUtils
+    public struct PasswordUtils
     {
         /// <summary>
         /// Hashes a password using the MD5 algorithm.
@@ -66,7 +67,8 @@
         /// <exception cref="ArgumentOutOfRangeException">Thrown when the length is less than or equal to zero.</exception>
         public static string GenerateRandomPassword(int length)
         {
-            if (length <= 0) throw new ArgumentOutOfRangeException(nameof(length), "Password length must be greater than zero.");
+            if (length <= 0)
+                throw new ArgumentOutOfRangeException(nameof(length), "Password length must be greater than zero.");
             const string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
             var passwordChars = new char[length];
             using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
@@ -74,8 +76,9 @@
             for (int i = 0; i < length; i++)
             {
                 rng.GetBytes(buffer);
-                passwordChars[i] = validChars[BitConverter.ToUInt32(buffer, 0) % validChars.Length];
+                passwordChars[i] = validChars[(int)(BitConverter.ToUInt32(buffer, 0) % validChars.Length)];
             }
+
             return new string(passwordChars);
         }
 
@@ -92,3 +95,4 @@
             return Convert.ToBase64String(hashBytes);
         }
     }
+}

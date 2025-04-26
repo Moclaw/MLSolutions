@@ -24,7 +24,7 @@ public interface IFluentBuilder<TEntity> : IOrderBuilder<TEntity>
     /// </summary>
     /// <typeparam name="TProperty">The type of the elements in the collection navigation property.</typeparam>
     /// <param name="navigationProperty">An expression specifying the collection navigation property to include.</param>
-    /// <returns>An instance of <see cref="IFluentBuilder{TEntity, IEnumerable{TProperty}, TProperty}"/> for further query building.</returns>
+    /// <returns>An instance of <see cref="IFluentBuilder{TEntity}"/> for further query building.</returns>
     IFluentBuilder<TEntity, IEnumerable<TProperty>, TProperty> Include<TProperty>(Expression<Func<TEntity, IEnumerable<TProperty>>> navigationProperty);
 
     /// <summary>
@@ -64,6 +64,6 @@ public interface IFluentBuilder<TEntity, TProperty, TGeneric> : IFluentBuilder<T
     /// </summary>
     /// <typeparam name="TNextProperty">The type of the elements in the next collection navigation property.</typeparam>
     /// <param name="navigationProperty">An expression specifying the next collection navigation property to include.</param>
-    /// <returns>An instance of <see cref="IFluentBuilder{TEntity, IEnumerable{TNextProperty}, TNextProperty}"/> for further query building.</returns>
+    /// <returns>An instance of <see cref="IFluentBuilder{TEntity}"/> for further query building.</returns>
     IFluentBuilder<TEntity, IEnumerable<TNextProperty>, TNextProperty> ThenInclude<TNextProperty>(Expression<Func<TGeneric, IEnumerable<TNextProperty>>> navigationProperty);
 }
