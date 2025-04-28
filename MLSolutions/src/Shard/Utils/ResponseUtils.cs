@@ -31,4 +31,9 @@ public struct ResponseUtils
     {
         return new Responses<T>(false, code, message, data);
     }
+
+    public static T Success<T>(int data, string message)
+    {
+        throw new NotImplementedException();
+    }
 }

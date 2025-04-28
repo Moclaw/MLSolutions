@@ -1,4 +1,6 @@
-﻿using Domain.IRepositories.Builders;
+﻿using System.Linq.Expressions;
+using Domain.IRepositories.Builders;
+using Mapster;
 using Shard.Entities;
 
 /// <summary>
@@ -6,7 +8,7 @@ using Shard.Entities;
 /// </summary>
 /// <typeparam name="TEntity">The type of the entity.</typeparam>
 /// <typeparam name="TKey">The type of the entity's key.</typeparam>
-public interface IQueryRepository<TEntity, in TKey>
+public interface IQueryRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
     where TKey : IEquatable<TKey>
 {
@@ -14,10 +16,16 @@ public interface IQueryRepository<TEntity, in TKey>
     /// Retrieves an entity by its identifier.
     /// </summary>
     /// <param name="id">The identifier of the entity.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="builder">A builder to customize the query.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The entity if found; otherwise, null.</returns>
-    Task<TEntity?> GetByIdAsync(TKey id, bool disableTracking = false, CancellationToken cancellationToken = default);
+    Task<TEntity?> GetByIdAsync(
+        TKey id,
+        bool enableTracking = false,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retrieves a projected entity by its identifier.
@@ -25,24 +33,69 @@ public interface IQueryRepository<TEntity, in TKey>
     /// <typeparam name="TProjector">The type of the projection.</typeparam>
     /// <param name="id">The identifier of the entity.</param>
     /// <param name="projector">A function to project the entity.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="builder">A builder to customize the query.</param>
+    /// <param name="typeAdapterConfig">The configuration for the TypeAdapter.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The projected entity if found; otherwise, null.</returns>
-    Task<TProjector?> GetByIdAsync<TProjector>(TKey id,
-        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null, bool disableTracking = false,
-        CancellationToken cancellationToken = default);
+    Task<TProjector?> GetByIdAsync<TProjector>(
+        TKey id,
+        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        TypeAdapterConfig? typeAdapterConfig = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Retrieves a projected entity by its identifier.
+    /// </summary>
+    /// <typeparam name="TProjector">The type of the projection.</typeparam>
+    /// <param name="ids">The identifier a list of the entity.</param>
+    /// <param name="projector">A function to project the entity.</param>
+    /// <param name="builder">A builder to customize the query.</param>
+    /// <param name="typeAdapterConfig">The configuration for the TypeAdapter.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The projected entity if found; otherwise, null.</returns>
+    Task<IEnumerable<TProjector>> GetByIdAsync<TProjector>(
+        List<TKey> ids,
+        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        TypeAdapterConfig? typeAdapterConfig = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Retrieves an entity by its identifier.
+    /// </summary>
+    /// <param name="ids">The identifier a list of the entity.</param>
+    /// <param name="builder">A builder to customize the query.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The entity if found; otherwise, null.</returns>
+    Task<IEnumerable<TEntity?>> GetByIdAsync(
+        List<TKey> ids,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retrieves all entities matching the specified predicate.
     /// </summary>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="builder">A builder to customize the query.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A collection of entities.</returns>
-    Task<IEnumerable<TEntity>> GetAllAsync(Predicate<TEntity>? predicate = null,
-        IFluentBuilder<TEntity>? builder = null, bool disableTracking = false,
-        CancellationToken cancellationToken = default);
+    Task<IEnumerable<TEntity>> GetAllAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retrieves all projected entities matching the specified predicate.
@@ -51,23 +104,33 @@ public interface IQueryRepository<TEntity, in TKey>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="projector">A function to project the entities.</param>
     /// <param name="builder">A builder to customize the query.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="typeAdapterConfig">The configuration for the TypeAdapter.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A collection of projected entities.</returns>
-    Task<IEnumerable<TProjector>> GetAllAsync<TProjector>(Predicate<TEntity>? predicate = null,
-        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null, IFluentBuilder<TEntity>? builder = null,
-        bool disableTracking = false, CancellationToken cancellationToken = default);
+    Task<IEnumerable<TProjector>> GetAllAsync<TProjector>(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        TypeAdapterConfig? typeAdapterConfig = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retrieves the first entity matching the specified predicate.
     /// </summary>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="builder">A builder to customize the query.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The first entity if found; otherwise, null.</returns>
-    Task<TEntity?> FirstOrDefaultAsync(Predicate<TEntity>? predicate = null, IFluentBuilder<TEntity>? builder = null,
-        bool disableTracking = false, CancellationToken cancellationToken = default);
+    Task<TEntity?> FirstOrDefaultAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retrieves the first projected entity matching the specified predicate.
@@ -76,23 +139,33 @@ public interface IQueryRepository<TEntity, in TKey>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="projector">A function to project the entities.</param>
     /// <param name="builder">A builder to customize the query.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="typeAdapterConfig">The configuration for the TypeAdapter.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The first projected entity if found; otherwise, null.</returns>
-    Task<TProjector?> FirstOrDefaultAsync<TProjector>(Predicate<TEntity>? predicate = null,
-        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null, IFluentBuilder<TEntity>? builder = null,
-        bool disableTracking = false, CancellationToken cancellationToken = default);
+    Task<TProjector?> FirstOrDefaultAsync<TProjector>(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        TypeAdapterConfig? typeAdapterConfig = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retrieves the single entity matching the specified predicate.
     /// </summary>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="builder">A builder to customize the query.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The single entity if found; otherwise, null.</returns>
-    Task<TEntity?> SingleOrDefaultAsync(Predicate<TEntity>? predicate = null, IFluentBuilder<TEntity>? builder = null,
-        bool disableTracking = false, CancellationToken cancellationToken = default);
+    Task<TEntity?> SingleOrDefaultAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retrieves the single projected entity matching the specified predicate.
@@ -101,23 +174,33 @@ public interface IQueryRepository<TEntity, in TKey>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="projector">A function to project the entities.</param>
     /// <param name="builder">A builder to customize the query.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="typeAdapterConfig">The configuration for the TypeAdapter.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The single projected entity if found; otherwise, null.</returns>
-    Task<TProjector?> SingleOrDefaultAsync<TProjector>(Predicate<TEntity>? predicate = null,
-        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null, IFluentBuilder<TEntity>? builder = null,
-        bool disableTracking = false, CancellationToken cancellationToken = default);
+    Task<TProjector?> SingleOrDefaultAsync<TProjector>(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        TypeAdapterConfig? typeAdapterConfig = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retrieves the last entity matching the specified predicate.
     /// </summary>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="builder">A builder to customize the query.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The last entity if found; otherwise, null.</returns>
-    Task<TEntity?> LastOrDefaultAsync(Predicate<TEntity>? predicate = null, IFluentBuilder<TEntity>? builder = null,
-        bool disableTracking = false, CancellationToken cancellationToken = default);
+    Task<TEntity?> LastOrDefaultAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retrieves the last projected entity matching the specified predicate.
@@ -126,12 +209,18 @@ public interface IQueryRepository<TEntity, in TKey>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="projector">A function to project the entities.</param>
     /// <param name="builder">A builder to customize the query.</param>
-    /// <param name="disableTracking">Indicates whether tracking should be disabled.</param>
+    /// <param name="typeAdapterConfig">The configuration for the TypeAdapter.</param>
+    /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The last projected entity if found; otherwise, null.</returns>
-    Task<TProjector?> LastOrDefaultAsync<TProjector>(Predicate<TEntity>? predicate = null,
-        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null, IFluentBuilder<TEntity>? builder = null,
-        bool disableTracking = false, CancellationToken cancellationToken = default);
+    Task<TProjector?> LastOrDefaultAsync<TProjector>(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
+        Action<IFluentBuilder<TEntity>>? builder = null,
+        TypeAdapterConfig? typeAdapterConfig = null,
+        bool enableTracking = false,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Determines whether any entities match the specified predicate.
@@ -139,7 +228,10 @@ public interface IQueryRepository<TEntity, in TKey>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>True if any entities match the predicate; otherwise, false.</returns>
-    Task<bool> AnyAsync(Predicate<TEntity>? predicate = null, CancellationToken cancellationToken = default);
+    Task<bool> AnyAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Determines whether all entities match the specified predicate.
@@ -147,7 +239,10 @@ public interface IQueryRepository<TEntity, in TKey>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>True if all entities match the predicate; otherwise, false.</returns>
-    Task<bool> AllAsync(Predicate<TEntity>? predicate = null, CancellationToken cancellationToken = default);
+    Task<bool> AllAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Counts the number of entities matching the specified predicate.
@@ -155,5 +250,8 @@ public interface IQueryRepository<TEntity, in TKey>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The number of entities matching the predicate.</returns>
-    Task<int> CountAsync(Predicate<TEntity>? predicate = null, CancellationToken cancellationToken = default);
+    Task<int> CountAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default
+    );
 }

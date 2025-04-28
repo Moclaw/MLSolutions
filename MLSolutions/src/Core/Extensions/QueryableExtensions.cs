@@ -73,7 +73,7 @@ public static class QueryableExtensions
     /// <param name="propertyName">The name of the property to order by.</param>
     /// <param name="isDescending">Indicates whether the sorting should be descending.</param>
     /// <returns>An <see cref="IQueryable{T}"/> whose elements are sorted according to the specified property.</returns>
-    public static IQueryable<T> ThenOrderByName<T>(this IQueryable<T> source, string propertyName, bool isDescending)
+    public static IQueryable<T> ThenOrderByProperty<T>(this IQueryable<T> source, string propertyName, bool isDescending)
     {
         return ApplyOrder(source, propertyName, isDescending, true);
     }
@@ -89,7 +89,12 @@ public static class QueryableExtensions
     {
         if (source is not IAsyncEnumerable<TSource> asyncEnumerable)
         {
-            return await Task.Run(() => source.ToList(), cancellation).ConfigureAwait(false);
+            return await Task.Run(() =>
+            {
+                List<TSource> list1 = [];
+                foreach (var source1 in source) list1.Add(source1);
+                return list1;
+            }, cancellation).ConfigureAwait(false);
         }
 
         var list = new List<TSource>();
@@ -138,6 +143,6 @@ public static class QueryableExtensions
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        return await Task.Run(() => source.Count(), cancellationToken).ConfigureAwait(false);
+        return await Task.Run(source.Count, cancellationToken).ConfigureAwait(false);
     }
 }

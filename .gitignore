@@ -363,3 +363,7 @@ MigrationBackup/
 FodyWeavers.xsd
 /Client/.vscode
 /Server/.vscode
+/MLSolutions/.idea
+MLSolutions/.vscode/settings.json
+MLSolutions/.idea/.idea.MLSolutions/.idea/aws.xml
+MLSolutions/.idea/.idea.MLSolutions/.idea/encodings.xml

@@ -6,13 +6,7 @@
 /// <param name="IsSuccess">Indicates whether the operation was successful.</param>
 /// <param name="StatusCode">The HTTP status code associated with the response.</param>
 /// <param name="Message">An optional message providing additional information about the response.</param>
-public record Responses
-    (
-        bool IsSuccess,
-        int StatusCode,
-        string? Message
-    )
-    : IResponses;
+public record Responses(bool IsSuccess, int StatusCode, string? Message) : IResponses;
 
 /// <summary>
 /// Represents a generic response with success status, HTTP status code, an optional message, and additional data.
@@ -22,14 +16,7 @@ public record Responses
 /// <param name="StatusCode">The HTTP status code associated with the response.</param>
 /// <param name="Message">An optional message providing additional information about the response.</param>
 /// <param name="Data">The data included in the response.</param>
-public record Responses<T>
-    (
-        bool IsSuccess,
-        int StatusCode,
-        string? Message,
-        T? Data
-    )
-    : IResponses;
+public record Responses<T>(bool IsSuccess, int StatusCode, string? Message, T? Data) : IResponses;
 
 /// <summary>
 /// Represents a collection response with success status, HTTP status code, an optional message, and a collection of responses.
@@ -38,14 +25,12 @@ public record Responses<T>
 /// <param name="StatusCode">The HTTP status code associated with the response.</param>
 /// <param name="Message">An optional message providing additional information about the response.</param>
 /// <param name="Data">A collection of responses included in the response.</param>
-public record ResponesCollection
-    (
-        bool IsSuccess,
-        int StatusCode,
-        string? Message,
-        IEnumerable<IResponses> Data
-    )
-    : IResponses;
+public record ResponesCollection(
+    bool IsSuccess,
+    int StatusCode,
+    string? Message,
+    IEnumerable<IResponses> Data
+) : IResponses;
 
 /// <summary>
 /// Represents a generic collection response with success status, HTTP status code, an optional message, and a collection of data.
@@ -55,11 +40,9 @@ public record ResponesCollection
 /// <param name="StatusCode">The HTTP status code associated with the response.</param>
 /// <param name="Message">An optional message providing additional information about the response.</param>
 /// <param name="Data">A collection of data included in the response.</param>
-public record ResponesCollection<T>
-    (
-        bool IsSuccess,
-        int StatusCode,
-        string? Message,
-        IEnumerable<T> Data
-    )
-    : IResponses;
+public record ResponesCollection<T>(
+    bool IsSuccess,
+    int StatusCode,
+    string? Message,
+    IEnumerable<T> Data
+) : IResponses;
