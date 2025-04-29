@@ -4,7 +4,9 @@ using Mapster;
 using Shard.Entities;
 
 namespace Domain.IRepositories;
-public interface IQueryMongoRepository<TEntity, in TKey> where TEntity : class, IEntity<TKey>
+
+public interface IQueryMongoRepository<TEntity, in TKey>
+    where TEntity : class, IEntity<TKey>
 {
     /// <summary>
     /// Retrieves an entity by its identifier.

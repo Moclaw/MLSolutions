@@ -1,4 +1,3 @@
-using System.Data;
 using System.Linq.Expressions;
 using Domain.IRepositories;
 using Domain.IRepositories.Builders;
@@ -6,7 +5,7 @@ using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Shard.Entities;
 
-namespace ORM.Repositories;
+namespace EfCore.Repositories;
 
 public class QueryMongoRepository<TEntity, TKey>(MongoBaseContext context)
     : IQueryMongoRepository<TEntity, TKey>
@@ -15,7 +14,7 @@ public class QueryMongoRepository<TEntity, TKey>(MongoBaseContext context)
 {
     private DbSet<TEntity> Collection => context.Set<TEntity>();
 
-    public virtual string CollectionName => Collection.EntityType.GetTableName() ?? string.Empty;
+    public virtual string CollectionName => typeof(TEntity).Name;
 
     private IQueryable<TEntity> GetQueryable(bool enableTracking = false)
     {
@@ -177,7 +176,7 @@ public class QueryMongoRepository<TEntity, TKey>(MongoBaseContext context)
             query = BindPredicate(query, predicate);
         }
 
-        return await query.ProjectToType<TEntity>(null).SingleOrDefaultAsync(cancellationToken);
+        return await query.SingleOrDefaultAsync(cancellationToken);
     }
 
     public Task<TProjector?> SingleOrDefaultAsync<TProjector>(

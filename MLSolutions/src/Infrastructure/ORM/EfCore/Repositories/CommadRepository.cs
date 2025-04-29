@@ -7,7 +7,8 @@ using Microsoft.Extensions.Logging;
 using Shard.Responses;
 using Shard.Utils;
 
-namespace ORM.Repositories;
+namespace EfCore.Repositories;
+
 public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> logger)
     : ICommandRepository
 {

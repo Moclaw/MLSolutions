@@ -15,7 +15,11 @@ public interface ICommandMongoRepository
     /// <param name="entity">The entity to add.</param>
     /// <param name="cancellationToken">Optional cancellation token.</param>
     /// <returns>A task representing the asynchronous operation, with the added entity as the result.</returns>
-    ValueTask<TEntity> AddAsync<TEntity>(TEntity entity, CancellationToken cancellationToken = default) where TEntity : class, IEntity;
+    ValueTask<TEntity> AddAsync<TEntity>(
+        TEntity entity,
+        CancellationToken cancellationToken = default
+    )
+        where TEntity : class, IEntity;
 
     /// <summary>
     /// Adds multiple entities asynchronously.
@@ -24,35 +28,43 @@ public interface ICommandMongoRepository
     /// <param name="entities">The entities to add.</param>
     /// <param name="cancellationToken">Optional cancellation token.</param>
     /// <returns>A task representing the asynchronous operation, with the added entities as the result.</returns>
-    ValueTask<IEnumerable<TEntity>> AddRangeAsync<TEntity>(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) where TEntity : class, IEntity;
+    ValueTask<IEnumerable<TEntity>> AddRangeAsync<TEntity>(
+        IEnumerable<TEntity> entities,
+        CancellationToken cancellationToken = default
+    )
+        where TEntity : class, IEntity;
 
     /// <summary>
     /// Updates a single entity.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity.</typeparam>
     /// <param name="entity">The entity to update.</param>
-    void Update<TEntity>(TEntity entity) where TEntity : class, IEntity;
+    void Update<TEntity>(TEntity entity)
+        where TEntity : class, IEntity;
 
     /// <summary>
     /// Updates multiple entities.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entities.</typeparam>
     /// <param name="entities">The entities to update.</param>
-    void UpdateRange<TEntity>(IEnumerable<TEntity> entities) where TEntity : class, IEntity;
+    void UpdateRange<TEntity>(IEnumerable<TEntity> entities)
+        where TEntity : class, IEntity;
 
     /// <summary>
     /// Removes a single entity.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity.</typeparam>
     /// <param name="entity">The entity to remove.</param>
-    void Remove<TEntity>(TEntity entity) where TEntity : class, IEntity;
+    void Remove<TEntity>(TEntity entity)
+        where TEntity : class, IEntity;
 
     /// <summary>
     /// Removes multiple entities.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entities.</typeparam>
     /// <param name="entities">The entities to remove.</param>
-    void RemoveRange<TEntity>(IEnumerable<TEntity> entities) where TEntity : class, IEntity;
+    void RemoveRange<TEntity>(IEnumerable<TEntity> entities)
+        where TEntity : class, IEntity;
 
     /// <summary>
     /// Saves changes asynchronously.

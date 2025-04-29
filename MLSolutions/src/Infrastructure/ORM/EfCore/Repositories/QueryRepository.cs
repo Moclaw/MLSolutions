@@ -1,12 +1,13 @@
 using System.Data;
 using System.Linq.Expressions;
 using Domain.IRepositories.Builders;
+using EfCore.Builders;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
-using ORM.Builders;
 using Shard.Entities;
 
-namespace ORM.Repositories;
+namespace EfCore.Repositories;
+
 public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
     where TKey : IEquatable<TKey>
@@ -122,7 +123,8 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query == null) return [];
+        if (queryBuilder.Query == null)
+            return [];
 
         if (predicate != null)
             return await queryBuilder
@@ -156,7 +158,8 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query == null) return default;
+        if (queryBuilder.Query == null)
+            return default;
         if (predicate != null)
             return await queryBuilder
                 .Query.Where(predicate)
@@ -189,7 +192,8 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query == null) return default;
+        if (queryBuilder.Query == null)
+            return default;
         if (predicate != null)
             return await queryBuilder
                 .Query.Where(predicate)
@@ -222,7 +226,8 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query == null) return default;
+        if (queryBuilder.Query == null)
+            return default;
         if (predicate != null)
             return await queryBuilder
                 .Query.Where(predicate)
@@ -268,7 +273,7 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     #endregion
 
     #region Dapper
- public async Task<List<TView>> GetAllAsync<TView>(string sqlQuery, object? param = null)
+    public async Task<List<TView>> GetAllAsync<TView>(string sqlQuery, object? param = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(sqlQuery);
         var result = await context.ExecuteQueryAsync<TView>(sqlQuery, param);

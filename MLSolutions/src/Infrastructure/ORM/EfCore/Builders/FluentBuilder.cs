@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Query;
 using MLSolutions;
 using Shard.Entities;
 
-namespace ORM.Builders;
+namespace EfCore.Builders;
 
 /// <summary>
 /// A fluent builder for constructing dynamic IQueryable queries with ordering, including, and filter ignoring support.

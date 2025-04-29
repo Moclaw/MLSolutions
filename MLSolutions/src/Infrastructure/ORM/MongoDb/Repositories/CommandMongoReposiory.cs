@@ -8,7 +8,7 @@ using Shard.Entities;
 using Shard.Responses;
 using Shard.Utils;
 
-namespace ORM.Repositories;
+namespace EfCore.Repositories;
 
 public class CommandMongoReposiory(
     MongoBaseContext context,
