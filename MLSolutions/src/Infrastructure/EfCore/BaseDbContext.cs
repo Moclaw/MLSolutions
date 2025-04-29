@@ -3,7 +3,7 @@ using System.Reflection;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 
-namespace EfCore;
+namespace ORM;
 
 /// <summary>
 /// Base DbContext with extended Dapper integration and dynamic configuration loading.

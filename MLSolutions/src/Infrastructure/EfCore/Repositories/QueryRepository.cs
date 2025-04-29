@@ -1,16 +1,19 @@
+using System.Data;
 using System.Linq.Expressions;
 using Domain.IRepositories.Builders;
-using EfCore.Builders;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using ORM.Builders;
 using Shard.Entities;
 
-namespace EfCore.Repositories;
+namespace ORM.Repositories;
 public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
     where TKey : IEquatable<TKey>
 {
     private DbSet<TEntity> Collection => context.Set<TEntity>();
+
+    #region EfCore
 
     private FluentBuilder<TEntity> InvokeQueryBuilder(
         Action<IFluentBuilder<TEntity>>? querybuilder,
@@ -261,4 +264,402 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
             return await queryBuilder.Query.CountAsync(predicate, cancellationToken);
         return 0;
     }
+
+    #endregion
+
+    #region Dapper
+ public async Task<List<TView>> GetAllAsync<TView>(string sqlQuery, object? param = null)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(sqlQuery);
+        var result = await context.ExecuteQueryAsync<TView>(sqlQuery, param);
+
+        return [.. result];
+    }
+
+    public virtual ValueTask<int> ExecuteAsync(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+
+        return context.ExecuteAsync(
+            sql,
+            param,
+            transaction,
+            commandTimeout,
+            commandType,
+            cancellationToken
+        );
+    }
+
+    public virtual ValueTask<IDataReader> ExecuteReaderAsync(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+
+        return context.ExecuteReaderAsync(
+            sql,
+            param,
+            transaction,
+            commandTimeout,
+            commandType,
+            cancellationToken
+        );
+    }
+
+    public virtual ValueTask<TResult?> QueryFirstOrDefault<TResult>(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+
+        return context.FirstOrDefault<TResult>(
+            sql,
+            param,
+            transaction,
+            commandTimeout,
+            commandType,
+            cancellationToken
+        );
+    }
+
+    public virtual ValueTask<TResult?> QuerySingleOrDefaultAsync<TResult>(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return context.SingleOrDefaultAsync<TResult>(
+            sql,
+            param,
+            transaction,
+            commandTimeout,
+            commandType,
+            cancellationToken
+        );
+    }
+
+    public virtual ValueTask<IEnumerable<TEntities>> QueryAsync<TEntities>(
+        string rawQuery,
+        object? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(rawQuery))
+        {
+            throw new ArgumentException(
+                $"'{nameof(rawQuery)}' cannot be null or empty.",
+                nameof(rawQuery)
+            );
+        }
+
+        return context.ExecuteQueryAsync<TEntities>(rawQuery, parameters, cancellationToken);
+    }
+
+    public virtual ValueTask<TResult?> ExecuteScalarAsync<TResult>(
+        string rawQuery,
+        object? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(rawQuery))
+        {
+            throw new ArgumentException(
+                $"'{nameof(rawQuery)}' cannot be null or empty.",
+                nameof(rawQuery)
+            );
+        }
+
+        return context.ExecuteScalarAsync<TResult?>(rawQuery, parameters, cancellationToken);
+    }
+
+    public virtual ValueTask<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(
+        string sql,
+        Func<TFirst, TSecond, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+
+        ArgumentNullException.ThrowIfNull(map);
+
+        if (string.IsNullOrEmpty(splitOn))
+        {
+            throw new ArgumentException(
+                $"'{nameof(splitOn)}' cannot be null or empty.",
+                nameof(splitOn)
+            );
+        }
+
+        return context.ExecuteQueryAsync(
+            sql,
+            map,
+            param,
+            transaction,
+            buffered,
+            splitOn,
+            commandTimeout,
+            commandType,
+            cancellationToken
+        );
+    }
+
+    public virtual ValueTask<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(
+        string sql,
+        Func<TFirst, TSecond, TThird, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+
+        ArgumentNullException.ThrowIfNull(map);
+
+        if (string.IsNullOrEmpty(splitOn))
+        {
+            throw new ArgumentException(
+                $"'{nameof(splitOn)}' cannot be null or empty.",
+                nameof(splitOn)
+            );
+        }
+
+        return context.ExecuteQueryAsync(
+            sql,
+            map,
+            param,
+            transaction,
+            buffered,
+            splitOn,
+            commandTimeout,
+            commandType,
+            cancellationToken
+        );
+    }
+
+    public virtual ValueTask<IEnumerable<TReturn>> QueryAsync<
+        TFirst,
+        TSecond,
+        TThird,
+        TFourth,
+        TReturn
+    >(
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+
+        ArgumentNullException.ThrowIfNull(map);
+
+        if (string.IsNullOrEmpty(splitOn))
+        {
+            throw new ArgumentException(
+                $"'{nameof(splitOn)}' cannot be null or empty.",
+                nameof(splitOn)
+            );
+        }
+
+        return context.ExecuteQueryAsync(
+            sql,
+            map,
+            param,
+            transaction,
+            buffered,
+            splitOn,
+            commandTimeout,
+            commandType,
+            cancellationToken
+        );
+    }
+
+    public virtual ValueTask<IEnumerable<TReturn>> QueryAsync<
+        TFirst,
+        TSecond,
+        TThird,
+        TFourth,
+        TFifth,
+        TReturn
+    >(
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+
+        ArgumentNullException.ThrowIfNull(map);
+
+        if (string.IsNullOrEmpty(splitOn))
+        {
+            throw new ArgumentException(
+                $"'{nameof(splitOn)}' cannot be null or empty.",
+                nameof(splitOn)
+            );
+        }
+
+        return context.ExecuteQueryAsync(
+            sql,
+            map,
+            param,
+            transaction,
+            buffered,
+            splitOn,
+            commandTimeout,
+            commandType,
+            cancellationToken
+        );
+    }
+
+    public virtual ValueTask<IEnumerable<TReturn>> QueryAsync<
+        TFirst,
+        TSecond,
+        TThird,
+        TFourth,
+        TFifth,
+        TSixth,
+        TReturn
+    >(
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+
+        ArgumentNullException.ThrowIfNull(map);
+
+        if (string.IsNullOrEmpty(splitOn))
+        {
+            throw new ArgumentException(
+                $"'{nameof(splitOn)}' cannot be null or empty.",
+                nameof(splitOn)
+            );
+        }
+
+        return context.ExecuteQueryAsync(
+            sql,
+            map,
+            param,
+            transaction,
+            buffered,
+            splitOn,
+            commandTimeout,
+            commandType,
+            cancellationToken
+        );
+    }
+
+    public ValueTask<(IEnumerable<T1>, IEnumerable<T2>)> QueryMultiple<T1, T2>(
+        string sql,
+        object? param = null
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+
+        return context.ExecuteQueryMultipleAsync<T1, T2>(sql, param);
+    }
+
+    public ValueTask<(IEnumerable<T1>, IEnumerable<T2>, IEnumerable<T3>)> QueryMultiple<T1, T2, T3>(
+        string sql,
+        object? param = null
+    )
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+        return context.ExecuteQueryMultipleAsync<T1, T2, T3>(sql, param);
+    }
+
+    public ValueTask<(
+        IEnumerable<T1>,
+        IEnumerable<T2>,
+        IEnumerable<T3>,
+        IEnumerable<T4>
+    )> QueryMultiple<T1, T2, T3, T4>(string sql, object? param = null)
+    {
+        if (string.IsNullOrEmpty(sql))
+        {
+            throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
+        }
+        return context.ExecuteQueryMultipleAsync<T1, T2, T3, T4>(sql, param);
+    }
+
+    #endregion
 }

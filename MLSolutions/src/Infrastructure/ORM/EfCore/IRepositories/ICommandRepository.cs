@@ -2,7 +2,6 @@
 using Shard.Responses;
 
 namespace Domain.IRepositories;
-
 /// <summary>
 /// The <see cref="ICommandRepository"/> interface defines a standardized contract
 /// for performing create, update, delete, and remove operations on entities within a data source.
@@ -19,7 +18,7 @@ namespace Domain.IRepositories;
 /// </list>
 ///
 /// All operations are asynchronous to promote scalability and responsiveness in high-concurrency environments.
-/// Implementations are expected to manage entity states properly within the underlying ORM (e.g., Entity Framework Core).
+/// Implementations are expected to manage entity states properly within the underlying EfCore (e.g., Entity Framework Core).
 /// </remarks>
 public interface ICommandRepository
 {
@@ -190,4 +189,43 @@ public interface ICommandRepository
         CancellationToken cancellationToken = default
     )
         where TEntity : class;
+
+    /// <summary>
+    /// Executes a raw SQL command asynchronously and returns the number of rows affected.
+    /// </summary>
+    /// <param name="sql">The SQL command to execute.</param>
+    /// <param name="param">Optional parameters for the SQL command.</param>
+    /// <param name="transaction">Optional database transaction to associate with the command.</param>
+    /// <param name="commandTimeout">Optional command timeout in seconds.</param>
+    /// <param name="commandType">Optional type of the command (e.g., Text, StoredProcedure).</param>
+    /// <param name="cancellationToken">Optional cancellation token.</param>
+    /// <returns>The number of rows affected by the command.</returns>
+    Task<int> ExecuteAsync(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Executes a raw SQL query asynchronously and returns a single scalar value.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the result to return.</typeparam>
+    /// <param name="sql">The SQL query to execute.</param>
+    /// <param name="param">Optional parameters for the SQL query.</param>
+    /// <param name="transaction">Optional database transaction to associate with the query.</param>
+    /// <param name="commandTimeout">Optional command timeout in seconds.</param>
+    /// <param name="commandType">Optional type of the command (e.g., Text, StoredProcedure).</param>
+    /// <param name="cancellationToken">Optional cancellation token.</param>
+    /// <returns>The scalar value resulting from the query.</returns>
+    Task<TResult?> ExecuteScalarAsync<TResult>(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    );
 }

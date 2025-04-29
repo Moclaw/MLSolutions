@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Data;
+using System.Linq.Expressions;
 using Domain.IRepositories.Builders;
 using Mapster;
 using Shard.Entities;
@@ -254,4 +255,174 @@ public interface IQueryRepository<TEntity, TKey>
         Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default
     );
+
+    /// <summary>
+    /// Executes a SQL query and returns all results as a list of <typeparamref name="TView"/>.
+    /// </summary>
+    /// <typeparam name="TView">The type of the view model to map results to.</typeparam>
+    /// <param name="sqlQuery">The SQL query string.</param>
+    /// <param name="param">Optional query parameters.</param>
+    /// <returns>A list of <typeparamref name="TView"/>.</returns>
+    Task<List<TView>> GetAllAsync<TView>(string sqlQuery, object? param = null);
+
+    /// <summary>
+    /// Executes a command that does not return rows (e.g., INSERT, UPDATE, DELETE).
+    /// </summary>
+    /// <param name="sql">The SQL command string.</param>
+    /// <param name="param">Optional command parameters.</param>
+    /// <param name="transaction">Optional database transaction.</param>
+    /// <param name="commandTimeout">Optional timeout in seconds.</param>
+    /// <param name="commandType">Optional command type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The number of rows affected.</returns>
+    ValueTask<int> ExecuteAsync(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes a query and returns a data reader for manual processing.
+    /// </summary>
+    /// <param name="sql">The SQL query string.</param>
+    /// <param name="param">Optional query parameters.</param>
+    /// <param name="transaction">Optional database transaction.</param>
+    /// <param name="commandTimeout">Optional timeout in seconds.</param>
+    /// <param name="commandType">Optional command type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An <see cref="IDataReader"/> for reading results.</returns>
+    ValueTask<IDataReader> ExecuteReaderAsync(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes a query and returns the first row or default if none.
+    /// </summary>
+    ValueTask<TResult?> QueryFirstOrDefault<TResult>(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes a query and returns a single row or default if none.
+    /// </summary>
+    ValueTask<TResult?> QuerySingleOrDefaultAsync<TResult>(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes a query and maps results directly to <typeparamref name="TEntity"/>.
+    /// </summary>
+    ValueTask<IEnumerable<TEntity>> QueryAsync<TEntity>(
+        string rawQuery,
+        object? parameters = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes a scalar query and returns the result.
+    /// </summary>
+    ValueTask<TResult?> ExecuteScalarAsync<TResult>(
+        string rawQuery,
+        object? parameters = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Multi-mapping query for two types.
+    /// </summary>
+    ValueTask<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(
+        string sql,
+        Func<TFirst, TSecond, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Multi-mapping query for three types.
+    /// </summary>
+    ValueTask<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(
+        string sql,
+        Func<TFirst, TSecond, TThird, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Multi-mapping query for four types.
+    /// </summary>
+    ValueTask<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Multi-mapping query for five types.
+    /// </summary>
+    ValueTask<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Multi-mapping query for six types.
+    /// </summary>
+    ValueTask<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes a batch query and returns two result sets.
+    /// </summary>
+    ValueTask<(IEnumerable<T1>, IEnumerable<T2>)> QueryMultiple<T1, T2>(string sql, object? param = null);
+
+    /// <summary>
+    /// Executes a batch query and returns three result sets.
+    /// </summary>
+    ValueTask<(IEnumerable<T1>, IEnumerable<T2>, IEnumerable<T3>)> QueryMultiple<T1, T2, T3>(string sql,
+        object? param = null);
+
+    /// <summary>
+    /// Executes a batch query and returns four result sets.
+    /// </summary>
+    ValueTask<(IEnumerable<T1>, IEnumerable<T2>, IEnumerable<T3>, IEnumerable<T4>)> QueryMultiple<T1, T2, T3, T4>(
+        string sql, object? param = null);
 }

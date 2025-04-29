@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using Domain.IRepositories.Builders;
 using Shard.Entities;
 
-namespace EfCore.Builders;
+namespace ORM.Builders;
 
 internal sealed class EntitySetter<TEntity>(TEntity entity): IEntitySetter<TEntity> where TEntity : class, IEntity
 {

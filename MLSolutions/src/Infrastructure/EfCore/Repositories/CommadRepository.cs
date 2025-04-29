@@ -1,4 +1,5 @@
 using System.Data;
+using Dapper;
 using Domain.IRepositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -6,8 +7,7 @@ using Microsoft.Extensions.Logging;
 using Shard.Responses;
 using Shard.Utils;
 
-namespace EfCore.Repositories;
-
+namespace ORM.Repositories;
 public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> logger)
     : ICommandRepository
 {
@@ -133,7 +133,10 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
     )
     {
         if (_currentTransaction == null)
+        {
+            logger.LogWarning("No active transaction to commit.");
             throw new InvalidOperationException("No active transaction to commit.");
+        }
 
         await context.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         await _currentTransaction.CommitAsync(cancellationToken);
@@ -144,7 +147,10 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
     public async Task CommitAsync(CancellationToken cancellationToken = default)
     {
         if (_currentTransaction == null)
+        {
+            logger.LogWarning("No active transaction to commit.");
             throw new InvalidOperationException("No active transaction to commit.");
+        }
 
         await context.SaveChangesAsync(cancellationToken);
         await _currentTransaction.CommitAsync(cancellationToken);
@@ -165,6 +171,10 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
         catch (DbUpdateConcurrencyException ex)
         {
             logger.LogError(ex, "Concurrency error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
             return new Responses(
                 IsSuccess: false,
                 StatusCode: 409,
@@ -174,10 +184,27 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
         catch (DbUpdateException ex)
         {
             logger.LogError(ex, "Database update error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
             return new Responses(
                 IsSuccess: false,
                 StatusCode: 500,
                 Message: "Database update error occurred."
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
+            return new Responses(
+                IsSuccess: false,
+                StatusCode: 500,
+                Message: "An error occurred while saving changes."
             );
         }
     }
@@ -236,5 +263,49 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
         }
 
         return affectedRows;
+    }
+
+    public async Task<int> ExecuteAsync(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var conn = context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await conn.OpenAsync(cancellationToken);
+
+        return await conn.ExecuteAsync(
+            sql: sql,
+            param: param,
+            transaction: transaction,
+            commandTimeout: commandTimeout,
+            commandType: commandType
+        );
+    }
+
+    public async Task<TResult?> ExecuteScalarAsync<TResult>(
+        string sql,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var conn = context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await conn.OpenAsync(cancellationToken);
+
+        return await conn.ExecuteScalarAsync<TResult>(
+            sql: sql,
+            param: param,
+            transaction: transaction,
+            commandTimeout: commandTimeout,
+            commandType: commandType
+        );
     }
 }

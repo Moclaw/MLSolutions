@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Query;
 using MLSolutions;
 using Shard.Entities;
 
-namespace EfCore.Builders;
+namespace ORM.Builders;
 
 /// <summary>
 /// A fluent builder for constructing dynamic IQueryable queries with ordering, including, and filter ignoring support.
@@ -211,9 +211,3 @@ internal class FluentBuilder<TEntity, TProperty, TGeneric>(
         }
     }
 }
-/// <summary>
-/// Extended fluent builder that supports ThenInclude for navigation properties.
-/// </summary>
-/// <typeparam name="TEntity">The entity type.</typeparam>
-/// <typeparam name="TProperty">The navigation property type.</typeparam>
-/// <typeparam name="TGeneric">The current property type in the navigation chain.</typeparam>
