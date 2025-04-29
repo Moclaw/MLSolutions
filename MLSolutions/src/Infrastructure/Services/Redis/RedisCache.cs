@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
+using MLSolutions;
+using Services.Configurations;
 using Services.Constants;
 using StackExchange.Redis;
-using Microsoft.Extensions.DependencyInjection;
-using Services.Configurations;
-using MLSolutions;
-
 
 namespace Services.Redis;
+
 public class RedisCache : IRedisCache
 {
     private readonly IDistributedCache _distributedCache;
@@ -14,7 +14,11 @@ public class RedisCache : IRedisCache
     private readonly bool _isRedisCacheProvider;
     private readonly IConnectionMultiplexer _connectionMultiplexer;
 
-    public RedisCache(IDistributedCache distributedCache, IServiceProvider serviceProvider, IConnectionMultiplexer connectionMultiplexer)
+    public RedisCache(
+        IDistributedCache distributedCache,
+        IServiceProvider serviceProvider,
+        IConnectionMultiplexer connectionMultiplexer
+    )
     {
         _distributedCache = distributedCache;
         _connectionMultiplexer = connectionMultiplexer;
@@ -229,10 +233,17 @@ public class RedisCache : IRedisCache
 
         HashSet<string> keysToRemove = searchOperator switch
         {
-            CacheKeySearchOperator.StartsWith => [.. outboxKeys.Where(x => x.StartsWith(keyPattern))],
+            CacheKeySearchOperator.StartsWith =>
+            [
+                .. outboxKeys.Where(x => x.StartsWith(keyPattern)),
+            ],
             CacheKeySearchOperator.EndsWith => [.. outboxKeys.Where(x => x.EndsWith(keyPattern))],
             CacheKeySearchOperator.Contains => [.. outboxKeys.Where(x => x.Contains(keyPattern))],
-            _ => throw new ArgumentOutOfRangeException(nameof(searchOperator), searchOperator, null)
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(searchOperator),
+                searchOperator,
+                null
+            ),
         };
 
         if (keysToRemove.Count == 0)
@@ -241,7 +252,10 @@ public class RedisCache : IRedisCache
         }
 
         await Task.WhenAll(
-            keysToRemove.Select(async key => { await _distributedCache.RemoveAsync(key, cancellation); })
+            keysToRemove.Select(async key =>
+            {
+                await _distributedCache.RemoveAsync(key, cancellation);
+            })
         );
 
         outboxKeys.RemoveWhere(x => keysToRemove.Contains(x));
