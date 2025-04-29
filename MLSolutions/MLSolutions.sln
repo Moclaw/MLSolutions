@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfCore", "src\Infrastructur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDb", "src\Infrastructure\ORM\MongoDb\MongoDb.csproj", "{45EF9DCE-16A4-44DA-A7EB-94A30CB80036}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "src\Infrastructure\Services\Services.csproj", "{BBDC4AA3-CE53-4D6D-B0C3-7C263A58D1D8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{45EF9DCE-16A4-44DA-A7EB-94A30CB80036}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45EF9DCE-16A4-44DA-A7EB-94A30CB80036}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45EF9DCE-16A4-44DA-A7EB-94A30CB80036}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBDC4AA3-CE53-4D6D-B0C3-7C263A58D1D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBDC4AA3-CE53-4D6D-B0C3-7C263A58D1D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBDC4AA3-CE53-4D6D-B0C3-7C263A58D1D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBDC4AA3-CE53-4D6D-B0C3-7C263A58D1D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,6 +65,7 @@ Global
 		{6B64B42D-CDE8-4A21-9C7A-8DAC366BE816} = {1D2D897C-DB03-4193-A245-343FE817210A}
 		{3744F889-7244-47FD-9084-1417F3852230} = {6B64B42D-CDE8-4A21-9C7A-8DAC366BE816}
 		{45EF9DCE-16A4-44DA-A7EB-94A30CB80036} = {6B64B42D-CDE8-4A21-9C7A-8DAC366BE816}
+		{BBDC4AA3-CE53-4D6D-B0C3-7C263A58D1D8} = {1D2D897C-DB03-4193-A245-343FE817210A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7089FC7-79A1-4CAA-AC88-1A189B1D840E}

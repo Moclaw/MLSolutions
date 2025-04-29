@@ -1,12 +1,8 @@
-﻿
-
-using Shard.Settings;
+﻿using Shard.Settings;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace MLSolutions;
-
 /// <summary>
 /// Provides extension methods for string manipulation and processing.
 /// </summary>
@@ -35,6 +31,7 @@ public static class StringExtensions
                     sb.Append('_');
                     pendingUnderscore = false;
                 }
+
                 sb.Append(char.ToLowerInvariant(c));
             }
             else if (char.IsWhiteSpace(c))

@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 
 namespace MLSolutions;
-
 /// <summary>
 /// Provides extension methods for object manipulation, including string and byte array conversions,
 /// and JSON serialization.
@@ -16,9 +15,9 @@ public static class ObjectExtensions
     /// <param name="orignal">The byte array to convert.</param>
     /// <param name="encoding">The encoding to use for conversion. Defaults to <see cref="Encoding.UTF8"/> if not specified.</param>
     /// <returns>A string representation of the byte array, or an empty string if the array is null or empty.</returns>
-    public static string ConvertToString(this byte[] orignal, Encoding? encoding = null)
+    public static string ConvertToString(this byte[]? orignal, Encoding? encoding = null)
     {
-        if (orignal == null || orignal.Length <= 0) return string.Empty;
+        if (orignal is not { Length: > 0 }) return string.Empty;
 
         encoding ??= Encoding.UTF8;
 
