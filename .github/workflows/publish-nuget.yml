@@ -11,9 +11,7 @@ on:
     branches:
       - main
   release:
-    types: [created]   
-
-
+    types: [created]
 
 jobs:
   publish:
@@ -26,7 +24,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'   
+          dotnet-version: '9.0.x'
 
       - name: Restore dependencies
         run: dotnet restore
@@ -38,4 +36,4 @@ jobs:
         run: dotnet pack --configuration Release --no-build --output ./nupkg
 
       - name: Push to NuGet
-        run: dotnet nuget push "./nupkg/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push "./nupkg/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
