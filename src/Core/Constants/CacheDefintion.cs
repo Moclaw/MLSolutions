@@ -1,4 +1,4 @@
-namespace Services.Constants;
+namespace Core.Constants;
 public abstract record CacheDefintion(CacheType CType)
 {
 }

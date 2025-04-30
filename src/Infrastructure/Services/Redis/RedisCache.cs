@@ -1,8 +1,8 @@
+using Core.Configuration;
+using Core.Constants;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using MLSolutions;
-using Services.Configurations;
-using Services.Constants;
 using StackExchange.Redis;
 
 namespace Services.Redis;

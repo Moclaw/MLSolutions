@@ -1,4 +1,4 @@
-namespace Services.Constants;
+namespace Core.Constants;
 public enum CacheType
 {
     InMemory = 0,

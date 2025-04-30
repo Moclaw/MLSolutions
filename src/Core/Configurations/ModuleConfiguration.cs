@@ -1,10 +1,11 @@
 using System.Reflection;
-using Services.Constants;
+using Core.Constants;
 
-namespace Services.Configurations;
+namespace Core.Configuration;
 public class ModuleConfiguration
 {
-    public CacheDefintion? Cache { internal get; set; } = new MemoryCacheDefintion();
+    internal static string? AppName;
+    public CacheDefintion? Cache { get; set; } = new MemoryCacheDefintion();
 
     public bool DisableMediaR { internal get; set; } = false;
 
