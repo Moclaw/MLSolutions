@@ -10,7 +10,7 @@ namespace Host;
 
 public static partial class Register
 {
-    public static IServiceCollection AddFrameworkExceptionHandling(
+    public static IServiceCollection AddGlobalExceptionHandling(
         this IServiceCollection services,
         string applicationName
     )
@@ -48,7 +48,10 @@ public static partial class Register
                 configuration
                     .ReadFrom.Configuration(context.Configuration)
                     .ReadFrom.Services(services)
-                    .Enrich.WithProperty("ApplicationName", context.HostingEnvironment.ApplicationName)
+                    .Enrich.WithProperty(
+                        "ApplicationName",
+                        context.HostingEnvironment.ApplicationName
+                    )
                     .Enrich.FromLogContext();
             }
         );

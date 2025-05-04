@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Infrastructure\ORM\EfCore\EfCore.csproj"/>
+        <ProjectReference Include="..\..\src\Infrastructure\ORM\MongoDb\MongoDb.csproj"/>
+        <ProjectReference Include="..\sample.Domain\sample.Domain.csproj"/>
+        <ProjectReference Include="..\sample.Application\sample.Application.csproj"/>
+        <ProjectReference Include="..\..\src\Core\Core.csproj"/>
+        <ProjectReference Include="..\..\src\Shard\Shard.csproj"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+</Project>

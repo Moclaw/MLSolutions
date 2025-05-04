@@ -19,7 +19,7 @@ internal class EntityNotFoundExceptionHandler : IExceptionHanlder
         }
         
         return httpContext.WriteExceptionResult(
-            (int)HttpStatusCode.BadRequest,
+            (int)HttpStatusCode.NoContent,
             exceptionType?.Message ?? "Entity not found"
         );
     }
