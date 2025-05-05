@@ -11,8 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Core\Core.csproj" />
-    <ProjectReference Include="..\..\src\Shard\Shard.csproj" />
+    <ProjectReference Include="..\..\src\Host\Host.csproj" />
     <ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
     <ProjectReference Include="..\sample.Application\sample.Application.csproj" />
     <ProjectReference Include="..\sample.Infrastructure\sample.Infrastructure.csproj" />

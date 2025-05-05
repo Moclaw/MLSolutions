@@ -1,15 +1,40 @@
+using Host;
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var appName = builder.Environment.ApplicationName;
+var configuration = builder.Configuration;
 
-builder.Services.AddOpenApi();
+// Corrected the chaining to ensure 'AddApplicationLog' is called on 'builder' instead of 'Services'
+builder
+    .AddApplicationLog(configuration, appName);
+
+builder.Services
+    .AddCorsServices(configuration)
+    .AddGlobalExceptionHandling(appName)
+    .AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
+
+//configure CORS
+app.UseCorsServices(configuration);
+
+//configure Global Exception Handling
+app.UseGlobalExceptionHandling();
+
+
+app.MapGet("/", (ILogger<Program> logger) =>
+{
+    logger.LogInformation("Hello World!");
+    return "Hello World!";
+});
+
+await app.RunAsync();

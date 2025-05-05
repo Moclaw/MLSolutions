@@ -1,8 +1,7 @@
-using Core.Configuration;
-using Core.Constants;
 using Host.Middleware;
 using Host.Services;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -17,21 +16,12 @@ public static partial class Register
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(applicationName);
 
-        ModuleConfiguration config = new()
-        {
-            Cache = new MemoryCacheDefintion(),
-            Assemblies = [typeof(Register).Assembly],
-            DisableMediaR = true,
-        };
-
-        services.AddSingleton(config);
-
         services.AddSingleton<IExceptionHandlerFactory, ExceptionHandlerFactory>();
 
         return services;
     }
 
-    public static IApplicationBuilder UseFrameworkExceptionHandling(
+    public static IApplicationBuilder UseGlobalExceptionHandling(
         this IApplicationBuilder builder
     )
     {
@@ -40,21 +30,26 @@ public static partial class Register
             .UseStatusCodePagesWithReExecute("/Error/{0}");
     }
 
-    public static WebApplicationBuilder AddApplicationLog(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddApplicationLog(this WebApplicationBuilder builder,
+        IConfiguration configuration, string applicationName)
     {
-        builder.Host.UseSerilog(
-            (context, services, configuration) =>
-            {
-                configuration
-                    .ReadFrom.Configuration(context.Configuration)
-                    .ReadFrom.Services(services)
-                    .Enrich.WithProperty(
-                        "ApplicationName",
-                        context.HostingEnvironment.ApplicationName
-                    )
-                    .Enrich.FromLogContext();
-            }
-        );
+        ArgumentNullException.ThrowIfNull(configuration);
+        builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+        {
+            loggerConfiguration
+                .ReadFrom.Configuration(configuration)
+                .Enrich.FromLogContext()
+                .Enrich.WithProperty("MachineName", Environment.MachineName)
+                .Enrich.WithProperty("ApplicationName", applicationName)
+                .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
+                .WriteTo.Console();
+        });
+
+        var logtest = Log.Logger
+            .ForContext("MachineName", Environment.MachineName)
+            .ForContext("ApplicationName", applicationName)
+            .ForContext("Environment", builder.Environment.EnvironmentName);
+
         return builder;
     }
 }
