@@ -2,6 +2,9 @@
 
 This directory contains the core source code for the MLSolutions project, organized into several main modules:
 
+## Setup 
+- This is a Bash/PowerShell script that automatically sets up a Clean Architecture project structure for .NET applications, following Domain-Driven Design (DDD) and optional Test-Driven Development (TDD) standards [Script Setup](https://github.com/Moclaw/ScriptKids/tree/main/src/CleanArchitecture). 
+
 ## 1. Core
 - **Extensions**: Provides utility extension methods for enums, objects, queryables, reflection, and strings. These extensions simplify common operations such as enum metadata retrieval, object serialization, dynamic query ordering, and string normalization.
 
