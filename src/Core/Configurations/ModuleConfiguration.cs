@@ -1,7 +1,7 @@
 using System.Reflection;
 using Core.Constants;
 
-namespace Core.Configuration;
+namespace Core.Configurations;
 public class ModuleConfiguration
 {
     internal static string? AppName;

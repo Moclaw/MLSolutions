@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using Shard.Responses;
 
-namespace Domain.IRepositories;
+namespace EfCore.IRepositories;
 /// <summary>
 /// The <see cref="ICommandRepository"/> interface defines a standardized contract
 /// for performing create, update, delete, and remove operations on entities within a data source.

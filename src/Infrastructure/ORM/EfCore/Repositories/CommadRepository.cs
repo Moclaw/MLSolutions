@@ -1,6 +1,6 @@
 using System.Data;
 using Dapper;
-using Domain.IRepositories;
+using EfCore.IRepositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;

@@ -1,4 +1,5 @@
 using Host;
+using Host.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,11 +9,12 @@ var configuration = builder.Configuration;
 
 // Corrected the chaining to ensure 'AddApplicationLog' is called on 'builder' instead of 'Services'
 builder
-    .AddApplicationLog(configuration, appName);
+    .AddSerilog(configuration, appName);
 
 builder.Services
     .AddCorsServices(configuration)
     .AddGlobalExceptionHandling(appName)
+    .AddHealthCheck(configuration)
     .AddOpenApi();
 
 var app = builder.Build();
@@ -30,11 +32,13 @@ app.UseCorsServices(configuration);
 //configure Global Exception Handling
 app.UseGlobalExceptionHandling();
 
+//configure ARM Elastic
+app.UseElasticApm(configuration);
 
 app.MapGet("/", (ILogger<Program> logger) =>
 {
-    logger.LogInformation("Hello World!");
-    return "Hello World!";
+    logger.LogInformation("Resource not found.");
+    return Results.NotFound("Resource not found.");
 });
 
 await app.RunAsync();

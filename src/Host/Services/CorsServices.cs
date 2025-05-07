@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shard.Constants;
 
-namespace Host;
+namespace Host.Services;
 
 public static class CorsServices
 {
