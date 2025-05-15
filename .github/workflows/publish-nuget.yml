@@ -27,13 +27,23 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: |
+          for proj in $(find . -name '*.csproj' -not -path "./sample/*"); do
+            dotnet restore "$proj"
+          done
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: |
+          for proj in $(find . -name '*.csproj' -not -path "./sample/*"); do
+            dotnet build "$proj" --configuration Release --no-restore
+          done
 
       - name: Pack
-        run: dotnet pack --configuration Release --no-build --output ./nupkg
+        run: |
+          mkdir -p ./nupkg
+          for proj in $(find . -name '*.csproj' -not -path "./sample/*"); do
+            dotnet pack "$proj" --configuration Release --no-build --output ./nupkg
+          done
 
       - name: Push to NuGet
         run: dotnet nuget push "./nupkg/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
