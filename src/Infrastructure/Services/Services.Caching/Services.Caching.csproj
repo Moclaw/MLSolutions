@@ -1,22 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Version>1.0.0</Version>
+		<Authors>moclaw</Authors>
+		<Company>moclaw</Company>
+		<Description> Service for caching data using Redis or in-memory.</Description>
+		<RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
+		<PackageTags>caching,redis,in-memory,mlsolutions</PackageTags>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageId>MLSolutions.Services.Caching</PackageId>
+	</PropertyGroup>
 
-  <ItemGroup>
-	  <FrameworkReference Include="Microsoft.AspNetCore.App" />
-	  <PackageReference Include="DotNetCore.CAP" Version="8.3.4" />
-	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.0" />
-	  <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.8.37" />
-  </ItemGroup>
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<PackageReference Include="DotNetCore.CAP" Version="8.3.4" />
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+		<PackageReference Include="StackExchange.Redis" Version="2.8.37" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Core\Core.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\Core\Core.csproj" />
+	</ItemGroup>
 
 </Project>
