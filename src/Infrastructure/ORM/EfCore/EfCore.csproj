@@ -4,7 +4,7 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<PackageId>Moclaw.EfCore</PackageId>
+		<PackageId>Moclawr.EfCore</PackageId>
 		<Version>1.0.0</Version>
 		<Authors>moclaw</Authors>
 		<Company>moclaw</Company>

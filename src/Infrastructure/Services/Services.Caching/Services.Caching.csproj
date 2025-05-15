@@ -11,7 +11,7 @@
 		<RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
 		<PackageTags>caching,redis,in-memory,mlsolutions</PackageTags>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageId>Moclaw.Services.Caching</PackageId>
+		<PackageId>Moclawr.Services.Caching</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

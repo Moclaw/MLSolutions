@@ -10,7 +10,7 @@
 		<Description>Custom implementation of DotNetCore.CAP for MQs like RabbitMQ, Kafka, Redis, and others.</Description>
 		<PackageTags> dotnetcore,cap,rabbitmq,kafka,redis,mongodb,postgresql,mysql,azure,mlsolutions</PackageTags>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageId>Moclaw.DotNetCore.CAP</PackageId>
+		<PackageId>Moclawr.DotNetCore.CAP</PackageId>
 
 	</PropertyGroup>
 	<ItemGroup>
