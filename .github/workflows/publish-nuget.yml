@@ -48,5 +48,5 @@ jobs:
       - name: Push to NuGet
         run: |
           for pkg in ./nupkg/*.nupkg; do
-            dotnet nuget push "$pkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate;
+            dotnet nuget push "$pkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
           done
