@@ -10,7 +10,7 @@
 		<Description>Service for external services like HTTP, gRPC, and others.</Description>
 		<PackageTags>http,grpc,mlsolutions</PackageTags>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageId>MLSolutions.Services.External</PackageId>
+		<PackageId>MLaw.Services.External</PackageId>
 		
 	</PropertyGroup>
 
