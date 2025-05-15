@@ -1,6 +1,6 @@
-# MLSolutions Overview
+# Mlaw Overview
 
-This directory contains the core source code for the MLSolutions project, organized into several main modules:
+This directory contains the core source code for the Mlaw project, organized into several main modules:
 
 ## Setup 
 - This is a Bash/PowerShell script that automatically sets up a Clean Architecture project structure for .NET applications, following Domain-Driven Design (DDD) and optional Test-Driven Development (TDD) standards [Script Setup](https://github.com/Moclaw/ScriptKids/tree/main/src/CleanArchitecture). 
