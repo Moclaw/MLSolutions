@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<ProjectReference Include="..\..\src\Infrastructure\Services\DotnetCap.Kafka\DotnetCap.csproj" />
+		<ProjectReference Include="..\..\src\Infrastructure\Services\Services.External\Services.External.csproj" />
+		<ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+</Project>

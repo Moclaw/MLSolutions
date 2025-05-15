@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>MLSolutions.Core</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>moclaw</Authors>
+    <Company>moclaw</Company>
+    <Description>Core utilities and base types for the moclaw project.</Description>
+    <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
+    <PackageTags>core,utilities,mlsolutions</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shard\Shard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+  </ItemGroup>
+
+</Project>

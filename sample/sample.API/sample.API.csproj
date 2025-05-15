@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Host\Host.csproj" />
+    <ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
+    <ProjectReference Include="..\sample.Application\sample.Application.csproj" />
+    <ProjectReference Include="..\sample.Infrastructure\sample.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

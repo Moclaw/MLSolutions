@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>MLSolutions.Shard</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>moclaw</Authors>
+    <Company>moclaw</Company>
+    <Description>Sharding utilities and base types for the moclaw project.</Description>
+    <RepositoryUrl>https://github.com/Moclaw/MLSolutions/</RepositoryUrl>
+    <PackageTags>shard,utilities,mlsolutions</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+</Project>

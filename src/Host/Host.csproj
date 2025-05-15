@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageId>MLSolutions.Host</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>moclaw</Authors>
+        <Company>moclaw</Company>
+        <Description>Host utilities and base types for the moclaw project.</Description>
+        <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
+        <PackageTags>host,utilities,mlsolutions</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Core\Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Core" Version="9.0.0" />
+        <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="9.0.0" />        
+		<PackageReference Include="DotNetCore.CAP.Pulsar" Version="8.3.4" />
+		<PackageReference Include="Elastic.Apm.NetCoreAll" Version="1.23.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
+        <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+        <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="9.0.3" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+		
+    </ItemGroup>
+
+</Project>

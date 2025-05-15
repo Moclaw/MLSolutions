@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>MLSolutions.MongoDb</PackageId>
+    <Version>1.0.1</Version>
+    <Authors>moclaw</Authors>
+    <Company>moclaw</Company>
+    <Description>MongoDB integration for the moclaw project.</Description>
+    <RepositoryUrl>https://github.com/Moclaw/MLSolutions/</RepositoryUrl>
+    <PackageTags>mongodb,orm,mlsolutions</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Domain\Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+    <PackageReference Include="MongoDB.Driver" Version="3.3.0" />
+    <PackageReference Include="MongoDB.EntityFrameworkCore" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>
