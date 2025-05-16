@@ -6,6 +6,7 @@ using static DotnetCap.Rabbit.RabbitConfiguration;
 using static DotnetCap.Kafka.KafkaConfiguration;
 using DotNetCore.CAP;
 using DotnetCap.Rabbit;
+using Microsoft.AspNetCore.Builder;
 
 namespace DotnetCap
 {
@@ -74,7 +75,6 @@ namespace DotnetCap
 
             return services;
         }
-
 
         private static void ValidateDotnetCapConfiguration(DotnetCapConfiguration config)
         {
