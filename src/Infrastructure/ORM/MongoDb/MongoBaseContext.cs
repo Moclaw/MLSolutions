@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 
-namespace EfCore;
+namespace MongoDb;
 
 public sealed class MongoBaseContext : DbContext
 {

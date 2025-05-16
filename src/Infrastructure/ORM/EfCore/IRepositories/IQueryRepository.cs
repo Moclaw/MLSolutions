@@ -281,7 +281,8 @@ public interface IQueryRepository<TEntity, TKey>
         IDbTransaction? transaction = null,
         int? commandTimeout = null,
         CommandType? commandType = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Executes a query and returns a data reader for manual processing.
@@ -299,7 +300,8 @@ public interface IQueryRepository<TEntity, TKey>
         IDbTransaction? transaction = null,
         int? commandTimeout = null,
         CommandType? commandType = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Executes a query and returns the first row or default if none.
@@ -310,7 +312,8 @@ public interface IQueryRepository<TEntity, TKey>
         IDbTransaction? transaction = null,
         int? commandTimeout = null,
         CommandType? commandType = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Executes a query and returns a single row or default if none.
@@ -321,15 +324,17 @@ public interface IQueryRepository<TEntity, TKey>
         IDbTransaction? transaction = null,
         int? commandTimeout = null,
         CommandType? commandType = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Executes a query and maps results directly to <typeparamref name="TEntity"/>.
     /// </summary>
-    ValueTask<IEnumerable<TEntity>> QueryAsync<TEntity>(
+    ValueTask<IEnumerable<TResult>> QueryAsync<TResult>(
         string rawQuery,
         object? parameters = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Executes a scalar query and returns the result.
@@ -337,7 +342,8 @@ public interface IQueryRepository<TEntity, TKey>
     ValueTask<TResult?> ExecuteScalarAsync<TResult>(
         string rawQuery,
         object? parameters = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Multi-mapping query for two types.
@@ -351,7 +357,8 @@ public interface IQueryRepository<TEntity, TKey>
         string splitOn = "Id",
         int? commandTimeout = null,
         CommandType? commandType = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Multi-mapping query for three types.
@@ -365,7 +372,8 @@ public interface IQueryRepository<TEntity, TKey>
         string splitOn = "Id",
         int? commandTimeout = null,
         CommandType? commandType = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Multi-mapping query for four types.
@@ -379,7 +387,8 @@ public interface IQueryRepository<TEntity, TKey>
         string splitOn = "Id",
         int? commandTimeout = null,
         CommandType? commandType = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Multi-mapping query for five types.
@@ -393,12 +402,21 @@ public interface IQueryRepository<TEntity, TKey>
         string splitOn = "Id",
         int? commandTimeout = null,
         CommandType? commandType = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Multi-mapping query for six types.
     /// </summary>
-    ValueTask<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(
+    ValueTask<IEnumerable<TReturn>> QueryAsync<
+        TFirst,
+        TSecond,
+        TThird,
+        TFourth,
+        TFifth,
+        TSixth,
+        TReturn
+    >(
         string sql,
         Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map,
         object? param = null,
@@ -407,22 +425,32 @@ public interface IQueryRepository<TEntity, TKey>
         string splitOn = "Id",
         int? commandTimeout = null,
         CommandType? commandType = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Executes a batch query and returns two result sets.
     /// </summary>
-    ValueTask<(IEnumerable<T1>, IEnumerable<T2>)> QueryMultiple<T1, T2>(string sql, object? param = null);
+    ValueTask<(IEnumerable<T1>, IEnumerable<T2>)> QueryMultiple<T1, T2>(
+        string sql,
+        object? param = null
+    );
 
     /// <summary>
     /// Executes a batch query and returns three result sets.
     /// </summary>
-    ValueTask<(IEnumerable<T1>, IEnumerable<T2>, IEnumerable<T3>)> QueryMultiple<T1, T2, T3>(string sql,
-        object? param = null);
+    ValueTask<(IEnumerable<T1>, IEnumerable<T2>, IEnumerable<T3>)> QueryMultiple<T1, T2, T3>(
+        string sql,
+        object? param = null
+    );
 
     /// <summary>
     /// Executes a batch query and returns four result sets.
     /// </summary>
-    ValueTask<(IEnumerable<T1>, IEnumerable<T2>, IEnumerable<T3>, IEnumerable<T4>)> QueryMultiple<T1, T2, T3, T4>(
-        string sql, object? param = null);
+    ValueTask<(IEnumerable<T1>, IEnumerable<T2>, IEnumerable<T3>, IEnumerable<T4>)> QueryMultiple<
+        T1,
+        T2,
+        T3,
+        T4
+    >(string sql, object? param = null);
 }

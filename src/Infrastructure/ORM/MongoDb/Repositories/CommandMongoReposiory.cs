@@ -8,7 +8,7 @@ using Shard.Entities;
 using Shard.Responses;
 using Shard.Utils;
 
-namespace EfCore.Repositories;
+namespace MongoDb.Repositories;
 
 public class CommandMongoReposiory(
     MongoBaseContext context,
@@ -86,11 +86,8 @@ public class CommandMongoReposiory(
     {
         try
         {
-            var data = await context.SaveChangesAsync(cancellationToken);
-            return ResponseUtils.Success<Responses>(
-                data: data,
-                message: "Changes saved successfully."
-            );
+            var affectedRows = await context.SaveChangesAsync(cancellationToken);
+            return ResponseUtils.Success(message: "Changes saved successfully.");
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -161,12 +158,13 @@ public class CommandMongoReposiory(
 
         var notExistIndex = entityType
             .GetIndexes()
-            .Where(x =>
-                x.Properties.Count > 0
-                && !string.IsNullOrEmpty(x.Properties[0].Name)
-                && !existIndexName.Any(i =>
-                    i.Contains(x.Properties[0].Name, StringComparison.OrdinalIgnoreCase)
-                )
+            .Where(
+                x =>
+                    x.Properties.Count > 0
+                    && !string.IsNullOrEmpty(x.Properties[0].Name)
+                    && !existIndexName.Any(
+                        i => i.Contains(x.Properties[0].Name, StringComparison.OrdinalIgnoreCase)
+                    )
             )
             .ToList();
 

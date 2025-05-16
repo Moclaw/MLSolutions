@@ -44,6 +44,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services.External", "src\In
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotnetCap", "src\Infrastructure\Services\DotnetCap\DotnetCap.csproj", "{3C44F383-C1E0-247F-8628-8270DE78AC3E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services.Autofac", "src\Infrastructure\Services\Services.Autofac\Services.Autofac.csproj", "{F43084D1-D606-4C4B-97ED-3753AE0E38C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,6 +104,10 @@ Global
 		{3C44F383-C1E0-247F-8628-8270DE78AC3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C44F383-C1E0-247F-8628-8270DE78AC3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C44F383-C1E0-247F-8628-8270DE78AC3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F43084D1-D606-4C4B-97ED-3753AE0E38C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F43084D1-D606-4C4B-97ED-3753AE0E38C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F43084D1-D606-4C4B-97ED-3753AE0E38C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F43084D1-D606-4C4B-97ED-3753AE0E38C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -123,6 +129,7 @@ Global
 		{DC411C91-0B79-4A62-B3AB-0EC596FAD4D4} = {25187D69-D414-4DE9-9181-1225E3B087EA}
 		{220086A7-7AB1-47CD-ABCF-D1987BF51E53} = {25187D69-D414-4DE9-9181-1225E3B087EA}
 		{3C44F383-C1E0-247F-8628-8270DE78AC3E} = {25187D69-D414-4DE9-9181-1225E3B087EA}
+		{F43084D1-D606-4C4B-97ED-3753AE0E38C3} = {25187D69-D414-4DE9-9181-1225E3B087EA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7089FC7-79A1-4CAA-AC88-1A189B1D840E}

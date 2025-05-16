@@ -19,7 +19,8 @@
 		<PackageReference Include="DotNetCore.CAP" Version="8.3.4" />
 		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"
+			Version="9.0.0" />
 		<PackageReference Include="StackExchange.Redis" Version="2.8.37" />
 	</ItemGroup>
 

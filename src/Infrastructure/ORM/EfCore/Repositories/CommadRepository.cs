@@ -164,10 +164,7 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
         try
         {
             var data = await context.SaveChangesAsync(cancellationToken);
-            return ResponseUtils.Success<Responses>(
-                data: data,
-                message: "Changes saved successfully."
-            );
+            return ResponseUtils.Success(message: "Changes saved successfully.");
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -217,15 +214,16 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
     {
         try
         {
-            var data = await context.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-            return ResponseUtils.Success<Responses>(
-                data: data,
-                message: "Changes saved successfully."
-            );
+            var data = await context.SaveChangesAsync(cancellationToken);
+            return ResponseUtils.Success(message: "Changes saved successfully.");
         }
         catch (DbUpdateConcurrencyException ex)
         {
             logger.LogError(ex, "Concurrency error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
             return new Responses(
                 IsSuccess: false,
                 StatusCode: 409,
@@ -235,10 +233,27 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
         catch (DbUpdateException ex)
         {
             logger.LogError(ex, "Database update error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
             return new Responses(
                 IsSuccess: false,
                 StatusCode: 500,
                 Message: "Database update error occurred."
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
+            return new Responses(
+                IsSuccess: false,
+                StatusCode: 500,
+                Message: "An error occurred while saving changes."
             );
         }
     }

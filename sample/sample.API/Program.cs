@@ -2,21 +2,26 @@ using Host;
 using Host.Services;
 using Serilog;
 using sample.Application;
+using sample.Application.DependencyInjection;
+using Services.Autofac.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var appName = builder.Environment.ApplicationName;
 var configuration = builder.Configuration;
 
-// Corrected the chaining to ensure 'AddApplicationLog' is called on 'builder' instead of 'Services'
-builder
-    .AddSerilog(configuration, appName);
+// Configure Serilog
+builder.AddSerilog(configuration, appName);
 
+// Use Autofac as the service provider factory
+builder.Host.UseServiceProviderFactory(
+    builder.Services.AddAutofacWithApplicationServices(configuration));
+
+// Register other services
 builder.Services
     .AddCorsServices(configuration)
     .AddGlobalExceptionHandling(appName)
     .AddHealthCheck(configuration)
-    .AddApplicationServices(configuration)
     .AddOpenApi();
 
 var app = builder.Build();
@@ -41,6 +46,5 @@ app.UseRouting();
 
 //configure Health Check
 app.UseHealthChecks(configuration);
-
 
 await app.RunAsync();

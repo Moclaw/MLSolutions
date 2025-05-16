@@ -5,7 +5,7 @@ using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Shard.Entities;
 
-namespace EfCore.Repositories;
+namespace MongoDb.Repositories;
 
 public class QueryMongoRepository<TEntity, TKey>(MongoBaseContext context)
     : IQueryMongoRepository<TEntity, TKey>

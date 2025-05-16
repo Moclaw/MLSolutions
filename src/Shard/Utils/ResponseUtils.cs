@@ -19,6 +19,11 @@ public struct ResponseUtils
         return new Responses<T>(true, 200, message, data);
     }
 
+    public static Responses.Responses Success(string? message = null, int code = 200)
+    {
+        return new Responses.Responses(true, code, message);
+    }
+
     /// <summary>
     /// Creates an error response with the specified status code, optional message, and optional data.
     /// </summary>
@@ -32,8 +37,18 @@ public struct ResponseUtils
         return new Responses<T>(false, code, message, data);
     }
 
-    public static T Success<T>(int data, string message)
+
+    /// <summary>
+    /// Creates an error response with the specified status code and optional message.
+    /// </summary>
+    /// <param name="code">The HTTP status code representing the error.</param>
+    /// <param name="message">An optional message providing additional information about the error.</param>
+    /// <returns>
+    /// A <see cref="Responses.Responses"/> object representing an error response.
+    /// </returns>
+    public static Responses.Responses Error(string? message = null, int code = 400)
     {
-        throw new NotImplementedException();
+        return new Responses.Responses(false, code, message);
     }
+
 }

@@ -7,6 +7,10 @@
 		<ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\..\src\Infrastructure\Services\Services.Autofac\Services.Autofac.csproj" />
+	</ItemGroup>
+
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
