@@ -1,45 +1,158 @@
-using Autofac;
-using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using Autofac;
+using Core.Constants;
+using Services.Autofac.Attributes;
 
 namespace Services.Autofac.Modules
 {
-    /// <summary>
-    /// Module for registering services
-    /// </summary>
-    public class ServiceModule : BaseModule
+    public class ServiceModule(
+        Assembly[] assemblies,
+        bool registerByNamingConvention = true,
+        bool autoRegisterConcreteTypes = false
+    ) : global::Autofac.Module
     {
-        private readonly Microsoft.Extensions.DependencyInjection.ServiceLifetime _lifetime;
-
-        /// <summary>
-        /// Creates a new service module
-        /// </summary>
-        /// <param name="lifetime">The lifetime for services (default: scoped)</param>
-        /// <param name="assemblies">The assemblies to scan for services</param>
-        public ServiceModule(
-            Microsoft.Extensions.DependencyInjection.ServiceLifetime lifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime.Scoped,
-            params Assembly[] assemblies) : base(assemblies)
-        {
-            _lifetime = lifetime;
-        }
-
-        /// <summary>
-        /// Load the service registrations
-        /// </summary>
-        /// <param name="builder">The container builder</param>
         protected override void Load(ContainerBuilder builder)
         {
-            base.Load(builder);
+            // Register by attributes
+            RegisterByAttributes(builder);
 
-            // Register all service types by convention
-            foreach (var assembly in Assemblies)
+            // Register by naming convention if enabled
+            if (registerByNamingConvention)
             {
-                var registration = builder.RegisterAssemblyTypes(assembly)
-                    .Where(t => t.Name.EndsWith("Service") && !t.IsInterface && !t.IsAbstract)
-                    .AsImplementedInterfaces();
-
-                ApplyLifetime(registration, _lifetime);
+                RegisterByNamingConvention(builder);
             }
+
+            // Auto-register concrete types if enabled
+            if (autoRegisterConcreteTypes)
+            {
+                RegisterConcreteTypes(builder);
+            }
+        }
+
+        private void RegisterByAttributes(ContainerBuilder builder)
+        {
+            // Register Transient services
+            builder
+                .RegisterAssemblyTypes(assemblies)
+                .Where(t =>
+                    t.GetCustomAttributes(typeof(TransientServiceAttribute), true).Length > 0
+                )
+                .AsImplementedInterfaces()
+                .AsSelf()
+                .Named(
+                    t =>
+                    {
+                        var attr = t.GetCustomAttribute<TransientServiceAttribute>();
+                        return !string.IsNullOrEmpty(attr?.ServiceName) ? attr.ServiceName : t.Name;
+                    },
+                    typeof(object)
+                )
+                .InstancePerDependency();
+
+            // Register Scoped services
+            builder
+                .RegisterAssemblyTypes(assemblies)
+                .Where(t => t.GetCustomAttributes(typeof(ScopedServiceAttribute), true).Length > 0)
+                .AsImplementedInterfaces()
+                .AsSelf()
+                .Named(
+                    t =>
+                    {
+                        var attr = t.GetCustomAttribute<ScopedServiceAttribute>();
+                        return !string.IsNullOrEmpty(attr?.ServiceName) ? attr.ServiceName : t.Name;
+                    },
+                    typeof(object)
+                )
+                .InstancePerLifetimeScope();
+
+            // Register Singleton services
+            builder
+                .RegisterAssemblyTypes(assemblies)
+                .Where(t =>
+                    t.GetCustomAttributes(typeof(SingletonServiceAttribute), true).Length > 0
+                )
+                .AsImplementedInterfaces()
+                .AsSelf()
+                .Named(
+                    t =>
+                    {
+                        var attr = t.GetCustomAttribute<SingletonServiceAttribute>();
+                        return !string.IsNullOrEmpty(attr?.ServiceName) ? attr.ServiceName : t.Name;
+                    },
+                    typeof(object)
+                )
+                .SingleInstance();
+        }
+
+        private void RegisterByNamingConvention(ContainerBuilder builder)
+        {
+            // Register services by naming convention (e.g., IUserService implemented by UserService)
+            // This will find all classes that end with specific suffixes and register them with their interfaces
+            var serviceTypes = assemblies
+                .SelectMany(a => a.GetTypes())
+                .Where(t =>
+                    (
+                        t.Name.EndsWith(AutofacConstants.ServiceConventions.Service)
+                        || t.Name.EndsWith(AutofacConstants.ServiceConventions.Repository)
+                        || t.Name.EndsWith(AutofacConstants.ServiceConventions.Manager)
+                    ) && t is { IsInterface: false, IsAbstract: false }
+                )
+                .ToList();
+
+            foreach (var serviceType in serviceTypes)
+            {
+                // Skip types that already have service attributes
+                if (
+                    serviceType.GetCustomAttributes(typeof(TransientServiceAttribute), true).Length
+                        > 0
+                    || serviceType.GetCustomAttributes(typeof(ScopedServiceAttribute), true).Length
+                        > 0
+                    || serviceType
+                        .GetCustomAttributes(typeof(SingletonServiceAttribute), true)
+                        .Length > 0
+                )
+                {
+                    continue;
+                }
+
+                var interfaces = serviceType
+                    .GetInterfaces()
+                    .Where(i =>
+                        i.Name.Contains(
+                            serviceType
+                                .Name.Replace(AutofacConstants.ServiceConventions.ImplSuffix, "")
+                                .Replace(
+                                    AutofacConstants.ServiceConventions.ImplementationSuffix,
+                                    ""
+                                )
+                        )
+                    )
+                    .ToList();
+
+                if (interfaces.Any())
+                {
+                    // Register with all matching interfaces
+                    builder
+                        .RegisterType(serviceType)
+                        .As(interfaces.ToArray())
+                        .InstancePerLifetimeScope(); // Default to scoped lifetime
+                }
+            }
+        }
+
+        private void RegisterConcreteTypes(ContainerBuilder builder)
+        {
+            // Auto-register concrete types not already registered
+            builder
+                .RegisterAssemblyTypes(assemblies)
+                .Where(t =>
+                    t is { IsInterface: false, IsAbstract: false }
+                    && t.GetCustomAttributes(typeof(TransientServiceAttribute), true).Length == 0
+                    && t.GetCustomAttributes(typeof(ScopedServiceAttribute), true).Length == 0
+                    && t.GetCustomAttributes(typeof(SingletonServiceAttribute), true).Length == 0
+                )
+                .AsSelf()
+                .InstancePerDependency();
         }
     }
 }

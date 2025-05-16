@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace sample.Infrastructure
 {
-    public static partial class Register
+    public static class InfrastructureServiceRegistration
     {
         public static IServiceCollection AddInfrastructureServices(
             this IServiceCollection services,
@@ -15,7 +15,6 @@ namespace sample.Infrastructure
         {
             services.AddDotnetCap(configuration)
                     .AddRabbitMq(configuration);
-
 
             return services;
         }

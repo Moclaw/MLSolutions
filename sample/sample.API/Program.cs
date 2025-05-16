@@ -1,9 +1,5 @@
 using Host;
 using Host.Services;
-using Serilog;
-using sample.Application;
-using sample.Application.DependencyInjection;
-using Services.Autofac.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,13 +9,9 @@ var configuration = builder.Configuration;
 // Configure Serilog
 builder.AddSerilog(configuration, appName);
 
-// Use Autofac as the service provider factory
-builder.Host.UseServiceProviderFactory(
-    builder.Services.AddAutofacWithApplicationServices(configuration));
-
 // Register other services
-builder.Services
-    .AddCorsServices(configuration)
+builder
+    .Services.AddCorsServices(configuration)
     .AddGlobalExceptionHandling(appName)
     .AddHealthCheck(configuration)
     .AddOpenApi();
