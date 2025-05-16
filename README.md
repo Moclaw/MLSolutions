@@ -1,6 +1,54 @@
-# Mlaw Overview
+# Moclaw Overview
 
-This directory contains the core source code for the Mlaw project, organized into several main modules:
+This directory contains the core source code for the Moclaw project, organized into several main modules:
+
+## NuGet Packages & Installation
+
+### Required NuGet Packages
+- Moclawr.Core
+- Moclawr.Shard
+- Moclawr.Domain
+- Moclawr.EfCore
+- Moclawr.MongoDb
+- Moclawr.Host
+- Moclawr.DotNetCore.CAP
+- Moclawr.Services.Caching
+- Moclawr.Services.External
+- Microsoft.AspNetCore.OpenApi
+- Microsoft.Extensions.Configuration.Abstractions
+- Microsoft.Extensions.DependencyInjection.Abstractions
+- Serilog.AspNetCore
+
+### How to Install
+
+You can install the required NuGet packages using the .NET CLI:
+
+```sh
+# Install Moclaw libraries
+ dotnet add package Moclawr.Core
+ dotnet add package Moclawr.Shard
+ dotnet add package Moclawr.Domain
+ dotnet add package Moclawr.EfCore
+ dotnet add package Moclawr.MongoDb
+ dotnet add package Moclawr.Host
+ dotnet add package Moclawr.DotNetCore.CAP
+ dotnet add package Moclawr.Services.Caching
+ dotnet add package Moclawr.Services.External
+
+# Install all required Microsoft/other packages
+ dotnet add package Microsoft.AspNetCore.OpenApi
+ dotnet add package Microsoft.Extensions.Configuration.Abstractions
+ dotnet add package Microsoft.Extensions.DependencyInjection.Abstractions
+ dotnet add package Serilog.AspNetCore
+```
+
+Or, restore all packages for the solution:
+
+```sh
+dotnet restore
+```
+
+---
 
 ## Setup 
 - This is a Bash/PowerShell script that automatically sets up a Clean Architecture project structure for .NET applications, following Domain-Driven Design (DDD) and optional Test-Driven Development (TDD) standards [Script Setup](https://github.com/Moclaw/ScriptKids/tree/main/src/CleanArchitecture). 
