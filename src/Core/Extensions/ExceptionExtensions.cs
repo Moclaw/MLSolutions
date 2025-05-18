@@ -15,7 +15,7 @@ public static class ExceptionExtensions
         {
             httpContext.Response.StatusCode = errorCode;
         }
-        var result = new Responses(IsSuccess: false, StatusCode: errorCode, Message: errorMessage);
+        var result = new Response(IsSuccess: false, StatusCode: errorCode, Message: errorMessage);
 
         return httpContext.Response.WriteAsync(result.Serialize());
     }

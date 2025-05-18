@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Autofac;
 using Autofac.Builder;
@@ -51,14 +54,17 @@ namespace Services.Autofac.Modules
             // Auto register concrete implementations of open generic interfaces
             var allTypes = assemblies.SelectMany(a => a.GetTypes()).ToList();
             var openGenericInterfaces = allTypes
-                .Where(t => t is { IsGenericTypeDefinition: true, IsInterface: true })
+                .Where(t => t.IsGenericTypeDefinition && t.IsInterface)
                 .ToList();
 
             foreach (var openGenericInterface in openGenericInterfaces)
             {
+                // Find all concrete types that implement this open generic interface
                 var implementations = allTypes
                     .Where(t =>
-                        t is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
+                        t.IsClass
+                        && !t.IsAbstract
+                        && !t.IsGenericTypeDefinition
                         && t.GetInterfaces()
                             .Any(i =>
                                 i.IsGenericType
@@ -69,6 +75,7 @@ namespace Services.Autofac.Modules
 
                 foreach (var implementation in implementations)
                 {
+                    // Find the closed generic interface that this type implements
                     var closedInterface = implementation
                         .GetInterfaces()
                         .FirstOrDefault(i =>

@@ -1,6 +1,7 @@
 using System.Data;
 using Dapper;
 using EfCore.IRepositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
@@ -159,12 +160,13 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
         _currentTransaction = null;
     }
 
-    public async Task<Responses> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task<int> SaveChangesAsync<TEntity>(CancellationToken cancellationToken = default)
     {
         try
         {
             var data = await context.SaveChangesAsync(cancellationToken);
-            return ResponseUtils.Success(message: "Changes saved successfully.");
+            logger.LogWarning("No changes were saved to the database.");
+            return data;
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -173,11 +175,7 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
             {
                 await context.Database.RollbackTransactionAsync(cancellationToken);
             }
-            return new Responses(
-                IsSuccess: false,
-                StatusCode: 409,
-                Message: "Concurrency error occurred."
-            );
+            throw new DbUpdateConcurrencyException("Concurrency error occurred.", ex);
         }
         catch (DbUpdateException ex)
         {
@@ -186,11 +184,7 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
             {
                 await context.Database.RollbackTransactionAsync(cancellationToken);
             }
-            return new Responses(
-                IsSuccess: false,
-                StatusCode: 500,
-                Message: "Database update error occurred."
-            );
+            throw new DbUpdateException("Database update error occurred.", ex);
         }
         catch (Exception ex)
         {
@@ -199,62 +193,7 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
             {
                 await context.Database.RollbackTransactionAsync(cancellationToken);
             }
-            return new Responses(
-                IsSuccess: false,
-                StatusCode: 500,
-                Message: "An error occurred while saving changes."
-            );
-        }
-    }
-
-    public async Task<Responses> SaveChangesAsync(
-        bool acceptAllChangesOnSuccess = true,
-        CancellationToken cancellationToken = default
-    )
-    {
-        try
-        {
-            var data = await context.SaveChangesAsync(cancellationToken);
-            return ResponseUtils.Success(message: "Changes saved successfully.");
-        }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            logger.LogError(ex, "Concurrency error occurred while saving changes.");
-            if (context.Database.CurrentTransaction is not null)
-            {
-                await context.Database.RollbackTransactionAsync(cancellationToken);
-            }
-            return new Responses(
-                IsSuccess: false,
-                StatusCode: 409,
-                Message: "Concurrency error occurred."
-            );
-        }
-        catch (DbUpdateException ex)
-        {
-            logger.LogError(ex, "Database update error occurred while saving changes.");
-            if (context.Database.CurrentTransaction is not null)
-            {
-                await context.Database.RollbackTransactionAsync(cancellationToken);
-            }
-            return new Responses(
-                IsSuccess: false,
-                StatusCode: 500,
-                Message: "Database update error occurred."
-            );
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "An error occurred while saving changes.");
-            if (context.Database.CurrentTransaction is not null)
-            {
-                await context.Database.RollbackTransactionAsync(cancellationToken);
-            }
-            return new Responses(
-                IsSuccess: false,
-                StatusCode: 500,
-                Message: "An error occurred while saving changes."
-            );
+            throw new Exception("An error occurred while saving changes.", ex);
         }
     }
 
@@ -323,5 +262,91 @@ public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> l
             commandTimeout: commandTimeout,
             commandType: commandType
         );
+    }
+
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var data = await context.SaveChangesAsync(cancellationToken);
+            if (data == 0)
+            {
+                logger.LogWarning("No changes were saved to the database.");
+            }
+            return data;
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            logger.LogError(ex, "Concurrency error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
+            throw;
+        }
+        catch (DbUpdateException ex)
+        {
+            logger.LogError(ex, "Database update error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
+            throw;
+        }
+    }
+
+    public async Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var affectedRows = await context.SaveChangesAsync(
+                acceptAllChangesOnSuccess,
+                cancellationToken
+            );
+            if (affectedRows == 0)
+            {
+                logger.LogWarning("No changes were saved to the database.");
+            }
+            return affectedRows;
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            logger.LogError(ex, "Concurrency error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
+            throw;
+        }
+        catch (DbUpdateException ex)
+        {
+            logger.LogError(ex, "Database update error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while saving changes.");
+            if (context.Database.CurrentTransaction is not null)
+            {
+                await context.Database.RollbackTransactionAsync(cancellationToken);
+            }
+            throw;
+        }
     }
 }

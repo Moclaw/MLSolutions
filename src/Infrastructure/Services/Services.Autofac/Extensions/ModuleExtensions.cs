@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using Autofac;
 
@@ -23,7 +24,7 @@ namespace Services.Autofac.Extensions
 
             foreach (
                 var module in moduleTypes.Select(moduleType =>
-                    (global::Autofac.Module)Activator.CreateInstance(moduleType)!
+                    (global::Autofac.Module)System.Activator.CreateInstance(moduleType)!
                 )
             )
             {

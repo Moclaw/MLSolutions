@@ -12,10 +12,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Host\Host.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Services\MinimalAPI\MinimalAPI.csproj" />
     <ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
     <ProjectReference Include="..\sample.Application\sample.Application.csproj" />
     <ProjectReference Include="..\sample.Infrastructure\sample.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Services\Services.Autofac\Services.Autofac.csproj" />
+    <ProjectReference Include="..\sample.Shared\sample.Shared.csproj" />
+    <ProjectReference Include="..\..\src\Shard\Shard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Endpoints\Todo\Commands\" />
+    <Folder Include="Endpoints\Todo\Queries\" />
   </ItemGroup>
 
 </Project>

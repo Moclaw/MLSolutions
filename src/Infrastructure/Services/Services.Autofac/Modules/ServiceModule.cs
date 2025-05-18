@@ -1,6 +1,7 @@
+using System;
+using System.Linq;
 using System.Reflection;
 using Autofac;
-using Core.Constants;
 using Services.Autofac.Attributes;
 
 namespace Services.Autofac.Modules
@@ -92,10 +93,12 @@ namespace Services.Autofac.Modules
                 .SelectMany(a => a.GetTypes())
                 .Where(t =>
                     (
-                        t.Name.EndsWith(AutofacConstants.ServiceConventions.Service)
-                        || t.Name.EndsWith(AutofacConstants.ServiceConventions.Repository)
-                        || t.Name.EndsWith(AutofacConstants.ServiceConventions.Manager)
-                    ) && t is { IsInterface: false, IsAbstract: false }
+                        t.Name.EndsWith("Service")
+                        || t.Name.EndsWith("Repository")
+                        || t.Name.EndsWith("Manager")
+                    )
+                    && !t.IsInterface
+                    && !t.IsAbstract
                 )
                 .ToList();
 
@@ -119,12 +122,7 @@ namespace Services.Autofac.Modules
                     .GetInterfaces()
                     .Where(i =>
                         i.Name.Contains(
-                            serviceType
-                                .Name.Replace(AutofacConstants.ServiceConventions.ImplSuffix, "")
-                                .Replace(
-                                    AutofacConstants.ServiceConventions.ImplementationSuffix,
-                                    ""
-                                )
+                            serviceType.Name.Replace("Impl", "").Replace("Implementation", "")
                         )
                     )
                     .ToList();
@@ -146,7 +144,8 @@ namespace Services.Autofac.Modules
             builder
                 .RegisterAssemblyTypes(assemblies)
                 .Where(t =>
-                    t is { IsInterface: false, IsAbstract: false }
+                    !t.IsInterface
+                    && !t.IsAbstract
                     && t.GetCustomAttributes(typeof(TransientServiceAttribute), true).Length == 0
                     && t.GetCustomAttributes(typeof(ScopedServiceAttribute), true).Length == 0
                     && t.GetCustomAttributes(typeof(SingletonServiceAttribute), true).Length == 0

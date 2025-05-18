@@ -6,12 +6,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Infrastructure\ORM\EfCore\EfCore.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Services\MinimalAPI\MinimalAPI.csproj" />
     <ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Services\Services.Autofac\Services.Autofac.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\" />
+    <Folder Include="Features\Todo\Dtos\" />
   </ItemGroup>
 
   <PropertyGroup>

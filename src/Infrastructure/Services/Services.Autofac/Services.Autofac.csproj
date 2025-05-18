@@ -14,8 +14,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 
 
-  </PropertyGroup>
-  <ItemGroup>
+  </PropertyGroup>  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Autofac" Version="8.3.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
@@ -25,10 +24,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"
       Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.5" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Core\Core.csproj" />
+  </ItemGroup>  <ItemGroup>
+  <ProjectReference Include="..\..\..\Core\Core.csproj" />
   </ItemGroup>
 
 </Project>

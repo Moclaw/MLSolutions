@@ -2,6 +2,7 @@
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<ProjectReference Include="..\..\src\Infrastructure\ORM\EfCore\EfCore.csproj" />
 		<ProjectReference Include="..\..\src\Infrastructure\Services\DotnetCap\DotnetCap.csproj" />
 		<ProjectReference Include="..\..\src\Infrastructure\Services\Services.External\Services.External.csproj" />
 		<ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
@@ -9,16 +10,6 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\src\Infrastructure\Services\Services.Autofac\Services.Autofac.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Reference Include="sample.Shared">
-	    <HintPath>..\sample.Shared\bin\Debug\net9.0\sample.Shared.dll</HintPath>
-	  </Reference>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Services\" />
 	</ItemGroup>
 
 	<PropertyGroup>

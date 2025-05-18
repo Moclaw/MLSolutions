@@ -65,14 +65,14 @@ public interface ICommandRepository
     /// Saves all pending changes asynchronously to the database.
     /// </summary>
     /// <param name="cancellationToken">Optional cancellation token.</param>
-    Task<Responses> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Saves all pending changes asynchronously to the database, with optional control over accepting changes on success.
     /// </summary>
     /// <param name="acceptAllChangesOnSuccess">Indicates whether all changes should be accepted automatically upon success.</param>
     /// <param name="cancellationToken">Optional cancellation token.</param>
-    Task<Responses> SaveChangesAsync(
+    Task<int> SaveChangesAsync(
         bool acceptAllChangesOnSuccess = true,
         CancellationToken cancellationToken = default
     );

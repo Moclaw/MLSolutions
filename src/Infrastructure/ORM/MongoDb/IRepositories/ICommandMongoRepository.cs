@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Shard.Entities;
 using Shard.Responses;
 
@@ -71,7 +72,7 @@ public interface ICommandMongoRepository
     /// </summary>
     /// <param name="cancellationToken">Optional cancellation token.</param>
     /// <returns>A task representing the asynchronous operation, with a response indicating the result.</returns>
-    ValueTask<Responses> SaveChangeAsync(CancellationToken cancellationToken = default);
+    ValueTask<int> SaveChangeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Begins a transaction asynchronously.

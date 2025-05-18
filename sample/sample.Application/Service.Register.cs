@@ -1,11 +1,10 @@
-﻿using System.Reflection;
-using Core.Constants;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace sample.Application
 {
-    public static class ApplicationServiceRegistration
+    public static partial class Register
     {
         public static IServiceCollection AddApplicationServices(
             this IServiceCollection services,
@@ -18,17 +17,14 @@ namespace sample.Application
             // Register services by naming convention
             var serviceTypes = assembly
                 .GetTypes()
-                .Where(t =>
-                    t.Name.EndsWith(AutofacConstants.ServiceConventions.Service)
-                    && t is { IsInterface: false, IsAbstract: false }
-                )
+                .Where(t => t.Name.EndsWith("Service") && !t.IsInterface && !t.IsAbstract)
                 .ToList();
 
             foreach (var serviceType in serviceTypes)
             {
                 var interfaces = serviceType
                     .GetInterfaces()
-                    .Where(i => i.Name.EndsWith(AutofacConstants.ServiceConventions.Service))
+                    .Where(i => i.Name.EndsWith("Service"))
                     .ToList();
 
                 if (interfaces.Any())

@@ -1,6 +1,6 @@
+using System.Linq;
 using System.Reflection;
 using Autofac;
-using Core.Constants;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Services.Autofac.Modules
@@ -13,11 +13,13 @@ namespace Services.Autofac.Modules
             builder
                 .RegisterAssemblyTypes(assemblies)
                 .Where(t =>
-                    t is { IsClass: true, IsAbstract: false, IsPublic: true }
+                    t.IsClass
+                    && !t.IsAbstract
+                    && t.IsPublic
                     && (
                         typeof(Controller).IsAssignableFrom(t)
                         || typeof(ControllerBase).IsAssignableFrom(t)
-                        || t.Name.EndsWith(AutofacConstants.ServiceConventions.Controller)
+                        || t.Name.EndsWith("Controller")
                     )
                 )
                 .AsSelf()

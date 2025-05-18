@@ -1,5 +1,7 @@
 using Host;
 using Host.Services;
+using MinimalAPI;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,9 @@ builder
     .AddGlobalExceptionHandling(appName)
     .AddHealthCheck(configuration)
     .AddOpenApi();
+
+// Register MinimalAPI services with MediatR integration
+builder.Services.AddMinimalApi(typeof(Program).Assembly);
 
 var app = builder.Build();
 
@@ -38,5 +43,8 @@ app.UseRouting();
 
 //configure Health Check
 app.UseHealthChecks(configuration);
+
+// Map all endpoints from the assembly
+app.MapMinimalEndpoints(typeof(Program).Assembly);
 
 await app.RunAsync();

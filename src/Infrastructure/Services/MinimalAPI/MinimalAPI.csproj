@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageId>Moclawr.MinimalAPI</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>moclaw</Authors>
+        <Company>moclaw</Company>
+        <Description>Minimal API utilities with MediatR integration for .NET 9</Description>
+        <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
+        <PackageTags>minimalapi,mediator,cqrs,mlsolutions</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="MediatR" Version="12.2.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\Shard\Shard.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Core.csproj" />
+    </ItemGroup>
+
+</Project>

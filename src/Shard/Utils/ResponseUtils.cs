@@ -14,14 +14,14 @@ public struct ResponseUtils
     /// <param name="data">The data to include in the response.</param>
     /// <param name="message">An optional message providing additional information about the response.</param>
     /// <returns>A <see cref="Responses{T}"/> object representing a successful response.</returns>
-    public static Responses<T> Success<T>(T? data, string? message = null)
+    public static Response<T> Success<T>(T? data, string? message = null)
     {
-        return new Responses<T>(true, 200, message, data);
+        return new Response<T>(true, 200, message, data);
     }
 
-    public static Responses.Responses Success(string? message = null, int code = 200)
+    public static Response Success(string? message = null, int code = 200)
     {
-        return new Responses.Responses(true, code, message);
+        return new Response(true, code, message);
     }
 
     /// <summary>
@@ -32,11 +32,10 @@ public struct ResponseUtils
     /// <param name="message">An optional message providing additional information about the error.</param>
     /// <param name="data">Optional data to include in the error response.</param>
     /// <returns>A <see cref="Responses{T}"/> object representing an error response.</returns>
-    public static Responses<T> Error<T>(int code, string? message = null, T? data = default)
+    public static Response<T> Error<T>(int code, string? message = null, T? data = default)
     {
-        return new Responses<T>(false, code, message, data);
+        return new Response<T>(false, code, message, data);
     }
-
 
     /// <summary>
     /// Creates an error response with the specified status code and optional message.
@@ -44,11 +43,10 @@ public struct ResponseUtils
     /// <param name="code">The HTTP status code representing the error.</param>
     /// <param name="message">An optional message providing additional information about the error.</param>
     /// <returns>
-    /// A <see cref="Responses.Responses"/> object representing an error response.
+    /// A <see cref="Response"/> object representing an error response.
     /// </returns>
-    public static Responses.Responses Error(string? message = null, int code = 400)
+    public static Response Error(string? message = null, int code = 400)
     {
-        return new Responses.Responses(false, code, message);
+        return new Response(false, code, message);
     }
-
 }

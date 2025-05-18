@@ -82,12 +82,11 @@ public class CommandMongoReposiory(
         context.RemoveRange(entitiesList);
     }
 
-    public async ValueTask<Responses> SaveChangeAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<int> SaveChangeAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            var affectedRows = await context.SaveChangesAsync(cancellationToken);
-            return ResponseUtils.Success(message: "Changes saved successfully.");
+            return await context.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -97,10 +96,9 @@ public class CommandMongoReposiory(
                 await context.Database.RollbackTransactionAsync(cancellationToken);
             }
 
-            return new Responses(
-                IsSuccess: false,
-                StatusCode: 409,
-                Message: "Concurrency error occurred."
+            throw new DbUpdateConcurrencyException(
+                "Concurrency error occurred while saving changes.",
+                ex
             );
         }
         catch (DbUpdateException ex)
@@ -111,11 +109,7 @@ public class CommandMongoReposiory(
                 await context.Database.RollbackTransactionAsync(cancellationToken);
             }
 
-            return new Responses(
-                IsSuccess: false,
-                StatusCode: 500,
-                Message: "Database update error occurred."
-            );
+            throw new DbUpdateException("Database update error occurred while saving changes.", ex);
         }
         catch (Exception ex)
         {
@@ -124,12 +118,7 @@ public class CommandMongoReposiory(
             {
                 await context.Database.RollbackTransactionAsync(cancellationToken);
             }
-
-            return new Responses(
-                IsSuccess: false,
-                StatusCode: 500,
-                Message: "An error occurred while saving changes."
-            );
+            throw new Exception("An error occurred while saving changes.", ex);
         }
     }
 
@@ -158,13 +147,12 @@ public class CommandMongoReposiory(
 
         var notExistIndex = entityType
             .GetIndexes()
-            .Where(
-                x =>
-                    x.Properties.Count > 0
-                    && !string.IsNullOrEmpty(x.Properties[0].Name)
-                    && !existIndexName.Any(
-                        i => i.Contains(x.Properties[0].Name, StringComparison.OrdinalIgnoreCase)
-                    )
+            .Where(x =>
+                x.Properties.Count > 0
+                && !string.IsNullOrEmpty(x.Properties[0].Name)
+                && !existIndexName.Any(i =>
+                    i.Contains(x.Properties[0].Name, StringComparison.OrdinalIgnoreCase)
+                )
             )
             .ToList();
 
