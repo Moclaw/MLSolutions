@@ -57,7 +57,7 @@ public static partial class Register
         return builder;
     }
 
-    
+
 
     public static IServiceCollection AddHealthCheck(this IServiceCollection services, IConfiguration configuration)
     {

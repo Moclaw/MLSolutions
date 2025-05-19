@@ -1,5 +1,5 @@
 using EfCore.Repositories;
-using sample.Infrastructure.Persistence;
+using sample.Infrastructure.Persistence.EfCore;
 using Shard.Entities;
 
 namespace sample.Infrastructure.Repositories;

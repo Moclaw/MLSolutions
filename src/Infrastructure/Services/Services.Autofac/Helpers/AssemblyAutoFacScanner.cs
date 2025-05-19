@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Autofac;
 using Core.Constants;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace Services.Autofac.Helpers
 {
@@ -94,45 +91,12 @@ namespace Services.Autofac.Helpers
                 switch (implementationTypes.Count)
                 {
                     case 1:
-                    {
-                        // Register single implementation
-                        var registration = containerBuilder
-                            .RegisterType(implementationTypes[0])
-                            .As(interfaceType);
-
-                        // Set the lifetime
-                        switch (serviceLifetime)
                         {
-                            case ServiceLifetime.Singleton:
-                                registration.SingleInstance();
-                                break;
-                            case ServiceLifetime.Scoped:
-                                registration.InstancePerLifetimeScope();
-                                break;
-                            case ServiceLifetime.Transient:
-                                registration.InstancePerDependency();
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException(
-                                    nameof(serviceLifetime),
-                                    serviceLifetime,
-                                    null
-                                );
-                        }
+                            // Register single implementation
+                            var registration = containerBuilder
+                                .RegisterType(implementationTypes[0])
+                                .As(interfaceType);
 
-                        break;
-                    }
-                    case > 1:
-                    {
-                        // Register multiple implementations
-                        foreach (
-                            var registration in implementationTypes.Select(implementationType =>
-                                containerBuilder
-                                    .RegisterType(implementationType)
-                                    .Named(implementationType.Name, interfaceType)
-                            )
-                        )
-                        {
                             // Set the lifetime
                             switch (serviceLifetime)
                             {
@@ -152,10 +116,43 @@ namespace Services.Autofac.Helpers
                                         null
                                     );
                             }
-                        }
 
-                        break;
-                    }
+                            break;
+                        }
+                    case > 1:
+                        {
+                            // Register multiple implementations
+                            foreach (
+                                var registration in implementationTypes.Select(implementationType =>
+                                    containerBuilder
+                                        .RegisterType(implementationType)
+                                        .Named(implementationType.Name, interfaceType)
+                                )
+                            )
+                            {
+                                // Set the lifetime
+                                switch (serviceLifetime)
+                                {
+                                    case ServiceLifetime.Singleton:
+                                        registration.SingleInstance();
+                                        break;
+                                    case ServiceLifetime.Scoped:
+                                        registration.InstancePerLifetimeScope();
+                                        break;
+                                    case ServiceLifetime.Transient:
+                                        registration.InstancePerDependency();
+                                        break;
+                                    default:
+                                        throw new ArgumentOutOfRangeException(
+                                            nameof(serviceLifetime),
+                                            serviceLifetime,
+                                            null
+                                        );
+                                }
+                            }
+
+                            break;
+                        }
                 }
             }
 

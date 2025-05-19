@@ -1,8 +1,8 @@
-using System.Reflection;
-using System.Text.Json;
 using Host.Attributes;
 using Host.Handlers;
 using Host.Services;
+using System.Reflection;
+using System.Text.Json;
 
 namespace Host.Middleware;
 

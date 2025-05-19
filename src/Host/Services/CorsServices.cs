@@ -12,7 +12,7 @@ public static class CorsServices
         ArgumentNullException.ThrowIfNull(configuration);
 
         var corsSettings = configuration.GetSection(nameof(CorsSettings)).Get<CorsSettings>();
-        
+
         if (corsSettings == null || corsSettings.Policies == null || corsSettings.Policies.Count == 0)
         {
             throw new InvalidOperationException("Invalid or missing CorsSettings configuration.");
@@ -83,7 +83,7 @@ public static class CorsServices
             {
                 if (context.Request.Method == "OPTIONS")
                 {
-                    context.Response.StatusCode = 204; 
+                    context.Response.StatusCode = 204;
                     return;
                 }
                 await next();

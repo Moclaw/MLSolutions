@@ -1,6 +1,8 @@
 using Host;
 using Host.Services;
 using MinimalAPI;
+using sample.Application;
+using sample.Infrastructure;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,12 +16,20 @@ builder.AddSerilog(configuration, appName);
 // Register other services
 builder
     .Services.AddCorsServices(configuration)
+    .AddMinimalApi(
+        typeof(Program).Assembly,
+        typeof(sample.Application.Register).Assembly,
+        typeof(sample.Infrastructure.Register).Assembly
+    )
     .AddGlobalExceptionHandling(appName)
     .AddHealthCheck(configuration)
+    // Register Infrastructure and Application services
+    .AddInfrastructureServices(configuration)
+    .AddApplicationServices(configuration)
+    // Register OpenAPI/Swagger
     .AddOpenApi();
 
-// Register MinimalAPI services with MediatR integration
-builder.Services.AddMinimalApi(typeof(Program).Assembly);
+
 
 var app = builder.Build();
 
@@ -30,18 +40,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-//configure CORS
+// Configure CORS
 app.UseCorsServices(configuration);
 
-//configure Global Exception Handling
+// Configure Global Exception Handling
 app.UseGlobalExceptionHandling();
 
-//configure ARM Elastic
+// Configure ARM Elastic
 app.UseElasticApm(configuration);
 
 app.UseRouting();
 
-//configure Health Check
+// Configure Health Check
 app.UseHealthChecks(configuration);
 
 // Map all endpoints from the assembly

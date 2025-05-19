@@ -1,6 +1,5 @@
-using System.Linq;
-using System.Reflection;
 using Autofac;
+using System.Reflection;
 
 namespace Services.Autofac.Extensions
 {

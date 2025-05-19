@@ -1,8 +1,6 @@
-using System;
-using System.Linq;
-using System.Reflection;
 using Autofac;
 using Services.Autofac.Attributes;
+using System.Reflection;
 
 namespace Services.Autofac.Modules
 {

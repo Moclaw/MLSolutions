@@ -1,7 +1,8 @@
-using System.Data;
-using System.Reflection;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
+using Shard.Entities;
+using System.Data;
+using System.Reflection;
 
 namespace EfCore;
 
@@ -20,15 +21,27 @@ public abstract class BaseDbContext(DbContextOptions options) : DbContext(option
     /// </summary>
     protected abstract Func<Type, bool> RegisterConfigurationsPredicate { get; }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Automatically maps DbSet properties for all entity types in the assembly.
+    /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
+        // Apply configurations from the executing assembly
         modelBuilder.ApplyConfigurationsFromAssembly(
             assembly: ExecutingAssembly,
             predicate: RegisterConfigurationsPredicate
         );
+
+        // Dynamically add DbSet properties for all entity types
+        var entityTypes = ExecutingAssembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(IEntity<>).IsAssignableFrom(t));
+
+        foreach (var entityType in entityTypes)
+        {
+            modelBuilder.Entity(entityType);
+        }
     }
 
     /// <summary>

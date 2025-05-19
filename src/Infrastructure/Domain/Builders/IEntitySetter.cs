@@ -1,5 +1,5 @@
-using System.Linq.Expressions;
 using Shard.Entities;
+using System.Linq.Expressions;
 
 namespace Domain.IRepositories.Builders;
 public interface IEntitySetter<TEntity> where TEntity : class, IEntity

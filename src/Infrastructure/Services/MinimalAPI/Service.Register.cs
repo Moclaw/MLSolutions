@@ -1,9 +1,7 @@
-using System.Reflection;
-using MediatR;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using MinimalAPI.Attributes;
-using MinimalAPI.Extensions;
+using System.Reflection;
 
 namespace MinimalAPI;
 
@@ -20,24 +18,30 @@ public static partial class Register
         params Assembly[] assemblies
     )
     {
-        // Register MediatR services
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(assemblies));
+        // Register MediatR handlers from all assemblies
+        // Find all potential application assemblies that might contain handlers
+        var allAssemblies = new List<Assembly>(assemblies);
 
-        // Register endpoint handlers
+        // Add references to application assemblies that contain handlers
         foreach (var assembly in assemblies)
         {
-            var endpointHandlerTypes = assembly
-                .GetTypes()
-                .Where(t =>
-                    !t.IsAbstract && t.IsClass && t.IsAssignableTo(typeof(IEndpointHandler))
+            var referencedAssemblies = assembly
+                .GetReferencedAssemblies()
+                .Where(
+                    a =>
+                        a.Name?.Contains("Application") == true
+                        || a.Name?.Contains("Features") == true
+                        || a.Name?.Contains("Handlers") == true
                 )
-                .ToList();
+                .Select(Assembly.Load);
 
-            foreach (var handlerType in endpointHandlerTypes)
-            {
-                services.AddScoped(handlerType);
-            }
+            allAssemblies.AddRange(referencedAssemblies);
         }
+
+        // Register MediatR services
+        services.AddMediatR(
+            cfg => cfg.RegisterServicesFromAssemblies(allAssemblies.Distinct().ToArray())
+        );
 
         return services;
     }
@@ -53,9 +57,81 @@ public static partial class Register
         params Assembly[] assemblies
     )
     {
-        foreach (var assembly in assemblies)
+        // Find all endpoint classes (classes deriving from EndpointBase)
+        var endpointTypes = assemblies
+            .SelectMany(a => a.GetTypes())
+            .Where(
+                t =>
+                    !t.IsAbstract
+                    && !t.IsInterface
+                    && t.IsAssignableTo(typeof(MinimalAPI.Endpoints.EndpointAbstractBase))
+            )
+            .ToList();
+
+        foreach (var endpointType in endpointTypes)
         {
-            app.MapEndpointsFromAssembly(assembly);
+            // Get route attribute
+            var routeAttr = endpointType.GetCustomAttribute<MinimalAPI.Attributes.RouteAttribute>();
+            if (routeAttr == null)
+                continue;
+
+            string basePath = routeAttr.Template;
+
+            // Find all handler methods with HTTP method attributes
+            var methods = endpointType
+                .GetMethods()
+                .Where(
+                    m =>
+                        m.GetCustomAttributes()
+                            .Any(a => a is MinimalAPI.Attributes.HttpMethodAttribute)
+                )
+                .ToList();
+
+            foreach (var method in methods)
+            {
+                // Get HTTP method attribute
+                var httpMethodAttr =
+                    method
+                        .GetCustomAttributes()
+                        .FirstOrDefault(a => a is MinimalAPI.Attributes.HttpMethodAttribute)
+                    as MinimalAPI.Attributes.HttpMethodAttribute;
+
+                if (httpMethodAttr == null)
+                    continue;
+
+                // Create the full route template
+                string routeTemplate = basePath;
+                if (!string.IsNullOrEmpty(httpMethodAttr.Route))
+                {
+                    routeTemplate = string.IsNullOrEmpty(routeTemplate)
+                        ? httpMethodAttr.Route
+                        : $"{routeTemplate}/{httpMethodAttr.Route}";
+                }
+
+                // Create the endpoint handler
+                var handler = app.MapMethods(
+                    routeTemplate,
+                    new[] { httpMethodAttr.Method },
+                    async (HttpContext context, IServiceProvider serviceProvider) =>
+                    {
+                        // Create endpoint instance from service provider
+                        var endpoint =
+                            ActivatorUtilities.CreateInstance(serviceProvider, endpointType)
+                            as MinimalAPI.Endpoints.EndpointAbstractBase;
+                        if (endpoint == null)
+                            return Results.StatusCode(500);
+
+                        // Set HttpContext on the endpoint
+                        endpoint.HttpContext = context;
+
+                        // Execute the endpoint
+                        await endpoint.ExecuteAsync(context.RequestAborted);
+
+                        // Return an empty result as the endpoint will have written to the response
+                        return Results.Empty;
+                    }
+                );
+            }
         }
 
         return app;

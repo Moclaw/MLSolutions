@@ -5,8 +5,6 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using MongoDB.EntityFrameworkCore.Extensions;
 using Shard.Entities;
-using Shard.Responses;
-using Shard.Utils;
 
 namespace MongoDb.Repositories;
 

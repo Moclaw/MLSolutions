@@ -1,26 +1,20 @@
-using System.Reflection;
 using EfCore;
 using Microsoft.EntityFrameworkCore;
-using Core;
+using sample.Infrastructure.Persistence.EfCore.Configurations;
+using System.Reflection;
 
-namespace sample.Infrastructure.Persistence
+namespace sample.Infrastructure.Persistence.EfCore
 {
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : BaseDbContext(options)
     {
         protected override Assembly ExecutingAssembly => typeof(ApplicationDbContext).Assembly;
 
-        protected override Func<Type, bool> RegisterConfigurationsPredicate => 
-            t => t.IsClass && typeof(IEntityTypeConfiguration<>).IsAssignableFrom(t);
+        protected override Func<Type, bool> RegisterConfigurationsPredicate =>
+            t => t.Namespace == typeof(ConfigurationFilter).Namespace;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            // Apply configurations from the specified namespace
-            
-            var configurations = AssemblyScanner.FindTypesInNamespace(
-                Assembly.GetExecutingAssembly(),
-                t => t.IsClass && typeof(IEntityTypeConfiguration<>).IsAssignableFrom(t)
-            );
         }
     }
 }

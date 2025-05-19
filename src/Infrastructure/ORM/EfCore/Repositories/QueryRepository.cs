@@ -1,10 +1,11 @@
-using System.Data;
-using System.Linq.Expressions;
-using Domain.IRepositories.Builders;
+using Domain.Builders;
 using EfCore.Builders;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Shard.Entities;
+using Shard.Utils;
+using System.Data;
+using System.Linq.Expressions;
 
 namespace EfCore.Repositories;
 
@@ -55,10 +56,11 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
         if (queryBuilder.Query != null)
         {
-            return await queryBuilder
-                .Query.Where(x => x.Id.Equals(id))
-                .ProjectToType<TProjector>(typeAdapterConfig)
-                .FirstOrDefaultAsync(cancellationToken);
+            var query = queryBuilder.Query.Where(x => x.Id.Equals(id));
+            var projectedQuery = projector != null
+                ? projector(query)
+                : query.ProjectToType<TProjector>(typeAdapterConfig);
+            return await projectedQuery.FirstOrDefaultAsync(cancellationToken);
         }
 
         return default;
@@ -76,10 +78,11 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
         if (queryBuilder.Query != null)
         {
-            return await queryBuilder
-                .Query.Where(x => ids.Contains(x.Id))
-                .ProjectToType<TProjector>(typeAdapterConfig)
-                .ToListAsync(cancellationToken);
+            var query = queryBuilder.Query.Where(x => ids.Contains(x.Id));
+            var projectedQuery = projector != null
+                ? projector(query)
+                : query.ProjectToType<TProjector>(typeAdapterConfig);
+            return await projectedQuery.ToListAsync(cancellationToken);
         }
 
         return [];
@@ -103,13 +106,26 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     public async Task<IEnumerable<TEntity>> GetAllAsync(
         Expression<Func<TEntity, bool>>? predicate = null,
         Action<IFluentBuilder<TEntity>>? builder = null,
+        Paging? paging = null,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
     )
     {
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query != null && predicate != null)
-            return await queryBuilder.Query.Where(predicate).ToListAsync(cancellationToken);
+        if (queryBuilder.Query != null)
+        {
+            var query = predicate != null ? queryBuilder.Query.Where(predicate) : queryBuilder.Query;
+
+            // Apply paging if provided
+            if (paging != null)
+            {
+                query = query
+                    .Skip((paging.PageIndex - 1) * paging.PageSize)
+                    .Take(paging.PageSize);
+            }
+
+            return await query.ToListAsync(cancellationToken);
+        }
         return [];
     }
 
@@ -117,6 +133,7 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         Expression<Func<TEntity, bool>>? predicate = null,
         Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
         Action<IFluentBuilder<TEntity>>? builder = null,
+        Paging? paging = null,
         TypeAdapterConfig? typeAdapterConfig = null,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
@@ -126,13 +143,23 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         if (queryBuilder.Query == null)
             return [];
 
+        var query = queryBuilder.Query;
         if (predicate != null)
-            return await queryBuilder
-                .Query.Where(predicate)
-                .ProjectToType<TProjector>(typeAdapterConfig)
-                .ToListAsync(cancellationToken);
+            query = query.Where(predicate);
 
-        return [];
+        var projectedQuery = projector != null
+            ? projector(query)
+            : query.ProjectToType<TProjector>(typeAdapterConfig);
+
+        // Apply paging if provided
+        if (paging != null)
+        {
+            projectedQuery = projectedQuery
+                .Skip((paging.PageIndex - 1) * paging.PageSize)
+                .Take(paging.PageSize);
+        }
+
+        return await projectedQuery.ToListAsync(cancellationToken);
     }
 
     public async Task<TEntity?> FirstOrDefaultAsync(
@@ -160,13 +187,13 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
         if (queryBuilder.Query == null)
             return default;
+        var query = queryBuilder.Query;
         if (predicate != null)
-            return await queryBuilder
-                .Query.Where(predicate)
-                .ProjectToType<TProjector>(typeAdapterConfig)
-                .FirstOrDefaultAsync(cancellationToken);
-
-        return default;
+            query = query.Where(predicate);
+        var projectedQuery = projector != null
+            ? projector(query)
+            : query.ProjectToType<TProjector>(typeAdapterConfig);
+        return await projectedQuery.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<TEntity?> SingleOrDefaultAsync(
@@ -194,13 +221,13 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
         if (queryBuilder.Query == null)
             return default;
+        var query = queryBuilder.Query;
         if (predicate != null)
-            return await queryBuilder
-                .Query.Where(predicate)
-                .ProjectToType<TProjector>(typeAdapterConfig)
-                .SingleOrDefaultAsync(cancellationToken);
-
-        return default;
+            query = query.Where(predicate);
+        var projectedQuery = projector != null
+            ? projector(query)
+            : query.ProjectToType<TProjector>(typeAdapterConfig);
+        return await projectedQuery.SingleOrDefaultAsync(cancellationToken);
     }
 
     public async Task<TEntity?> LastOrDefaultAsync(
@@ -228,13 +255,13 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
         if (queryBuilder.Query == null)
             return default;
+        var query = queryBuilder.Query;
         if (predicate != null)
-            return await queryBuilder
-                .Query.Where(predicate)
-                .ProjectToType<TProjector>(typeAdapterConfig)
-                .LastOrDefaultAsync(cancellationToken);
-
-        return default;
+            query = query.Where(predicate);
+        var projectedQuery = projector != null
+            ? projector(query)
+            : query.ProjectToType<TProjector>(typeAdapterConfig);
+        return await projectedQuery.LastOrDefaultAsync(cancellationToken);
     }
 
     public async Task<bool> AnyAsync(
@@ -284,6 +311,7 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     public virtual ValueTask<int> ExecuteAsync(
         string sql,
         object? param = null,
+        Paging? paging = null,
         IDbTransaction? transaction = null,
         int? commandTimeout = null,
         CommandType? commandType = null,
@@ -295,9 +323,25 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
         }
 
+        string finalSql = sql;
+        object? finalParam = param;
+
+        if (paging != null)
+        {
+            // This is a naive paging implementation for SQL Server. Adjust as needed for your DB.
+            finalSql = $@"
+                SELECT * FROM (
+                    {sql}
+                ) AS PagedResult
+                ORDER BY (SELECT NULL)
+                OFFSET {(paging.PageIndex - 1) * paging.PageSize} ROWS
+                FETCH NEXT {paging.PageSize} ROWS ONLY
+            ";
+        }
+
         return context.ExecuteAsync(
-            sql,
-            param,
+            finalSql,
+            finalParam,
             transaction,
             commandTimeout,
             commandType,
@@ -639,7 +683,6 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
 
         return context.ExecuteQueryMultipleAsync<T1, T2>(sql, param);
     }
-
     public ValueTask<(IEnumerable<T1>, IEnumerable<T2>, IEnumerable<T3>)> QueryMultiple<T1, T2, T3>(
         string sql,
         object? param = null
@@ -665,6 +708,5 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         }
         return context.ExecuteQueryMultipleAsync<T1, T2, T3, T4>(sql, param);
     }
-
     #endregion
 }

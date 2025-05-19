@@ -12,10 +12,6 @@
     <ProjectReference Include="..\..\src\Infrastructure\Services\Services.Autofac\Services.Autofac.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Features\Todo\Dtos\" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

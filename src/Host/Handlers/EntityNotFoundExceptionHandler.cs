@@ -1,9 +1,9 @@
-using System.Net;
 using Host.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using MLSolutions;
 using Shard.Exceptions;
+using System.Net;
 
 namespace Host.Handlers;
 [HandlerFor(typeof(EntityNotFoundException))]
@@ -17,7 +17,7 @@ internal class EntityNotFoundExceptionHandler : IExceptionHanlder
         {
             httpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
         }
-        
+
         return httpContext.WriteExceptionResult(
             (int)HttpStatusCode.NoContent,
             exceptionType?.Message ?? "Entity not found"

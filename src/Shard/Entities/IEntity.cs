@@ -3,9 +3,7 @@
 /// <summary>
 /// Represents a base interface for all entities.
 /// </summary>
-public interface IEntity
-{
-}
+public interface IEntity { }
 
 /// <summary>
 /// Represents a generic interface for entities with a strongly-typed identifier.

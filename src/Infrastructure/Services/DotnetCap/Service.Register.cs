@@ -1,12 +1,10 @@
 ﻿using Core.Configurations;
 using Core.Enums;
+using DotNetCore.CAP;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using static DotnetCap.Rabbit.RabbitConfiguration;
 using static DotnetCap.Kafka.KafkaConfiguration;
-using DotNetCore.CAP;
-using DotnetCap.Rabbit;
-using Microsoft.AspNetCore.Builder;
+using static DotnetCap.Rabbit.RabbitConfiguration;
 
 namespace DotnetCap
 {
@@ -137,9 +135,9 @@ namespace DotnetCap
 
         private static void ConfigureDashboard(CapOptions capOptions, DotnetCapConfiguration config)
         {
-            capOptions.UseDashboard(dashboard => 
-            { 
-                dashboard.PathMatch = config.DashboardPath ?? "/cap"; 
+            capOptions.UseDashboard(dashboard =>
+            {
+                dashboard.PathMatch = config.DashboardPath ?? "/cap";
             });
         }
     }

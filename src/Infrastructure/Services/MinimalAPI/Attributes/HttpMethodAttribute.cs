@@ -10,12 +10,12 @@ public abstract class HttpMethodAttribute : Attribute
     /// The HTTP method (GET, POST, PUT, DELETE, etc.)
     /// </summary>
     public string Method { get; }
-    
+
     /// <summary>
     /// The route template
     /// </summary>
     public string Route { get; }
-    
+
     protected HttpMethodAttribute(string method, string route)
     {
         Method = method;

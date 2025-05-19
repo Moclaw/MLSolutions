@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Reflection;
 
 
@@ -20,5 +18,5 @@ public class AuthorizeAttribute(string policy) : Attribute
         var authorizeAttributes = type.GetCustomAttributes<AuthorizeAttribute>(true);
         return authorizeAttributes.FirstOrDefault()?.Policy ?? string.Empty;
     }
-    
+
 }

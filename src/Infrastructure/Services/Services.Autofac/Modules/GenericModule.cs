@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Autofac;
 using Autofac.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace Services.Autofac.Modules
 {

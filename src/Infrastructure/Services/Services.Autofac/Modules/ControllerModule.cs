@@ -1,7 +1,6 @@
-using System.Linq;
-using System.Reflection;
 using Autofac;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 
 namespace Services.Autofac.Modules
 {

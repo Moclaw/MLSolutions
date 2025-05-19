@@ -1,8 +1,9 @@
-﻿using System.Data;
-using System.Linq.Expressions;
-using Domain.IRepositories.Builders;
+﻿using Domain.Builders;
 using Mapster;
 using Shard.Entities;
+using Shard.Utils;
+using System.Data;
+using System.Linq.Expressions;
 
 /// <summary>
 /// Represents a repository interface for querying entities of type <typeparamref name="TEntity"/>.
@@ -88,12 +89,14 @@ public interface IQueryRepository<TEntity, TKey>
     /// </summary>
     /// <param name="predicate">A predicate to filter the entities.</param>
     /// <param name="builder">A builder to customize the query.</param>
+    /// <param name="paging">Paging information.</param>
     /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A collection of entities.</returns>
     Task<IEnumerable<TEntity>> GetAllAsync(
         Expression<Func<TEntity, bool>>? predicate = null,
         Action<IFluentBuilder<TEntity>>? builder = null,
+        Paging? paging = null,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
     );
@@ -113,6 +116,7 @@ public interface IQueryRepository<TEntity, TKey>
         Expression<Func<TEntity, bool>>? predicate = null,
         Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
         Action<IFluentBuilder<TEntity>>? builder = null,
+        Paging? paging = null,
         TypeAdapterConfig? typeAdapterConfig = null,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
@@ -278,6 +282,7 @@ public interface IQueryRepository<TEntity, TKey>
     ValueTask<int> ExecuteAsync(
         string sql,
         object? param = null,
+        Paging? paging = null,
         IDbTransaction? transaction = null,
         int? commandTimeout = null,
         CommandType? commandType = null,

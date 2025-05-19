@@ -23,17 +23,17 @@
         /// <summary>
         /// Gets or sets a value indicating whether to use transactions.
         /// </summary>
-        public bool UseTransaction { get; set; } 
+        public bool UseTransaction { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to enable the CAP dashboard.
         /// </summary>
-        public bool UseDashboard { get; set; } 
+        public bool UseDashboard { get; set; }
 
         /// <summary>
         /// Gets or sets the path for the CAP dashboard.
         /// </summary>
-        public string? DashboardPath { get; set; } 
+        public string? DashboardPath { get; set; }
 
         /// <summary>
         /// Gets or sets the username for the CAP dashboard.
@@ -43,7 +43,7 @@
         /// <summary>
         /// Gets or sets the password for the CAP dashboard.
         /// </summary>
-        public string? DashboardPassword { get; set; } 
+        public string? DashboardPassword { get; set; }
 
         /// <summary>
         /// Gets or sets the number of times to retry a failed message.
@@ -53,7 +53,7 @@
         /// <summary>
         /// Gets or sets the interval (in seconds) between failed message retries.
         /// </summary>
-        public int FailedRetryInterval { get; set; } 
+        public int FailedRetryInterval { get; set; }
 
         /// <summary>
         /// Gets or sets the time (in seconds) after which succeeded messages expire.

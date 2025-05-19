@@ -1,5 +1,3 @@
-using System;
-
 namespace Services.Autofac.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]

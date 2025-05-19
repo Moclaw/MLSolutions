@@ -1,9 +1,9 @@
-using System.Net;
 using Host.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using MLSolutions;
 using Shard.Exceptions;
+using System.Net;
 
 namespace Host.Handlers;
 

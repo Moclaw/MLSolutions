@@ -1,9 +1,8 @@
-using System.Net;
 using Host.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using MLSolutions;
-using Shard.Responses;
+using System.Net;
 
 namespace Host.Handlers;
 [HandlerFor(typeof(Exception))]

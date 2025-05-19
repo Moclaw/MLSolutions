@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using Host.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel.DataAnnotations;
 
 namespace Host.Middleware;
 

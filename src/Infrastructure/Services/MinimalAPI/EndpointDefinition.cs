@@ -1,11 +1,11 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace MinimalAPI;
 
-public sealed record EndpointDefinition(Type EndpointType,Type RequestType, Type ResponseType)
+public sealed record EndpointDefinition(Type EndpointType, Type RequestType, Type ResponseType)
 {
     public string? RouteGroupPath { get; internal set; }
     internal IEndpointFilter[] EndpointFilters { get; set; } = [];

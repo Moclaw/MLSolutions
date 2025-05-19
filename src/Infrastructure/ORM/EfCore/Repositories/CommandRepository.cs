@@ -1,16 +1,13 @@
-using System.Data;
 using Dapper;
 using EfCore.IRepositories;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
-using Shard.Responses;
-using Shard.Utils;
+using System.Data;
 
 namespace EfCore.Repositories;
 
-public class CommadRepository(BaseDbContext context, ILogger<CommadRepository> logger)
+public class CommandRepository(BaseDbContext context, ILogger<CommandRepository> logger)
     : ICommandRepository
 {
     private IDbContextTransaction? _currentTransaction;

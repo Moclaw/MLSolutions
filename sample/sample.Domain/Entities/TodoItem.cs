@@ -1,6 +1,8 @@
+using Shard.Entities;
+
 namespace sample.Domain.Entities;
 
-public class TodoItem
+public class TodoItem : IEntity<int>
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;

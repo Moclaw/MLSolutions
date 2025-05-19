@@ -11,6 +11,14 @@
   </ItemGroup>
 
   <ItemGroup>
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.5">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.5">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
     <ProjectReference Include="..\..\src\Host\Host.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Services\MinimalAPI\MinimalAPI.csproj" />
     <ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
@@ -21,9 +29,6 @@
     <ProjectReference Include="..\..\src\Shard\Shard.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Endpoints\Todo\Commands\" />
-    <Folder Include="Endpoints\Todo\Queries\" />
-  </ItemGroup>
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1development_1json__JsonSchema="https://json.schemastore.org/assetlinks.json" /></VisualStudio></ProjectExtensions>
 
 </Project>
