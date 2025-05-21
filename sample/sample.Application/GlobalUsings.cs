@@ -1,1 +1,1 @@
-﻿global using Shard.Responses;
+﻿global using Shared.Responses;

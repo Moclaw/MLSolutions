@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Http;
-using Shard.Responses;
+using Shared.Responses;
 
 namespace MLSolutions;
 

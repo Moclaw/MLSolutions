@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MinimalAPI.Handlers.Command;
 using sample.Domain.Constants;
 using sample.Domain.Entities;
-using Shard.Utils;
+using Shared.Utils;
 
 namespace sample.Application.Features.Todo.Commands.Create;
 

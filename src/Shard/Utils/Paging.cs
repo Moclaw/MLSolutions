@@ -1,4 +1,4 @@
-﻿namespace Shard.Utils
+﻿namespace Shared.Utils
 {
     /// <summary>
     /// Represents pagination information for a dataset.

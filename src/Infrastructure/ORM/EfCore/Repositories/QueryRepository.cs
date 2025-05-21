@@ -2,8 +2,8 @@ using Domain.Builders;
 using EfCore.Builders;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
-using Shard.Entities;
-using Shard.Utils;
+using Shared.Entities;
+using Shared.Utils;
 using System.Data;
 using System.Linq.Expressions;
 

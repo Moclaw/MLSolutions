@@ -1,6 +1,6 @@
 using EfCore.Repositories;
 using sample.Infrastructure.Persistence.EfCore;
-using Shard.Entities;
+using Shared.Entities;
 
 namespace sample.Infrastructure.Repositories;
 public class QueryDefaultRepository<TEntity, TKey>(ApplicationDbContext dbContext)

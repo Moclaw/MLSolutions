@@ -2,7 +2,7 @@ using Domain.Builders;
 using Domain.IRepositories;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
-using Shard.Entities;
+using Shared.Entities;
 using System.Linq.Expressions;
 
 namespace MongoDb.Repositories;

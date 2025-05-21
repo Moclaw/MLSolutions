@@ -2,8 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using MinimalAPI.Handlers;
 using sample.Domain.Constants;
 using sample.Domain.Entities;
-using Shard.Responses;
-using Shard.Utils;
+using Shared.Responses;
+using Shared.Utils;
 
 namespace sample.Application.Features.Todo.Queries.GetById;
 

@@ -1,6 +1,6 @@
-﻿using Shard.Responses;
+﻿using Shared.Responses;
 
-namespace Shard.Utils;
+namespace Shared.Utils;
 
 /// <summary>
 /// Utility class for creating standardized response objects.

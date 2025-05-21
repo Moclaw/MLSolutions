@@ -11,7 +11,7 @@ public class GetTodoByIdEndpoint(IMediator mediator) : EndpointBase<Request, Res
 {
     [HttpGet]
 
-    public override async Task<Shard.Responses.Response<Response>> HandleAsync(Request req, CancellationToken ct)
+    public override async Task<Shared.Responses.Response<Response>> HandleAsync(Request req, CancellationToken ct)
     {
         return await _mediator.Send(req, ct);
     }

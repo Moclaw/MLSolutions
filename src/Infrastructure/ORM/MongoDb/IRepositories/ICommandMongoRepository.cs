@@ -1,4 +1,4 @@
-using Shard.Entities;
+using Shared.Entities;
 
 namespace Domain.IRepositories;
 

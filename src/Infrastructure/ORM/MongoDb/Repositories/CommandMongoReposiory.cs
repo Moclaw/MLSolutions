@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using MongoDB.EntityFrameworkCore.Extensions;
-using Shard.Entities;
+using Shared.Entities;
 
 namespace MongoDb.Repositories;
 

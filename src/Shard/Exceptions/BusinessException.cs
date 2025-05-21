@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace Shard.Exceptions;
+namespace Shared.Exceptions;
 
 /// <summary>
 /// Represents a business logic exception that occurs during application execution.

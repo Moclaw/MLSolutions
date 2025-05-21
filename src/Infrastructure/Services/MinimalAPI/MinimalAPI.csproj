@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>Moclawr.MinimalAPI</PackageId>
-        <Version>1.0.1</Version>
+        <Version>1.0.2</Version>
         <Authors>moclaw</Authors>
         <Company>moclaw</Company>
         <Description>Minimal API utilities with MediatR integration for .NET 9</Description>
@@ -21,7 +21,7 @@
     </ItemGroup>
     
     <ItemGroup>
-      <ProjectReference Include="..\..\..\Shard\Shard.csproj" />
+      <ProjectReference Include="..\..\..\Shared\Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>

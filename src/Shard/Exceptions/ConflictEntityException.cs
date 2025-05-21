@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace Shard.Exceptions;
+namespace Shared.Exceptions;
 
 /// <summary>
 /// Represents an exception that is thrown when a conflict occurs with an entity.

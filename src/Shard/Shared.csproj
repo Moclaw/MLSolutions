@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<PackageId>Moclawr.Shared</PackageId>
+		<Version>1.0.2</Version>
+		<Authors>moclaw</Authors>
+		<Company>moclaw</Company>
+		<Description>Sharding utilities and base types for the moclaw project.</Description>
+		<RepositoryUrl>https://github.com/Moclaw/MLSolutions/</RepositoryUrl>
+		<PackageTags>shard,utilities,mlsolutions</PackageTags>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+</Project>

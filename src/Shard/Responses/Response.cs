@@ -1,4 +1,4 @@
-﻿namespace Shard.Responses;
+﻿namespace Shared.Responses;
 
 /// <summary>
 /// Represents a basic response with success status, HTTP status code, and an optional message.

@@ -1,4 +1,4 @@
-﻿namespace Shard.Entities;
+﻿namespace Shared.Entities;
 
 /// <summary>
 /// Represents a base interface for all entities.

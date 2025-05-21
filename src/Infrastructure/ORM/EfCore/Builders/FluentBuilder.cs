@@ -2,7 +2,7 @@ using Domain.Builders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using MLSolutions;
-using Shard.Entities;
+using Shared.Entities;
 using System.Linq.Expressions;
 
 namespace EfCore.Builders;

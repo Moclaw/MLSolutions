@@ -1,4 +1,4 @@
-using Shard.Entities;
+using Shared.Entities;
 using System.Linq.Expressions;
 
 namespace Domain.IRepositories.Builders;

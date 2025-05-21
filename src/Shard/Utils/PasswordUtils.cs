@@ -1,5 +1,5 @@
 ﻿// ReSharper disable All
-namespace Shard.Utils
+namespace Shared.Utils
 {
     /// <summary>
     /// Provides utility methods for password hashing, verification, and generation.

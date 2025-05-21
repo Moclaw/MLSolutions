@@ -26,7 +26,7 @@
     <ProjectReference Include="..\sample.Infrastructure\sample.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Services\Services.Autofac\Services.Autofac.csproj" />
     <ProjectReference Include="..\sample.Shared\sample.Shared.csproj" />
-    <ProjectReference Include="..\..\src\Shard\Shard.csproj" />
+    <ProjectReference Include="..\..\src\Shared\Shared.csproj" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1development_1json__JsonSchema="https://json.schemastore.org/assetlinks.json" /></VisualStudio></ProjectExtensions>

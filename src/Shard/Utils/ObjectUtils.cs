@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace Shard.Utils;
+namespace Shared.Utils;
 
 /// <summary>
 /// Utility methods for object manipulation and reflection.

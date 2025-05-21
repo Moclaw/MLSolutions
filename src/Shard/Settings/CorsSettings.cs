@@ -1,4 +1,4 @@
-﻿namespace Shard.Constants
+﻿namespace Shared.Constants
 {
     /// <summary>
     /// Represents the settings for configuring Cross-Origin Resource Sharing (CORS).

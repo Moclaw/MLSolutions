@@ -1,5 +1,5 @@
 using MediatR;
-using Shard.Responses;
+using Shared.Responses;
 
 namespace MinimalAPI.Handlers.Command;
 

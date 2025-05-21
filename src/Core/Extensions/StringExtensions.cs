@@ -1,4 +1,4 @@
-﻿using Shard.Settings;
+﻿using Shared.Settings;
 using System.Text;
 using System.Text.Json;
 

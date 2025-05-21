@@ -1,4 +1,4 @@
-﻿namespace Shard.Responses
+﻿namespace Shared.Responses
 {
     /// <summary>
     /// Represents a response interface that provides details about the success, status, and message of an operation.

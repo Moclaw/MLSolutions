@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using MinimalAPI.Extensions;
-using Shard.Responses;
+using Shared.Responses;
 using System.Text.Json;
 
 namespace MinimalAPI.Endpoints;

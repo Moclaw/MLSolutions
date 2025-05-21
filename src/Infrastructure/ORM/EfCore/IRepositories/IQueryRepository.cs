@@ -1,7 +1,7 @@
 ﻿using Domain.Builders;
 using Mapster;
-using Shard.Entities;
-using Shard.Utils;
+using Shared.Entities;
+using Shared.Utils;
 using System.Data;
 using System.Linq.Expressions;
 

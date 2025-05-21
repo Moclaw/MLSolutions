@@ -1,6 +1,6 @@
 using Dapper;
 using Microsoft.EntityFrameworkCore;
-using Shard.Entities;
+using Shared.Entities;
 using System.Data;
 using System.Reflection;
 

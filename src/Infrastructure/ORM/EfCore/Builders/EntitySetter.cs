@@ -1,5 +1,5 @@
 using Domain.IRepositories.Builders;
-using Shard.Entities;
+using Shared.Entities;
 using System.Linq.Expressions;
 
 namespace EfCore.Builders;

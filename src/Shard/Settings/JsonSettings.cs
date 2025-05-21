@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Shard.Settings;
+namespace Shared.Settings;
 
 /// <summary>
 /// Provides default JSON serialization settings for the application.

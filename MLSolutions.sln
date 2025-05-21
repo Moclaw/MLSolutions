@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sample", "sample", "{50428BF0-8ECA-4CC0-B3B8-5EF33CA794AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shard", "src\Shard\Shard.csproj", "{62599106-A108-4896-A442-50F67AAD57A5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "src\Shard\Shared.csproj", "{62599106-A108-4896-A442-50F67AAD57A5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{1D2D897C-DB03-4193-A245-343FE817210A}"
 EndProject

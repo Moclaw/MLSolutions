@@ -3,7 +3,7 @@ using MinimalAPI.Handlers;
 using sample.Application.Features.Todo.Dtos;
 using sample.Domain.Constants;
 using sample.Domain.Entities;
-using Shard.Utils;
+using Shared.Utils;
 
 namespace sample.Application.Features.Todo.Queries.GetAll;
 

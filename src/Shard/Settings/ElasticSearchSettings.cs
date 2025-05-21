@@ -1,4 +1,4 @@
-﻿namespace Shard.Settings
+﻿namespace Shared.Settings
 {
     public class ElasticSearchSettings
     {

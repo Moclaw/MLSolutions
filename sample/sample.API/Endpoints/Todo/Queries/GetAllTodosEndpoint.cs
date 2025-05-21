@@ -2,7 +2,7 @@ using MediatR;
 using MinimalAPI.Attributes;
 using MinimalAPI.Endpoints;
 using sample.Application.Features.Todo.Queries.GetAll;
-using Shard.Responses;
+using Shared.Responses;
 
 namespace sample.API.Endpoints.Todo.Queries;
 
