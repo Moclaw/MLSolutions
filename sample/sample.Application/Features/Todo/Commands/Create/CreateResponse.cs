@@ -1,6 +1,6 @@
 namespace sample.Application.Features.Todo.Commands.Create;
 
-public class Response
+public class CreateResponse
 {
     public int Id { get; set; }
 }

@@ -40,7 +40,7 @@ public static partial class Register
 
         // Register MediatR services
         services.AddMediatR(
-            cfg => cfg.RegisterServicesFromAssemblies(allAssemblies.Distinct().ToArray())
+            cfg => cfg.RegisterServicesFromAssemblies([.. allAssemblies.Distinct()])
         );
 
         return services;

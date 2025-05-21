@@ -9,9 +9,9 @@ namespace sample.Application.Features.Todo.Commands.Create;
 
 public class CreateHandler(
     [FromKeyedServices(ServiceKeys.CommandRepository)]
-    ICommandRepository commandRepository) : ICommandHandler<CreateRequest, Response>
+    ICommandRepository commandRepository) : ICommandHandler<CreateRequest, CreateResponse>
 {
-    public async Task<Response<Response>> Handle(CreateRequest request, CancellationToken cancellationToken)
+    public async Task<Response<CreateResponse>> Handle(CreateRequest request, CancellationToken cancellationToken)
     {
         var todoItem = new TodoItem
         {
@@ -24,7 +24,7 @@ public class CreateHandler(
         await commandRepository.AddAsync(todoItem, cancellationToken);
         await commandRepository.SaveChangesAsync(cancellationToken);
         return ResponseUtils.Success(
-            new Response { Id = todoItem.Id },
+            new CreateResponse { Id = todoItem.Id },
             "Todo item created successfully"
         );
     }
