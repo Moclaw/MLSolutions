@@ -1,4 +1,4 @@
-﻿namespace Shared.Constants
+﻿namespace Shared.Settings
 {
     /// <summary>
     /// Represents the settings for configuring Cross-Origin Resource Sharing (CORS).

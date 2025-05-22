@@ -11,15 +11,14 @@ namespace EfCore.Builders;
 /// A fluent builder for constructing dynamic IQueryable queries with ordering, including, and filter ignoring support.
 /// </summary>
 /// <typeparam name="TEntity">The entity type.</typeparam>
-
-internal class FluentBuilder<TEntity>(IQueryable<TEntity> query, IOrderedQueryable<TEntity>? order = default, FluentBuilder<TEntity>? root = default) : IFluentBuilder<TEntity>
-    where TEntity : class, IEntity
+internal class FluentBuilder<TEntity> : IFluentBuilder<TEntity>
+    where TEntity : class, IEntity // Ensure TEntity implements IEntity
 {
-    private IQueryable<TEntity> _query = query;
+    private IQueryable<TEntity> _query;
 
-    protected IOrderedQueryable<TEntity>? _order = order;
+    protected IOrderedQueryable<TEntity>? _order;
 
-    protected readonly FluentBuilder<TEntity>? _root = root;
+    protected readonly FluentBuilder<TEntity>? _root;
 
     internal IOrderedQueryable<TEntity>? QueryOrder => _order;
 
@@ -29,7 +28,12 @@ internal class FluentBuilder<TEntity>(IQueryable<TEntity> query, IOrderedQueryab
         set { _query = value; }
     }
 
-    //internal bool HasCustomOrder => _order is not null;
+    internal FluentBuilder(IQueryable<TEntity> query, IOrderedQueryable<TEntity>? order = default, FluentBuilder<TEntity>? root = default)
+    {
+        _query = query;
+        _order = order;
+        _root = root;
+    }
 
     internal void UpdateQuery(IQueryable<TEntity> updateQuery)
     {
