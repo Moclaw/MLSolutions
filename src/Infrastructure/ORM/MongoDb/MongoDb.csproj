@@ -5,13 +5,21 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>Moclawr.MongoDb</PackageId>
-		<Version>1.0.2</Version>
+		<Version>1.0.3</Version>
 		<Authors>moclaw</Authors>
 		<Company>moclaw</Company>
-		<Description>MongoDB integration for the moclaw project.</Description>
-		<RepositoryUrl>https://github.com/Moclaw/MLSolutions/</RepositoryUrl>
-		<PackageTags>mongodb,orm,mlsolutions</PackageTags>
+		<Description>MongoDB integration for the moclaw project. Provides context and repositories for MongoDB data access.</Description>
+		<Copyright>Copyright © Moclaw 2025</Copyright>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>mongodb;nosql;repository;database;dotnet;mlsolutions</PackageTags>
+		<PackageReleaseNotes>Added improved XML documentation and bug fixes.</PackageReleaseNotes>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -22,6 +30,11 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
 		<PackageReference Include="MongoDB.Driver" Version="3.3.0" />
 		<PackageReference Include="MongoDB.EntityFrameworkCore" Version="9.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\..\assets\icon.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 </Project>

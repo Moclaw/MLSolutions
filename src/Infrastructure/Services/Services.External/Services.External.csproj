@@ -4,14 +4,22 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<Version>1.0.2</Version>
+		<PackageId>Moclawr.Services.External</PackageId>
+		<Version>1.0.3</Version>
 		<Authors>moclaw</Authors>
 		<Company>moclaw</Company>
-		<Description>Service for external services like HTTP, gRPC, and others.</Description>
-		<PackageTags>http,grpc,mlsolutions</PackageTags>
+		<Description>Services for external communication like SMTP email and SMS messaging. Provides a clean, abstracted interface for common communication channels.</Description>
+		<Copyright>Copyright © Moclaw 2025</Copyright>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>smtp;email;sms;messaging;http;external-services;dotnet;mlsolutions</PackageTags>
+		<PackageReleaseNotes>Added improved XML documentation and bug fixes.</PackageReleaseNotes>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageId>Moclawr.Services.External</PackageId>
-		
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -20,6 +28,11 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\Core\Core.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\..\assets\icon.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 </Project>

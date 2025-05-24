@@ -5,13 +5,21 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>Moclawr.MinimalAPI</PackageId>
-        <Version>1.0.2.1</Version>
+        <Version>1.0.3</Version>
         <Authors>moclaw</Authors>
         <Company>moclaw</Company>
-        <Description>Minimal API utilities with MediatR integration for .NET 9</Description>
+        <Description>Minimal API utilities with MediatR integration for .NET 9. Provides a class-based approach to endpoint definition with built-in CQRS support.</Description>
+        <Copyright>Copyright © Moclaw 2025</Copyright>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
-        <PackageTags>minimalapi,mediator,cqrs,mlsolutions</PackageTags>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>minimalapi;mediator;cqrs;endpoints;dotnet;mlsolutions</PackageTags>
+        <PackageReleaseNotes>Added improved XML documentation and bug fixes.</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,6 +34,11 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Core.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+        <None Include="..\..\..\..\assets\icon.png" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>

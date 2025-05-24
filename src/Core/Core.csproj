@@ -5,13 +5,21 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>Moclawr.Core</PackageId>
-	  <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>moclaw</Authors>
     <Company>moclaw</Company>
-    <Description>Core utilities and base types for the moclaw project.</Description>
+    <Description>Core utilities and base types for the moclaw project. Provides essential utility extension methods and base functionality for .NET applications.</Description>
+    <Copyright>Copyright © Moclaw 2025</Copyright>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
-    <PackageTags>core,utilities,mlsolutions</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>core;utilities;extensions;dotnet;mlsolutions</PackageTags>
+    <PackageReleaseNotes>Added improved XML documentation and bug fixes.</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +28,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\assets\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

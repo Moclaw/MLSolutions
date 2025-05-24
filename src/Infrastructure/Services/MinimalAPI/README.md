@@ -1,9 +1,10 @@
-# Minimal API Library for .NET 9
+# Moclawr.MinimalAPI
 
-This library provides a structured approach to creating Minimal APIs in .NET 9 with the following features:
+[![NuGet](https://img.shields.io/nuget/v/Moclawr.MinimalAPI.svg)](https://www.nuget.org/packages/Moclawr.MinimalAPI/)
 
-- Controller-like attribute routing with HTTP method attributes
-- Built-in MediatR integration for CQRS implementation
+## Overview
+
+Moclawr.MinimalAPI is a powerful library for building clean, structured, and maintainable ASP.NET Core Minimal APIs. It provides a class-based approach to endpoint definition with built-in MediatR integration for implementing the CQRS pattern, making it easy to create scalable API applications with clear separation of concerns.
 - Strong typing for requests and responses
 - Automatic model binding from various sources (route, query, body, form, header)
 - Standardized response handling

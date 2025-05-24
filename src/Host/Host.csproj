@@ -5,13 +5,21 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>Moclawr.Host</PackageId>
-        <Version>1.0.2</Version>
+        <Version>1.0.3</Version>
         <Authors>moclaw</Authors>
         <Company>moclaw</Company>
-        <Description>Host utilities and base types for the moclaw project.</Description>
+        <Description>Host utilities and base types for the moclaw project. Provides essential infrastructure for building robust ASP.NET Core applications.</Description>
+        <Copyright>Copyright © Moclaw 2025</Copyright>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
-        <PackageTags>host,utilities,mlsolutions</PackageTags>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>host;exceptions;middleware;logging;healthchecks;dotnet;mlsolutions</PackageTags>
+        <PackageReleaseNotes>Added improved XML documentation and bug fixes.</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -32,7 +40,11 @@
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
         <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="9.0.3" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-		
+    </ItemGroup>
+    
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+        <None Include="..\..\assets\icon.png" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>

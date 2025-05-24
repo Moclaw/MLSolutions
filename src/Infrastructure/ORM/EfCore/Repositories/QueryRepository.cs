@@ -1,11 +1,11 @@
+using System.Data;
+using System.Linq.Expressions;
 using Domain.Builders;
 using EfCore.Builders;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Shared.Entities;
 using Shared.Utils;
-using System.Data;
-using System.Linq.Expressions;
 
 namespace EfCore.Repositories;
 
@@ -57,9 +57,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         if (queryBuilder.Query != null)
         {
             var query = queryBuilder.Query.Where(x => x.Id.Equals(id));
-            var projectedQuery = projector != null
-                ? projector(query)
-                : query.ProjectToType<TProjector>(typeAdapterConfig);
+            var projectedQuery =
+                projector != null
+                    ? projector(query)
+                    : query.ProjectToType<TProjector>(typeAdapterConfig);
             return await projectedQuery.FirstOrDefaultAsync(cancellationToken);
         }
 
@@ -79,9 +80,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         if (queryBuilder.Query != null)
         {
             var query = queryBuilder.Query.Where(x => ids.Contains(x.Id));
-            var projectedQuery = projector != null
-                ? projector(query)
-                : query.ProjectToType<TProjector>(typeAdapterConfig);
+            var projectedQuery =
+                projector != null
+                    ? projector(query)
+                    : query.ProjectToType<TProjector>(typeAdapterConfig);
             return await projectedQuery.ToListAsync(cancellationToken);
         }
 
@@ -114,14 +116,13 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
         if (queryBuilder.Query != null)
         {
-            var query = predicate != null ? queryBuilder.Query.Where(predicate) : queryBuilder.Query;
+            var query =
+                predicate != null ? queryBuilder.Query.Where(predicate) : queryBuilder.Query;
 
             // Apply paging if provided
             if (paging != null)
             {
-                query = query
-                    .Skip((paging.PageIndex - 1) * paging.PageSize)
-                    .Take(paging.PageSize);
+                query = query.Skip((paging.PageIndex - 1) * paging.PageSize).Take(paging.PageSize);
             }
 
             return await query.ToListAsync(cancellationToken);
@@ -147,9 +148,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         if (predicate != null)
             query = query.Where(predicate);
 
-        var projectedQuery = projector != null
-            ? projector(query)
-            : query.ProjectToType<TProjector>(typeAdapterConfig);
+        var projectedQuery =
+            projector != null
+                ? projector(query)
+                : query.ProjectToType<TProjector>(typeAdapterConfig);
 
         // Apply paging if provided
         if (paging != null)
@@ -190,9 +192,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         var query = queryBuilder.Query;
         if (predicate != null)
             query = query.Where(predicate);
-        var projectedQuery = projector != null
-            ? projector(query)
-            : query.ProjectToType<TProjector>(typeAdapterConfig);
+        var projectedQuery =
+            projector != null
+                ? projector(query)
+                : query.ProjectToType<TProjector>(typeAdapterConfig);
         return await projectedQuery.FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -224,9 +227,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         var query = queryBuilder.Query;
         if (predicate != null)
             query = query.Where(predicate);
-        var projectedQuery = projector != null
-            ? projector(query)
-            : query.ProjectToType<TProjector>(typeAdapterConfig);
+        var projectedQuery =
+            projector != null
+                ? projector(query)
+                : query.ProjectToType<TProjector>(typeAdapterConfig);
         return await projectedQuery.SingleOrDefaultAsync(cancellationToken);
     }
 
@@ -258,9 +262,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         var query = queryBuilder.Query;
         if (predicate != null)
             query = query.Where(predicate);
-        var projectedQuery = projector != null
-            ? projector(query)
-            : query.ProjectToType<TProjector>(typeAdapterConfig);
+        var projectedQuery =
+            projector != null
+                ? projector(query)
+                : query.ProjectToType<TProjector>(typeAdapterConfig);
         return await projectedQuery.LastOrDefaultAsync(cancellationToken);
     }
 
@@ -329,7 +334,8 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         if (paging != null)
         {
             // This is a naive paging implementation for SQL Server. Adjust as needed for your DB.
-            finalSql = $@"
+            finalSql =
+                $@"
                 SELECT * FROM (
                     {sql}
                 ) AS PagedResult
@@ -683,6 +689,7 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
 
         return context.ExecuteQueryMultipleAsync<T1, T2>(sql, param);
     }
+
     public ValueTask<(IEnumerable<T1>, IEnumerable<T2>, IEnumerable<T3>)> QueryMultiple<T1, T2, T3>(
         string sql,
         object? param = null

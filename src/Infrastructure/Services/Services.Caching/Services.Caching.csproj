@@ -4,14 +4,22 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<Version>1.0.2</Version>
+		<PackageId>Moclawr.Services.Caching</PackageId>
+		<Version>1.0.3</Version>
 		<Authors>moclaw</Authors>
 		<Company>moclaw</Company>
-		<Description> Service for caching data using Redis or in-memory.</Description>
+		<Description>Flexible caching solution for .NET applications, with support for Redis and in-memory caching strategies.</Description>
+		<Copyright>Copyright © Moclaw 2025</Copyright>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
-		<PackageTags>caching,redis,in-memory,mlsolutions</PackageTags>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>caching;redis;in-memory;distributed-cache;dotnet;mlsolutions</PackageTags>
+		<PackageReleaseNotes>Added improved XML documentation and bug fixes.</PackageReleaseNotes>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageId>Moclawr.Services.Caching</PackageId>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -26,6 +34,11 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\Core\Core.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\..\assets\icon.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 </Project>
