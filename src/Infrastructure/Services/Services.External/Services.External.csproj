@@ -11,7 +11,7 @@
 		<Description>Services for external communication like SMTP email and SMS messaging. Provides a clean, abstracted interface for common communication channels.</Description>
 		<Copyright>Copyright © Moclaw 2025</Copyright>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageIcon>icon.png</PackageIcon>
+		<PackageIcon>icon.svg</PackageIcon>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>

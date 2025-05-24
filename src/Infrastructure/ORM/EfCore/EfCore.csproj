@@ -11,7 +11,7 @@
 		<Description>EF Core integration for the moclaw project. Provides base context, repositories, and builders for relational data access.</Description>
 		<Copyright>Copyright © Moclaw 2025</Copyright>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageIcon>icon.png</PackageIcon>
+		<PackageIcon>icon.svg</PackageIcon>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
@@ -38,7 +38,7 @@
 
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
-		<None Include="..\..\..\..\assets\icon.png" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\..\assets\icon.svg" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 </Project>
