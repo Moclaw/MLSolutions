@@ -6,10 +6,14 @@ using Shared.Responses;
 
 namespace sample.API.Endpoints.Todo.Commands;
 
-public class UpdateTodoEndpoint(IMediator mediator) : EndpointBase<UpdateRequest, UpdateResponse>(mediator)
+public class UpdateTodoEndpoint(IMediator mediator)
+    : SingleEndpointBase<UpdateRequest, UpdateResponse>(mediator)
 {
     [HttpPut("api/todos/{id}")]
-    public override async Task<Response<UpdateResponse>> HandleAsync(UpdateRequest req, CancellationToken ct)
+    public override async Task<Response<UpdateResponse>> HandleAsync(
+        UpdateRequest req,
+        CancellationToken ct
+    )
     {
         return await _mediator.Send(req, ct);
     }

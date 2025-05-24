@@ -5,7 +5,7 @@ using sample.Application.Features.Todo.Commands.Delete;
 
 namespace sample.API.Endpoints.Todo.Commands;
 
-public class DeleteTodoEndpoint(IMediator mediator) : EndpointBase<Request>(mediator)
+public class DeleteTodoEndpoint(IMediator mediator) : SingleEndpointBase<Request>(mediator)
 {
     [HttpDelete("api/todos/{id}")]
     public override async Task<Response> HandleAsync(Request req, CancellationToken ct)

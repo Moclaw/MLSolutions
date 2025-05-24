@@ -4,7 +4,7 @@
 
 ## Overview
 
-Moclawr.MinimalAPI is a powerful library for building clean, structured, and maintainable ASP.NET Core Minimal APIs. It provides a class-based approach to endpoint definition with built-in MediatR integration for implementing the CQRS pattern, making it easy to create scalable API applications with clear separation of concerns.
+Moclawr.MinimalAPI is a powerful library for building clean, structured, and maintainable ASP.NET Core Minimal APIs for .NET 9. It provides a class-based approach to endpoint definition with built-in MediatR integration for implementing the CQRS pattern, making it easy to create scalable API applications with clear separation of concerns.
 - Strong typing for requests and responses
 - Automatic model binding from various sources (route, query, body, form, header)
 - Standardized response handling
@@ -41,23 +41,38 @@ app.MapMinimalEndpoints(typeof(Program).Assembly);
 
 ### Step 2: Create Endpoint Classes
 
-Create classes that inherit from `EndpointBase<TRequest, TResponse>` for endpoints that return data:
+You can create endpoints in three different ways depending on your response type:
+
+1. For endpoints that return a single item:
 
 ```csharp
-public class GetAllTodosEndpoint(IMediator mediator) : EndpointBase<GetAllRequest, GetAllResponse>(mediator)
+public class GetTodoEndpoint(IMediator mediator) : SingleEndpointBase<GetRequest, TodoItemDto>(mediator)
 {
-    [HttpGet("api/todos")]
-    public override async Task<Response<GetAllResponse>> HandleAsync(GetAllRequest req, CancellationToken ct)
+    [HttpGet("api/todos/{id}")]
+    public override async Task<Response<TodoItemDto>> HandleAsync(GetRequest req, CancellationToken ct)
     {
         return await _mediator.Send(req, ct);
     }
 }
 ```
 
-Or use `EndpointBase<TRequest>` for endpoints that don't return data:
+2. For endpoints that return a collection:
 
 ```csharp
-public class DeleteTodoEndpoint(IMediator mediator) : EndpointBase<DeleteRequest>(mediator)
+public class GetAllTodosEndpoint(IMediator mediator) : CollectionEndpointBase<GetAllRequest, TodoItemDto>(mediator)
+{
+    [HttpGet("api/todos")]
+    public override async Task<ResponesCollection<TodoItemDto>> HandleAsync(GetAllRequest req, CancellationToken ct)
+    {
+        return await _mediator.Send(req, ct);
+    }
+}
+```
+
+3. Or use the general base class for custom response formats:
+
+```csharp
+public class DeleteTodoEndpoint(IMediator mediator) : EndpointBase<DeleteRequest, object, Response>(mediator)
 {
     [HttpDelete("api/todos/{id}")]
     public override async Task<Response> HandleAsync(DeleteRequest req, CancellationToken ct)
@@ -231,51 +246,92 @@ public class UpdateRequest : ICommand<UpdateResponse>
 
 ### Response Handling
 
-The `Response` and `Response<T>` classes provide standardized response handling:
+The library provides standardized response handling with different response types:
+
+- `Response` - Base response with success status, HTTP status code, and an optional message
+- `Response<T>` - Response with data of type T
+- `ResponesCollection<T>` - Response with a collection of items of type T
 
 ```csharp
 // Success response with data
-return new Response<TodoItemDto>
-{
-    Data = todoDto,
-    Message = "Todo item retrieved successfully"
-};
+return new Response<TodoItemDto>(
+    IsSuccess: true,
+    StatusCode: 200,
+    Message: "Todo item retrieved successfully",
+    Data: todoDto
+);
 
 // Success response without data
-return Response.Success("Operation completed successfully");
+return new Response(true, 200, "Operation completed successfully");
+
+// Collection response
+return new ResponesCollection<TodoItemDto>(
+    IsSuccess: true,
+    StatusCode: 200,
+    Message: "Todo items retrieved successfully",
+    Data: todos
+);
 
 // Error responses
-return Response.NotFound("Todo item not found");
-return Response.BadRequest("Invalid input data");
-return Response.Forbidden("You don't have permission to access this resource");
-return Response.Error("An error occurred", StatusCodes.Status500InternalServerError);
+return new Response(false, 404, "Todo item not found");
+return new Response(false, 400, "Invalid input data");
+return new Response(false, 403, "You don't have permission to access this resource");
+return new Response(false, 500, "An error occurred");
 ```
 
 ### Versioning
 
-The library supports API versioning:
+The library includes enhanced versioning support:
 
 ```csharp
+// Define versioning options in your Program.cs
+services.Configure<VersioningOptions>(options => 
+{
+    options.Prefix = "v";            // Default prefix for version number
+    options.DefaultVersion = 1;      // Default version if not specified
+    options.PrependToRoute = false;  // Whether to prepend version to the route
+});
+
+// Use versioning in your endpoint
 [HttpGet("api/v{version}/todos")]
 public override async Task<Response<GetAllResponse>> HandleAsync(GetAllRequest req, CancellationToken ct)
 {
+    // Use version-specific logic if needed
     return await _mediator.Send(req, ct);
 }
 ```
 
 ### Authorization
 
-You can apply authorization to endpoints:
+The library offers enhanced authorization features:
 
 ```csharp
+// Method 1: Using attributes
 [HttpPost("api/todos")]
 [Authorize(Roles = "Admin,Editor")]
 public override async Task<Response<CreateResponse>> HandleAsync(CreateRequest req, CancellationToken ct)
 {
     return await _mediator.Send(req, ct);
 }
+
+// Method 2: Using endpoint definition
+public class CreateTodoEndpoint(IMediator mediator) : SingleEndpointBase<CreateRequest, CreateResponse>(mediator)
+{
+    [HttpPost("api/todos")]
+    public override async Task<Response<CreateResponse>> HandleAsync(CreateRequest req, CancellationToken ct)
+    {
+        // Configure authorization in constructor or initialization code
+        Definition.EnabledAuthorization = true;
+        Definition.Roles("Admin", "Editor");
+        Definition.Policies("RequireMinimumAge");
+        Definition.AuthSchemes("Bearer");
+        
+        return await _mediator.Send(req, ct);
+    }
+}
 ```
 
 ## Conclusion
 
-This MinimalAPI library provides a structured approach to building APIs with minimal boilerplate while maintaining the benefits of strong typing, dependency injection, and separation of concerns through the CQRS pattern.
+This MinimalAPI library provides a structured approach to building APIs with minimal boilerplate while maintaining the benefits of strong typing, dependency injection, and separation of concerns through the CQRS pattern with .NET 9 features.
+*

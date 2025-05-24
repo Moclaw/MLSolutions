@@ -10,18 +10,5 @@ namespace sample.Application.Features.Todo.Dtos
         public bool IsCompleted { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
-
-        public static TodoItemDto FromEntity(TodoItem entity)
-        {
-            return new TodoItemDto
-            {
-                Id = entity.Id,
-                Title = entity.Title,
-                Description = entity.Description,
-                IsCompleted = entity.IsCompleted,
-                CreatedAt = entity.CreatedAt,
-                CompletedAt = entity.CompletedAt
-            };
-        }
     }
 }

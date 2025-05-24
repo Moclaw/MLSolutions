@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using MinimalAPI.Attributes;
 using MinimalAPI.Handlers;
 using sample.Application.Features.Todo.Dtos;
 using sample.Domain.Constants;
@@ -7,34 +8,43 @@ using Shared.Utils;
 
 namespace sample.Application.Features.Todo.Queries.GetAll;
 
-public class GetAllHandler([FromKeyedServices(ServiceKeys.QueryRepository)] IQueryRepository<TodoItem, int> queryRepository) : IQueryCollectionHandler<GetAllRequest, GetallResponse>
+public class GetAllHandler(
+    [FromKeyedServices(ServiceKeys.QueryRepository)] IQueryRepository<TodoItem, int> queryRepository
+) : IQueryCollectionHandler<GetAllRequest, GetallResponse>
 {
-    public async Task<Response<GetallResponse>> Handle(GetAllRequest request, CancellationToken cancellationToken)
+    public async Task<ResponesCollection<GetallResponse>> Handle(
+        GetAllRequest request,
+        CancellationToken cancellationToken
+    )
     {
-        // Use builder to apply ordering and paging since repository does not support 'orderBy' parameter directly
-        var todoItems = await queryRepository.GetAllAsync(
-            t => t.Title.Contains(request.Search ?? string.Empty),
+        var todoItems = await queryRepository.GetAllAsync<GetallResponse>(
+            predicate: t =>
+                string.IsNullOrEmpty(request.Search) || t.Title.Contains(request.Search),
             builder: b =>
             {
-               b.OrderByProperty(request.OrderBy ?? nameof(TodoItem.CreatedAt), request.IsAscending);
+                b.OrderByProperty(
+                    request.OrderBy ?? nameof(TodoItem.CreatedAt),
+                    request.IsAscending
+                );
             },
-            paging: new Paging(default, request.PageIndex, request.PageSize),
+            projector: query =>
+                query.Select(item => new GetallResponse
+                {
+                    Id = item.Id,
+                    Title = item.Title,
+                    Description = item.Description,
+                    IsCompleted = item.IsCompleted,
+                    CreatedAt = item.CreatedAt,
+                }),
+            paging: new Pagination(default, request.PageIndex, request.PageSize),
             enableTracking: false,
             cancellationToken: cancellationToken
         );
-
-
-        var totalCount = todoItems.Count();
-
-        return ResponseUtils.Success(
-            new GetallResponse
-            {
-                Items = [.. todoItems.Select(TodoItemDto.FromEntity)],
-                TotalCount = totalCount,
-                PageIndex = request.PageIndex,
-                PageSize = request.PageSize,
-            },
-            "Todo items retrieved successfully"
+        return new ResponesCollection<GetallResponse>(
+            IsSuccess: true,
+            Message: "Todo items retrieved successfully.",
+            Data: todoItems.Entities,
+            StatusCode: 200
         );
     }
 }

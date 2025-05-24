@@ -12,7 +12,8 @@ public interface IQueryRequest<TResponse> : IRequest<Response<TResponse>>;
 public interface IQueryHandler<in TQueryRequest, TResponse> : IRequestHandler<TQueryRequest, Response<TResponse>>
     where TQueryRequest : IQueryRequest<TResponse>;
 
-public interface IQueryCollectionRequest<TResponse> : IRequest<Response<TResponse>>
+public interface IQueryCollectionRequest<TResponse> : IRequest<ResponesCollection<TResponse>>
+    where TResponse : notnull
 {
     public string? Search { get; set; }
 
@@ -25,5 +26,7 @@ public interface IQueryCollectionRequest<TResponse> : IRequest<Response<TRespons
     public bool IsAscending { get; set; }
 };
 
-public interface IQueryCollectionHandler<in TQueryRequest, TResponse> : IRequestHandler<TQueryRequest, Response<TResponse>>
-    where TQueryRequest : IQueryCollectionRequest<TResponse>;
+public interface
+    IQueryCollectionHandler<in TQueryRequest, TResponse> : IRequestHandler<TQueryRequest, ResponesCollection<TResponse>>
+    where TQueryRequest : IQueryCollectionRequest<TResponse>
+    where TResponse : notnull;

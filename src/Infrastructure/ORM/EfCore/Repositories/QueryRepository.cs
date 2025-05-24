@@ -35,13 +35,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query != null)
-            return await queryBuilder.Query.FirstOrDefaultAsync(
-                x => x.Id.Equals(id),
-                cancellationToken
-            );
-        return null;
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        return qb.Query == null
+            ? null
+            : await qb.Query.FirstOrDefaultAsync(x => x.Id.Equals(id), cancellationToken);
     }
 
     public async Task<TProjector?> GetByIdAsync<TProjector>(
@@ -53,18 +50,15 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query != null)
-        {
-            var query = queryBuilder.Query.Where(x => x.Id.Equals(id));
-            var projectedQuery =
-                projector != null
-                    ? projector(query)
-                    : query.ProjectToType<TProjector>(typeAdapterConfig);
-            return await projectedQuery.FirstOrDefaultAsync(cancellationToken);
-        }
-
-        return default;
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        if (qb.Query == null)
+            return default;
+        var query = qb.Query.Where(x => x.Id.Equals(id));
+        var projected =
+            projector != null
+                ? projector(query)
+                : query.ProjectToType<TProjector>(typeAdapterConfig);
+        return await projected.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<TProjector>> GetByIdAsync<TProjector>(
@@ -76,18 +70,15 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query != null)
-        {
-            var query = queryBuilder.Query.Where(x => ids.Contains(x.Id));
-            var projectedQuery =
-                projector != null
-                    ? projector(query)
-                    : query.ProjectToType<TProjector>(typeAdapterConfig);
-            return await projectedQuery.ToListAsync(cancellationToken);
-        }
-
-        return [];
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        if (qb.Query == null)
+            return Array.Empty<TProjector>();
+        var query = qb.Query.Where(x => ids.Contains(x.Id));
+        var projected =
+            projector != null
+                ? projector(query)
+                : query.ProjectToType<TProjector>(typeAdapterConfig);
+        return await projected.ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<TEntity?>> GetByIdAsync(
@@ -97,71 +88,79 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query != null)
-            return await queryBuilder
-                .Query.Where(x => ids.Contains(x.Id))
-                .ToListAsync(cancellationToken);
-        return [];
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        return qb.Query == null
+            ? Array.Empty<TEntity?>()
+            : await qb.Query.Where(x => ids.Contains(x.Id)).ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<TEntity>> GetAllAsync(
+    public async Task<(IEnumerable<TEntity> Entities, Pagination Pagination)> GetAllAsync(
         Expression<Func<TEntity, bool>>? predicate = null,
         Action<IFluentBuilder<TEntity>>? builder = null,
-        Paging? paging = null,
+        Pagination? paging = null,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query != null)
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        if (qb.Query == null)
+            return (Enumerable.Empty<TEntity>(), new Pagination());
+        var query = predicate != null ? qb.Query.Where(predicate) : qb.Query;
+        var total = await query.CountAsync(cancellationToken);
+        if (paging != null)
         {
-            var query =
-                predicate != null ? queryBuilder.Query.Where(predicate) : queryBuilder.Query;
+            query = query.Skip((paging.PageIndex - 1) * paging.PageSize).Take(paging.PageSize);
 
-            // Apply paging if provided
-            if (paging != null)
-            {
-                query = query.Skip((paging.PageIndex - 1) * paging.PageSize).Take(paging.PageSize);
-            }
+            paging = new Pagination(total, paging.PageIndex, paging.PageSize);
 
-            return await query.ToListAsync(cancellationToken);
+            return (await query.ToListAsync(cancellationToken), paging);
         }
-        return [];
+
+        var list = await query.ToListAsync(cancellationToken);
+        paging = new Pagination(total, 1, paging?.PageSize ?? 10);
+        return (list, paging);
     }
 
-    public async Task<IEnumerable<TProjector>> GetAllAsync<TProjector>(
+    public async Task<(
+        IEnumerable<TProjector> Entities,
+        Pagination Pagination
+    )> GetAllAsync<TProjector>(
         Expression<Func<TEntity, bool>>? predicate = null,
         Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
         Action<IFluentBuilder<TEntity>>? builder = null,
-        Paging? paging = null,
+        Pagination? paging = null,
         TypeAdapterConfig? typeAdapterConfig = null,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query == null)
-            return [];
-
-        var query = queryBuilder.Query;
-        if (predicate != null)
-            query = query.Where(predicate);
-
-        var projectedQuery =
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        if (qb.Query == null)
+            return (Enumerable.Empty<TProjector>(), new Pagination());
+        var query = predicate != null ? qb.Query.Where(predicate) : qb.Query;
+        var projected =
             projector != null
                 ? projector(query)
                 : query.ProjectToType<TProjector>(typeAdapterConfig);
 
-        // Apply paging if provided
         if (paging != null)
         {
-            projectedQuery = projectedQuery
+            projected = projected
                 .Skip((paging.PageIndex - 1) * paging.PageSize)
                 .Take(paging.PageSize);
-        }
 
-        return await projectedQuery.ToListAsync(cancellationToken);
+            var count = await qb.Query.CountAsync(cancellationToken);
+
+            paging = new Pagination(count, paging.PageIndex, paging.PageSize);
+
+            return (projected, paging);
+        }
+        else
+        {
+            var list = await projected.ToListAsync(cancellationToken);
+            var count = await qb.Query.CountAsync(cancellationToken);
+            return (list, new Pagination(count, 1, paging?.PageSize ?? 10));
+        }
     }
 
     public async Task<TEntity?> FirstOrDefaultAsync(
@@ -171,10 +170,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query != null && predicate != null)
-            return await queryBuilder.Query.FirstOrDefaultAsync(predicate, cancellationToken);
-        return null;
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        return qb.Query != null && predicate != null
+            ? await qb.Query.FirstOrDefaultAsync(predicate, cancellationToken)
+            : null;
     }
 
     public async Task<TProjector?> FirstOrDefaultAsync<TProjector>(
@@ -186,17 +185,15 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query == null)
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        if (qb.Query == null)
             return default;
-        var query = queryBuilder.Query;
-        if (predicate != null)
-            query = query.Where(predicate);
-        var projectedQuery =
+        var query = predicate != null ? qb.Query.Where(predicate) : qb.Query;
+        var projected =
             projector != null
                 ? projector(query)
                 : query.ProjectToType<TProjector>(typeAdapterConfig);
-        return await projectedQuery.FirstOrDefaultAsync(cancellationToken);
+        return await projected.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<TEntity?> SingleOrDefaultAsync(
@@ -206,10 +203,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query != null && predicate != null)
-            return await queryBuilder.Query.SingleOrDefaultAsync(predicate, cancellationToken);
-        return null;
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        return qb.Query != null && predicate != null
+            ? await qb.Query.SingleOrDefaultAsync(predicate, cancellationToken)
+            : null;
     }
 
     public async Task<TProjector?> SingleOrDefaultAsync<TProjector>(
@@ -221,17 +218,15 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query == null)
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        if (qb.Query == null)
             return default;
-        var query = queryBuilder.Query;
-        if (predicate != null)
-            query = query.Where(predicate);
-        var projectedQuery =
+        var query = predicate != null ? qb.Query.Where(predicate) : qb.Query;
+        var projected =
             projector != null
                 ? projector(query)
                 : query.ProjectToType<TProjector>(typeAdapterConfig);
-        return await projectedQuery.SingleOrDefaultAsync(cancellationToken);
+        return await projected.SingleOrDefaultAsync(cancellationToken);
     }
 
     public async Task<TEntity?> LastOrDefaultAsync(
@@ -241,10 +236,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query != null && predicate != null)
-            return await queryBuilder.Query.LastOrDefaultAsync(predicate, cancellationToken);
-        return null;
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        return qb.Query != null && predicate != null
+            ? await qb.Query.LastOrDefaultAsync(predicate, cancellationToken)
+            : null;
     }
 
     public async Task<TProjector?> LastOrDefaultAsync<TProjector>(
@@ -256,17 +251,15 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(builder, enableTracking);
-        if (queryBuilder.Query == null)
+        var qb = InvokeQueryBuilder(builder, enableTracking);
+        if (qb.Query == null)
             return default;
-        var query = queryBuilder.Query;
-        if (predicate != null)
-            query = query.Where(predicate);
-        var projectedQuery =
+        var query = predicate != null ? qb.Query.Where(predicate) : qb.Query;
+        var projected =
             projector != null
                 ? projector(query)
                 : query.ProjectToType<TProjector>(typeAdapterConfig);
-        return await projectedQuery.LastOrDefaultAsync(cancellationToken);
+        return await projected.LastOrDefaultAsync(cancellationToken);
     }
 
     public async Task<bool> AnyAsync(
@@ -274,10 +267,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(null, false);
-        if (queryBuilder.Query != null && predicate != null)
-            return await queryBuilder.Query.AnyAsync(predicate, cancellationToken);
-        return false;
+        var qb = InvokeQueryBuilder(null, false);
+        return qb.Query != null && predicate != null
+            ? await qb.Query.AnyAsync(predicate, cancellationToken)
+            : false;
     }
 
     public async Task<bool> AllAsync(
@@ -285,10 +278,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(null, false);
-        if (queryBuilder.Query != null && predicate != null)
-            return await queryBuilder.Query.AllAsync(predicate, cancellationToken);
-        return false;
+        var qb = InvokeQueryBuilder(null, false);
+        return qb.Query != null && predicate != null
+            ? await qb.Query.AllAsync(predicate, cancellationToken)
+            : false;
     }
 
     public async Task<int> CountAsync(
@@ -296,27 +289,27 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         CancellationToken cancellationToken = default
     )
     {
-        var queryBuilder = InvokeQueryBuilder(null, false);
-        if (queryBuilder.Query != null && predicate != null)
-            return await queryBuilder.Query.CountAsync(predicate, cancellationToken);
-        return 0;
+        var qb = InvokeQueryBuilder(null, false);
+        return qb.Query != null && predicate != null
+            ? await qb.Query.CountAsync(predicate, cancellationToken)
+            : 0;
     }
 
     #endregion
 
     #region Dapper
+
     public async Task<List<TView>> GetAllAsync<TView>(string sqlQuery, object? param = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(sqlQuery);
         var result = await context.ExecuteQueryAsync<TView>(sqlQuery, param);
-
         return [.. result];
     }
 
     public virtual ValueTask<int> ExecuteAsync(
         string sql,
         object? param = null,
-        Paging? paging = null,
+        Pagination? paging = null,
         IDbTransaction? transaction = null,
         int? commandTimeout = null,
         CommandType? commandType = null,
@@ -324,25 +317,27 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
 
         string finalSql = sql;
         object? finalParam = param;
-
         if (paging != null)
         {
-            // This is a naive paging implementation for SQL Server. Adjust as needed for your DB.
             finalSql =
                 $@"
                 SELECT * FROM (
                     {sql}
                 ) AS PagedResult
                 ORDER BY (SELECT NULL)
-                OFFSET {(paging.PageIndex - 1) * paging.PageSize} ROWS
-                FETCH NEXT {paging.PageSize} ROWS ONLY
+                OFFSET @Offset ROWS
+                FETCH NEXT @Fetch ROWS ONLY
             ";
+
+            finalParam = new
+            {
+                Offset = (paging.PageIndex - 1) * paging.PageSize,
+                Fetch = paging.PageSize,
+            };
         }
 
         return context.ExecuteAsync(
@@ -365,10 +360,7 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
-
         return context.ExecuteReaderAsync(
             sql,
             param,
@@ -389,10 +381,7 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
-
         return context.FirstOrDefault<TResult>(
             sql,
             param,
@@ -429,13 +418,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(rawQuery))
-        {
             throw new ArgumentException(
                 $"'{nameof(rawQuery)}' cannot be null or empty.",
                 nameof(rawQuery)
             );
-        }
-
         return context.ExecuteQueryAsync<TEntities>(rawQuery, parameters, cancellationToken);
     }
 
@@ -446,13 +432,10 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(rawQuery))
-        {
             throw new ArgumentException(
                 $"'{nameof(rawQuery)}' cannot be null or empty.",
                 nameof(rawQuery)
             );
-        }
-
         return context.ExecuteScalarAsync<TResult?>(rawQuery, parameters, cancellationToken);
     }
 
@@ -469,20 +452,13 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
-
         ArgumentNullException.ThrowIfNull(map);
-
         if (string.IsNullOrEmpty(splitOn))
-        {
             throw new ArgumentException(
                 $"'{nameof(splitOn)}' cannot be null or empty.",
                 nameof(splitOn)
             );
-        }
-
         return context.ExecuteQueryAsync(
             sql,
             map,
@@ -509,20 +485,13 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
-
         ArgumentNullException.ThrowIfNull(map);
-
         if (string.IsNullOrEmpty(splitOn))
-        {
             throw new ArgumentException(
                 $"'{nameof(splitOn)}' cannot be null or empty.",
                 nameof(splitOn)
             );
-        }
-
         return context.ExecuteQueryAsync(
             sql,
             map,
@@ -555,20 +524,13 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
-
         ArgumentNullException.ThrowIfNull(map);
-
         if (string.IsNullOrEmpty(splitOn))
-        {
             throw new ArgumentException(
                 $"'{nameof(splitOn)}' cannot be null or empty.",
                 nameof(splitOn)
             );
-        }
-
         return context.ExecuteQueryAsync(
             sql,
             map,
@@ -602,20 +564,13 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
-
         ArgumentNullException.ThrowIfNull(map);
-
         if (string.IsNullOrEmpty(splitOn))
-        {
             throw new ArgumentException(
                 $"'{nameof(splitOn)}' cannot be null or empty.",
                 nameof(splitOn)
             );
-        }
-
         return context.ExecuteQueryAsync(
             sql,
             map,
@@ -650,20 +605,13 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
-
         ArgumentNullException.ThrowIfNull(map);
-
         if (string.IsNullOrEmpty(splitOn))
-        {
             throw new ArgumentException(
                 $"'{nameof(splitOn)}' cannot be null or empty.",
                 nameof(splitOn)
             );
-        }
-
         return context.ExecuteQueryAsync(
             sql,
             map,
@@ -683,10 +631,7 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
-
         return context.ExecuteQueryMultipleAsync<T1, T2>(sql, param);
     }
 
@@ -696,9 +641,7 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
         return context.ExecuteQueryMultipleAsync<T1, T2, T3>(sql, param);
     }
 
@@ -710,10 +653,9 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
     )> QueryMultiple<T1, T2, T3, T4>(string sql, object? param = null)
     {
         if (string.IsNullOrEmpty(sql))
-        {
             throw new ArgumentException($"'{nameof(sql)}' cannot be null or empty.", nameof(sql));
-        }
         return context.ExecuteQueryMultipleAsync<T1, T2, T3, T4>(sql, param);
     }
+
     #endregion
 }

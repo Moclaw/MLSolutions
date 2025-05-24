@@ -5,7 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>Moclawr.Services.Caching</PackageId>
-		<Version>1.0.3</Version>
+		<Version>2.0.0</Version>
 		<Authors>moclaw</Authors>
 		<Company>moclaw</Company>
 		<Description>Flexible caching solution for .NET applications, with support for Redis and in-memory caching strategies.</Description>
