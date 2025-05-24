@@ -11,7 +11,7 @@
     <Description>Domain entities and builders for the moclaw project. Provides base entity types and builder interfaces for entity construction and query building.</Description>
     <Copyright>Copyright © Moclaw 2025</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageIcon>icon.svg</PackageIcon>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
@@ -32,7 +32,7 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
-    <None Include="..\..\..\assets\icon.svg" Pack="true" PackagePath="\" />
+    <None Include="..\..\..\assets\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

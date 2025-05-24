@@ -11,7 +11,7 @@
 		<Description>Flexible caching solution for .NET applications, with support for Redis and in-memory caching strategies.</Description>
 		<Copyright>Copyright © Moclaw 2025</Copyright>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageIcon>icon.svg</PackageIcon>
+		<PackageIcon>icon.png</PackageIcon>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
@@ -38,7 +38,7 @@
 	
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
-		<None Include="..\..\..\..\assets\icon.svg" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\..\assets\icon.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 </Project>

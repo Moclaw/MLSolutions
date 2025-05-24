@@ -11,7 +11,7 @@
 		<Description>Enhanced implementation of DotNetCore.CAP for message brokers like RabbitMQ, Kafka, Redis, and others. Simplifies integration of event-based microservices.</Description>
 		<Copyright>Copyright © Moclaw 2025</Copyright>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageIcon>icon.svg</PackageIcon>
+		<PackageIcon>icon.png</PackageIcon>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
@@ -39,7 +39,7 @@
 	
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
-		<None Include="..\..\..\..\assets\icon.svg" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\..\assets\icon.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 </Project>

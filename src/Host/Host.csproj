@@ -11,7 +11,7 @@
         <Description>Host utilities and base types for the moclaw project. Provides essential infrastructure for building robust ASP.NET Core applications.</Description>
         <Copyright>Copyright © Moclaw 2025</Copyright>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageIcon>icon.svg</PackageIcon>
+        <PackageIcon>icon.png</PackageIcon>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
@@ -44,7 +44,7 @@
     
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\" />
-        <None Include="..\..\assets\icon.svg" Pack="true" PackagePath="\" />
+        <None Include="..\..\assets\icon.png" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>
