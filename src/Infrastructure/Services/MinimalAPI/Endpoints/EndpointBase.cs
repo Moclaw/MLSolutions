@@ -9,7 +9,7 @@ using Shared.Responses;
 /// </summary>
 /// <typeparam name="TRequest">The request type</typeparam>
 /// <typeparam name="TResponse">The response item type</typeparam>
-/// <typeparam name="TResponseWrapper">The response wrapper type (Response or ResponesCollection)</typeparam>
+/// <typeparam name="TResponseWrapper">The response wrapper type (Response or ResponseCollection)</typeparam>
 public abstract class EndpointBase<TRequest, TResponse, TResponseWrapper>(IMediator mediator)
     : EndpointAbstractBase
     where TRequest : class, new()

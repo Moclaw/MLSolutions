@@ -62,7 +62,7 @@ public class GetTodoEndpoint(IMediator mediator) : SingleEndpointBase<GetRequest
 public class GetAllTodosEndpoint(IMediator mediator) : CollectionEndpointBase<GetAllRequest, TodoItemDto>(mediator)
 {
     [HttpGet("api/todos")]
-    public override async Task<ResponesCollection<TodoItemDto>> HandleAsync(GetAllRequest req, CancellationToken ct)
+    public override async Task<ResponseCollection<TodoItemDto>> HandleAsync(GetAllRequest req, CancellationToken ct)
     {
         return await _mediator.Send(req, ct);
     }
@@ -250,7 +250,7 @@ The library provides standardized response handling with different response type
 
 - `Response` - Base response with success status, HTTP status code, and an optional message
 - `Response<T>` - Response with data of type T
-- `ResponesCollection<T>` - Response with a collection of items of type T
+- `ResponseCollection<T>` - Response with a collection of items of type T
 
 ```csharp
 // Success response with data
@@ -265,7 +265,7 @@ return new Response<TodoItemDto>(
 return new Response(true, 200, "Operation completed successfully");
 
 // Collection response
-return new ResponesCollection<TodoItemDto>(
+return new ResponseCollection<TodoItemDto>(
     IsSuccess: true,
     StatusCode: 200,
     Message: "Todo items retrieved successfully",
