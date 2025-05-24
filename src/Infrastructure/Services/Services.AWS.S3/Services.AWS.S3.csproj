@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageId>Moclawr.Services.AWS.S3</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>moclaw</Authors>
+        <Company>moclaw</Company>
+        <Description>AWS S3 service client implementation providing a clean, abstracted interface 
+            for interacting with Amazon S3 storage.</Description>
+        <Copyright>Copyright © Moclaw 2025</Copyright>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>aws;s3;cloud-storage;amazon-s3;file-storage;dotnet;mlsolutions</PackageTags>
+        <PackageReleaseNotes>Added improved XML documentation and bug fixes.</PackageReleaseNotes>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+
+        <PackageReference Include="AWSSDK.S3" Version="4.0.0.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+        <None Include="..\..\..\..\assets\icon.png" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+
+</Project>
