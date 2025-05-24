@@ -10,7 +10,7 @@ public class GetAllTodosEndpoint(IMediator mediator)
     : CollectionEndpointBase<GetAllRequest, GetallResponse>(mediator)
 {
     [HttpGet("api/todos")]
-    public override async Task<ResponesCollection<GetallResponse>> HandleAsync(
+    public override async Task<ResponseCollection<GetallResponse>> HandleAsync(
         GetAllRequest req,
         CancellationToken ct
     )

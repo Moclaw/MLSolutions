@@ -12,7 +12,7 @@ public interface IQueryRequest<TResponse> : IRequest<Response<TResponse>>;
 public interface IQueryHandler<in TQueryRequest, TResponse> : IRequestHandler<TQueryRequest, Response<TResponse>>
     where TQueryRequest : IQueryRequest<TResponse>;
 
-public interface IQueryCollectionRequest<TResponse> : IRequest<ResponesCollection<TResponse>>
+public interface IQueryCollectionRequest<TResponse> : IRequest<ResponseCollection<TResponse>>
     where TResponse : notnull
 {
     public string? Search { get; set; }
@@ -27,6 +27,6 @@ public interface IQueryCollectionRequest<TResponse> : IRequest<ResponesCollectio
 };
 
 public interface
-    IQueryCollectionHandler<in TQueryRequest, TResponse> : IRequestHandler<TQueryRequest, ResponesCollection<TResponse>>
+    IQueryCollectionHandler<in TQueryRequest, TResponse> : IRequestHandler<TQueryRequest, ResponseCollection<TResponse>>
     where TQueryRequest : IQueryCollectionRequest<TResponse>
     where TResponse : notnull;

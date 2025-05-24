@@ -12,7 +12,7 @@ public class GetAllHandler(
     [FromKeyedServices(ServiceKeys.QueryRepository)] IQueryRepository<TodoItem, int> queryRepository
 ) : IQueryCollectionHandler<GetAllRequest, GetallResponse>
 {
-    public async Task<ResponesCollection<GetallResponse>> Handle(
+    public async Task<ResponseCollection<GetallResponse>> Handle(
         GetAllRequest request,
         CancellationToken cancellationToken
     )
@@ -40,7 +40,7 @@ public class GetAllHandler(
             enableTracking: false,
             cancellationToken: cancellationToken
         );
-        return new ResponesCollection<GetallResponse>(
+        return new ResponseCollection<GetallResponse>(
             IsSuccess: true,
             Message: "Todo items retrieved successfully.",
             Data: todoItems.Entities,

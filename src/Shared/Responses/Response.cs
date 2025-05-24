@@ -1,4 +1,6 @@
-﻿namespace Shared.Responses;
+﻿using Shared.Utils;
+
+namespace Shared.Responses;
 
 /// <summary>
 /// Represents a basic response with success status, HTTP status code, and an optional message.
@@ -25,11 +27,12 @@ public record Response<T>(bool IsSuccess, int StatusCode, string? Message, T? Da
 /// <param name="StatusCode">The HTTP status code associated with the response.</param>
 /// <param name="Message">An optional message providing additional information about the response.</param>
 /// <param name="Data">A collection of responses included in the response.</param>
-public record ResponesCollection(
+public record ResponseCollection(
     bool IsSuccess,
     int StatusCode,
     string? Message,
-    IEnumerable<IResponse> Data
+    IEnumerable<IResponse> Data,
+    Pagination? Pagination = null
 ) : IResponse;
 
 /// <summary>
@@ -40,9 +43,11 @@ public record ResponesCollection(
 /// <param name="StatusCode">The HTTP status code associated with the response.</param>
 /// <param name="Message">An optional message providing additional information about the response.</param>
 /// <param name="Data">A collection of data included in the response.</param>
-public record ResponesCollection<T>(
+/// <param name="Pagination"></param>
+public record ResponseCollection<T>(
     bool IsSuccess,
     int StatusCode,
     string? Message,
-    IEnumerable<T> Data
+    IEnumerable<T> Data,
+    Pagination? Pagination = null
 ) : IResponse;

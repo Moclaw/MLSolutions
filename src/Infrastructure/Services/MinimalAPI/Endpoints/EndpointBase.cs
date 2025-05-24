@@ -76,6 +76,6 @@ public abstract class SingleEndpointBase<TRequest>(IMediator mediator)
 /// Base class for endpoints with request and collection response
 /// </summary>
 public abstract class CollectionEndpointBase<TRequest, TResponse>(IMediator mediator)
-    : EndpointBase<TRequest, TResponse, ResponesCollection<TResponse>>(mediator)
+    : EndpointBase<TRequest, TResponse, ResponseCollection<TResponse>>(mediator)
     where TRequest : class, new()
     where TResponse : notnull { }
