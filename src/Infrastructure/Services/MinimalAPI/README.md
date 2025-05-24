@@ -1,91 +1,280 @@
-# Simple Minimal API Library for .NET 9
+# Minimal API Library for .NET 9
 
 This library provides a structured approach to creating Minimal APIs in .NET 9 with the following features:
 
-- Controller-like attribute routing
-- Built-in MediatR integration
-- Support for CQRS pattern
-- Simple and clean API definition
+- Controller-like attribute routing with HTTP method attributes
+- Built-in MediatR integration for CQRS implementation
+- Strong typing for requests and responses
+- Automatic model binding from various sources (route, query, body, form, header)
+- Standardized response handling
+- Support for versioning and authorization
 
 ## Getting Started
 
-1. Add a reference to the SimpleMinimalAPI project in your application.
-2. Register the SimpleMinimalAPI services in your `Program.cs` file.
-3. Create endpoint classes and implement your API methods.
+1. Add a reference to the MinimalAPI project in your application.
+2. Register the MinimalAPI services in your `Program.cs` file.
+3. Create endpoint classes that inherit from `EndpointBase`.
 4. Map all endpoints in your `Program.cs` file.
 
 ## Usage Example
 
 ### Step 1: Register Services
 
-In your `Program.cs` file, register the Simple Minimal API services:
+In your `Program.cs` file, register the Minimal API services:
 
 ```csharp
-// Add SimpleMinimalAPI services (including MediatR)
-builder.Services.AddSimpleMinimalApi(typeof(Program).Assembly);
+// Register Minimal API services
+builder.Services.AddMinimalApi(
+    typeof(Program).Assembly,  // Endpoints assembly
+    typeof(Application).Assembly,  // Handlers assembly
+    typeof(Infrastructure).Assembly  // Infrastructure assembly
+);
 
 // ... other service registrations
 
 var app = builder.Build();
 
 // Map all endpoints from the assembly
-app.MapSimpleMinimalEndpoints(typeof(Program).Assembly);
+app.MapMinimalEndpoints(typeof(Program).Assembly);
 ```
 
 ### Step 2: Create Endpoint Classes
 
-Create classes that inherit from `EndpointBase` or one of the specialized endpoint classes. You can also use the generic `Endpoint<TRequest, TResponse>` for custom logic:
+Create classes that inherit from `EndpointBase<TRequest, TResponse>` for endpoints that return data:
 
 ```csharp
-[Route("api/todos")]
-public class TodoEndpoint : Endpoint<TodoRequest, TodoResponse>
+public class GetAllTodosEndpoint(IMediator mediator) : EndpointBase<GetAllRequest, GetAllResponse>(mediator)
 {
-    public override async Task<TodoResponse> HandleAsync(TodoRequest req, CancellationToken ct)
+    [HttpGet("api/todos")]
+    public override async Task<Response<GetAllResponse>> HandleAsync(GetAllRequest req, CancellationToken ct)
     {
-        // Your business logic here
-        return new TodoResponse(/* ... */);
+        return await _mediator.Send(req, ct);
     }
 }
 ```
 
-### Step 3: Create MediatR Command/Query Classes
+Or use `EndpointBase<TRequest>` for endpoints that don't return data:
 
 ```csharp
-// Query with result
-public record GetAllTodosQuery() : IRequest<IEnumerable<TodoItem>>;
-
-// Command with result
-public record CreateTodoCommand(string Title) : IRequest<int>;
-
-// Command without result
-public record DeleteTodoCommand(int Id) : IRequest;
-```
-
-### Step 4: Implement MediatR Handlers
-
-```csharp
-public class GetAllTodosQueryHandler : IRequestHandler<GetAllTodosQuery, IEnumerable<TodoItem>>
+public class DeleteTodoEndpoint(IMediator mediator) : EndpointBase<DeleteRequest>(mediator)
 {
-    private readonly ITodoRepository _repository;
-    public GetAllTodosQueryHandler(ITodoRepository repository)
+    [HttpDelete("api/todos/{id}")]
+    public override async Task<Response> HandleAsync(DeleteRequest req, CancellationToken ct)
     {
-        _repository = repository;
-    }
-    public async Task<IEnumerable<TodoItem>> Handle(GetAllTodosQuery request, CancellationToken cancellationToken)
-    {
-        return await _repository.GetAllAsync(cancellationToken);
+        return await _mediator.Send(req, ct);
     }
 }
 ```
 
-## Endpoint<TRequest, TResponse> Usage
+### Step 3: Create Request Classes
 
-- The `Endpoint<TRequest, TResponse>` base class allows you to define endpoints with strong typing for request and response.
-- The framework will call `HandleAsync` with the bound request object.
-- If your response implements `IResponse`, the HTTP status code will be set from `StatusCode` property.
-- The response is serialized to JSON and written to the HTTP response.
-- No dependency on custom binders or context classes is required for basic usage.
+For commands that modify data and return a result:
 
-## Specialized Endpoint Classes
+```csharp
+public class CreateRequest : ICommand<CreateResponse>
+{
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+}
 
-You can still use specialized endpoint classes for CQRS and MediatR integration as shown in the previous examples.
+public class CreateResponse
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+}
+```
+
+For commands that don't return data:
+
+```csharp
+public class DeleteRequest : ICommand
+{
+    [FromRoute]
+    public int Id { get; set; }
+}
+```
+
+For queries that return data:
+
+```csharp
+public class GetAllRequest : IQueryRequest<GetAllResponse>
+{
+    public string? Search { get; set; }
+    public int PageIndex { get; set; } = 0;
+    public int PageSize { get; set; } = 10;
+}
+
+public class GetAllResponse
+{
+    public List<TodoItemDto> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+}
+```
+
+### Step 4: Implement Command/Query Handlers
+
+Command handler with response:
+
+```csharp
+public class CreateHandler(ITodoRepository repository) : ICommandHandler<CreateRequest, CreateResponse>
+{
+    private readonly ITodoRepository _repository = repository;
+
+    public async Task<Response<CreateResponse>> Handle(CreateRequest request, CancellationToken cancellationToken)
+    {
+        var todo = new TodoItem
+        {
+            Title = request.Title,
+            Description = request.Description
+        };
+
+        var id = await _repository.AddAsync(todo, cancellationToken);
+        await _repository.SaveChangeAsync(cancellationToken);
+
+        return new Response<CreateResponse>
+        {
+            Data = new CreateResponse { Id = id, Title = todo.Title }
+        };
+    }
+}
+```
+
+Command handler without response:
+
+```csharp
+public class DeleteHandler(ITodoRepository repository) : ICommandHandler<DeleteRequest>
+{
+    private readonly ITodoRepository _repository = repository;
+
+    public async Task<Response> Handle(DeleteRequest request, CancellationToken cancellationToken)
+    {
+        var todo = await _repository.GetByIdAsync(request.Id, cancellationToken);
+        if (todo == null)
+            return Response.NotFound($"Todo with id {request.Id} not found");
+
+        _repository.Remove(todo);
+        await _repository.SaveChangeAsync(cancellationToken);
+
+        return Response.Success();
+    }
+}
+```
+
+Query handler:
+
+```csharp
+public class GetAllHandler(ITodoRepository repository) : IQueryHandler<GetAllRequest, GetAllResponse>
+{
+    private readonly ITodoRepository _repository = repository;
+
+    public async Task<Response<GetAllResponse>> Handle(GetAllRequest request, CancellationToken cancellationToken)
+    {
+        var (items, totalCount) = await _repository.GetPaginatedAsync(
+            request.Search, 
+            request.PageIndex, 
+            request.PageSize, 
+            cancellationToken
+        );
+
+        return new Response<GetAllResponse>
+        {
+            Data = new GetAllResponse
+            {
+                Items = items.Select(i => new TodoItemDto
+                {
+                    Id = i.Id,
+                    Title = i.Title,
+                    Description = i.Description,
+                    IsCompleted = i.IsCompleted
+                }).ToList(),
+                TotalCount = totalCount
+            }
+        };
+    }
+}
+```
+
+## Advanced Features
+
+### Model Binding
+
+The framework automatically binds request data from various sources:
+
+- `[FromRoute]` - Bind from route parameters
+- `[FromQuery]` - Bind from query string
+- `[FromBody]` - Bind from request body (JSON)
+- `[FromForm]` - Bind from form data
+- `[FromHeader]` - Bind from HTTP headers
+- `[FromServices]` - Inject services from DI container
+
+Example:
+```csharp
+public class UpdateRequest : ICommand<UpdateResponse>
+{
+    [FromRoute]
+    public int Id { get; set; }
+    
+    [FromBody]
+    public string Title { get; set; } = string.Empty;
+    
+    [FromBody]
+    public string? Description { get; set; }
+    
+    [FromQuery]
+    public bool IsCompleted { get; set; }
+    
+    [FromServices]
+    public ICurrentUserService CurrentUser { get; set; } = null!;
+}
+```
+
+### Response Handling
+
+The `Response` and `Response<T>` classes provide standardized response handling:
+
+```csharp
+// Success response with data
+return new Response<TodoItemDto>
+{
+    Data = todoDto,
+    Message = "Todo item retrieved successfully"
+};
+
+// Success response without data
+return Response.Success("Operation completed successfully");
+
+// Error responses
+return Response.NotFound("Todo item not found");
+return Response.BadRequest("Invalid input data");
+return Response.Forbidden("You don't have permission to access this resource");
+return Response.Error("An error occurred", StatusCodes.Status500InternalServerError);
+```
+
+### Versioning
+
+The library supports API versioning:
+
+```csharp
+[HttpGet("api/v{version}/todos")]
+public override async Task<Response<GetAllResponse>> HandleAsync(GetAllRequest req, CancellationToken ct)
+{
+    return await _mediator.Send(req, ct);
+}
+```
+
+### Authorization
+
+You can apply authorization to endpoints:
+
+```csharp
+[HttpPost("api/todos")]
+[Authorize(Roles = "Admin,Editor")]
+public override async Task<Response<CreateResponse>> HandleAsync(CreateRequest req, CancellationToken ct)
+{
+    return await _mediator.Send(req, ct);
+}
+```
+
+## Conclusion
+
+This MinimalAPI library provides a structured approach to building APIs with minimal boilerplate while maintaining the benefits of strong typing, dependency injection, and separation of concerns through the CQRS pattern.

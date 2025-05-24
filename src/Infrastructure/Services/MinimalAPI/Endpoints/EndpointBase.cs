@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using MinimalAPI.Extensions;
 using Shared.Responses;
 using System.Text.Json;
+using System.Reflection;
+using MinimalAPI.Attributes;
+using MinimalAPI.Endpoints;
 
 namespace MinimalAPI.Endpoints;
 
@@ -20,7 +22,7 @@ public abstract partial class EndpointBase<TRequest, TResponse>(IMediator mediat
         TRequest req = default!;
         if (typeof(TRequest) != typeof(object))
         {
-            req = await HttpContext.BindAsync<TRequest>(ct);
+            req = await EndpointBindingHelper.BindAsync<TRequest>(HttpContext, ct);
         }
 
         var res = await HandleAsync(req, ct);
@@ -58,7 +60,7 @@ public abstract partial class EndpointBase<TRequest>(IMediator mediator) : Endpo
         TRequest req = default!;
         if (typeof(TRequest) != typeof(object))
         {
-            req = await HttpContext.BindAsync<TRequest>(ct);
+            req = await EndpointBindingHelper.BindAsync<TRequest>(HttpContext, ct);
         }
         var res = await HandleAsync(req, ct);
         var statusCode = 200;

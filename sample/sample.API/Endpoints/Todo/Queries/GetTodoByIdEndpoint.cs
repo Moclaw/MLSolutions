@@ -6,11 +6,9 @@ using Response = sample.Application.Features.Todo.Queries.GetById.Response;
 
 namespace sample.API.Endpoints.Todo.Queries;
 
-[Route("api/todos/{id}")]
 public class GetTodoByIdEndpoint(IMediator mediator) : EndpointBase<Request, Response>(mediator)
 {
-    [HttpGet]
-
+    [HttpGet("api/todos/{id}")]
     public override async Task<Shared.Responses.Response<Response>> HandleAsync(Request req, CancellationToken ct)
     {
         return await _mediator.Send(req, ct);

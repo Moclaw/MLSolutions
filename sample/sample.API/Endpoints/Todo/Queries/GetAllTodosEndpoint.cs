@@ -6,10 +6,9 @@ using Shared.Responses;
 
 namespace sample.API.Endpoints.Todo.Queries;
 
-[Route("api/todos")]
 public class GetAllTodosEndpoint(IMediator mediator) : EndpointBase<GetAllRequest, GetallResponse>(mediator)
 {
-    [HttpGet]
+    [HttpGet("api/todos")]
     public override async Task<Response<GetallResponse>> HandleAsync(GetAllRequest req, CancellationToken ct)
     {
         return await _mediator.Send(req, ct);

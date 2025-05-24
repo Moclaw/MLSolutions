@@ -21,3 +21,10 @@ public abstract class VersioningOptions
         return string.Join(string.Empty, [Prefix, DefaultVersion]);
     }
 }
+
+/// <summary>
+/// Default implementation of VersioningOptions
+/// </summary>
+public class DefaultVersioningOptions : VersioningOptions
+{
+}

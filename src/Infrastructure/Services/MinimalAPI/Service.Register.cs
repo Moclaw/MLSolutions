@@ -1,7 +1,7 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
 namespace MinimalAPI;
 
@@ -27,11 +27,10 @@ public static partial class Register
         {
             var referencedAssemblies = assembly
                 .GetReferencedAssemblies()
-                .Where(
-                    a =>
-                        a.Name?.Contains("Application") == true
-                        || a.Name?.Contains("Features") == true
-                        || a.Name?.Contains("Handlers") == true
+                .Where(a =>
+                    a.Name?.Contains("Application") == true
+                    || a.Name?.Contains("Features") == true
+                    || a.Name?.Contains("Handlers") == true
                 )
                 .Select(Assembly.Load);
 
@@ -39,8 +38,8 @@ public static partial class Register
         }
 
         // Register MediatR services
-        services.AddMediatR(
-            cfg => cfg.RegisterServicesFromAssemblies([.. allAssemblies.Distinct()])
+        services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssemblies([.. allAssemblies.Distinct()])
         );
 
         return services;
@@ -60,30 +59,20 @@ public static partial class Register
         // Find all endpoint classes (classes deriving from EndpointBase)
         var endpointTypes = assemblies
             .SelectMany(a => a.GetTypes())
-            .Where(
-                t =>
-                    !t.IsAbstract
-                    && !t.IsInterface
-                    && t.IsAssignableTo(typeof(MinimalAPI.Endpoints.EndpointAbstractBase))
+            .Where(t =>
+                !t.IsAbstract
+                && !t.IsInterface
+                && t.IsAssignableTo(typeof(MinimalAPI.Endpoints.EndpointAbstractBase))
             )
             .ToList();
 
         foreach (var endpointType in endpointTypes)
         {
-            // Get route attribute
-            var routeAttr = endpointType.GetCustomAttribute<MinimalAPI.Attributes.RouteAttribute>();
-            if (routeAttr == null)
-                continue;
-
-            string basePath = routeAttr.Template;
-
             // Find all handler methods with HTTP method attributes
             var methods = endpointType
                 .GetMethods()
-                .Where(
-                    m =>
-                        m.GetCustomAttributes()
-                            .Any(a => a is MinimalAPI.Attributes.HttpMethodAttribute)
+                .Where(m =>
+                    m.GetCustomAttributes().Any(a => a is MinimalAPI.Attributes.HttpMethodAttribute)
                 )
                 .ToList();
 
@@ -96,17 +85,11 @@ public static partial class Register
                         .FirstOrDefault(a => a is MinimalAPI.Attributes.HttpMethodAttribute)
                     as MinimalAPI.Attributes.HttpMethodAttribute;
 
-                if (httpMethodAttr == null)
+                if (httpMethodAttr == null || string.IsNullOrEmpty(httpMethodAttr.Route))
                     continue;
 
-                // Create the full route template
-                string routeTemplate = basePath;
-                if (!string.IsNullOrEmpty(httpMethodAttr.Route))
-                {
-                    routeTemplate = string.IsNullOrEmpty(routeTemplate)
-                        ? httpMethodAttr.Route
-                        : $"{routeTemplate}/{httpMethodAttr.Route}";
-                }
+                // Use the route template directly from the HTTP method attribute
+                string routeTemplate = httpMethodAttr.Route;
 
                 // Create the endpoint handler
                 var handler = app.MapMethods(

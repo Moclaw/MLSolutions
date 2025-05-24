@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 
 namespace MinimalAPI;
 
@@ -9,7 +9,7 @@ public sealed record EndpointDefinition(Type EndpointType, Type RequestType, Typ
 {
     public string? RouteGroupPath { get; internal set; }
     internal IEndpointFilter[] EndpointFilters { get; set; } = [];
-    public VersioningOptions Version { get; internal set; }
+    public VersioningOptions Version { get; internal set; } = new DefaultVersioningOptions();
     public string[] Verbs { internal get; set; } = [];
     public object[] EndpointAttributes { get; internal set; } = [];
 
@@ -22,8 +22,8 @@ public sealed record EndpointDefinition(Type EndpointType, Type RequestType, Typ
     public List<string>? PreBuiltUserPolicies { get; private set; }
     public Action<AuthorizationPolicyBuilder>? PolicyBuilder { get; private set; }
 
-    public void Policy(Action<AuthorizationPolicyBuilder> policy)
-        => PolicyBuilder = policy + PolicyBuilder;
+    public void Policy(Action<AuthorizationPolicyBuilder> policy) =>
+        PolicyBuilder = policy + PolicyBuilder;
 
     public void Policies(params string[] policyNames)
     {
@@ -50,6 +50,8 @@ public sealed record EndpointDefinition(Type EndpointType, Type RequestType, Typ
     internal readonly bool Disposable = EndpointType.IsAssignableTo(typeof(IDisposable));
     internal readonly bool DisposableAsync = EndpointType.IsAssignableTo(typeof(IAsyncDisposable));
 
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
     internal object? RequestBinder;
     internal JsonSerializerContext? SerializerContext;
+#pragma warning restore CS0649
 }
