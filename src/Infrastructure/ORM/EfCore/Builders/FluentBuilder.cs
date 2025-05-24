@@ -6,7 +6,6 @@ using Shared.Entities;
 using System.Linq.Expressions;
 
 namespace EfCore.Builders;
-
 /// <summary>
 /// A fluent builder for constructing dynamic IQueryable queries with ordering, including, and filter ignoring support.
 /// </summary>
@@ -28,7 +27,8 @@ internal class FluentBuilder<TEntity> : IFluentBuilder<TEntity>
         set { _query = value; }
     }
 
-    internal FluentBuilder(IQueryable<TEntity> query, IOrderedQueryable<TEntity>? order = default, FluentBuilder<TEntity>? root = default)
+    internal FluentBuilder(IQueryable<TEntity> query, IOrderedQueryable<TEntity>? order = default,
+        FluentBuilder<TEntity>? root = default)
     {
         _query = query;
         _order = order;
@@ -64,7 +64,8 @@ internal class FluentBuilder<TEntity> : IFluentBuilder<TEntity>
         return this;
     }
 
-    public virtual IFluentBuilder<TEntity> OrderByDescending<TProperty>(Expression<Func<TEntity, TProperty>> keySelector)
+    public virtual IFluentBuilder<TEntity> OrderByDescending<TProperty>(
+        Expression<Func<TEntity, TProperty>> keySelector)
     {
         _order = _order is null ? _query.OrderByDescending(keySelector) : _order.ThenByDescending(keySelector);
         _query = _order;
@@ -73,20 +74,25 @@ internal class FluentBuilder<TEntity> : IFluentBuilder<TEntity>
         return this;
     }
 
-    public virtual IFluentBuilder<TEntity, TProperty, TProperty> Include<TProperty>(Expression<Func<TEntity, TProperty?>> navigationProperty)
-       where TProperty : class, IEntity
+    public virtual IFluentBuilder<TEntity, TProperty, TProperty> Include<TProperty>(
+        Expression<Func<TEntity, TProperty?>> navigationProperty)
+        where TProperty : class, IEntity
     {
         _query = _query.Include(navigationProperty);
         _root?.UpdateQuery(_query);
-        var builder = new FluentBuilder<TEntity, TProperty, TProperty>((_root ?? this).Query, (_root ?? this).QueryOrder, _root ?? this);
+        var builder =
+            new FluentBuilder<TEntity, TProperty, TProperty>((_root ?? this).Query, (_root ?? this).QueryOrder,
+                _root ?? this);
         return builder;
     }
 
-    public virtual IFluentBuilder<TEntity, IEnumerable<TProperty>, TProperty> Include<TProperty>(Expression<Func<TEntity, IEnumerable<TProperty>>> navigationProperty)
+    public virtual IFluentBuilder<TEntity, IEnumerable<TProperty>, TProperty> Include<TProperty>(
+        Expression<Func<TEntity, IEnumerable<TProperty>>> navigationProperty)
     {
         _query = _query.Include(navigationProperty);
         _root?.UpdateQuery(_query);
-        var builder = new FluentBuilder<TEntity, IEnumerable<TProperty>, TProperty>((_root ?? this).Query, (_root ?? this).QueryOrder, _root ?? this);
+        var builder = new FluentBuilder<TEntity, IEnumerable<TProperty>, TProperty>((_root ?? this).Query,
+            (_root ?? this).QueryOrder, _root ?? this);
         return builder;
     }
 
@@ -106,7 +112,9 @@ internal class FluentBuilder<TEntity> : IFluentBuilder<TEntity>
 
     public IFluentBuilder<TEntity> OrderByProperty(string propertyName, bool isDescending)
     {
-        _query = _order is null ? _query.OrderByProperty(propertyName, isDescending) : _query.ThenOrderByProperty(propertyName, isDescending);
+        _query = _order is null
+            ? _query.OrderByProperty(propertyName, isDescending)
+            : _query.ThenOrderByProperty(propertyName, isDescending);
         _order = _query as IOrderedQueryable<TEntity>;
 
         _root?.UpdateQuery(_query);
@@ -114,43 +122,67 @@ internal class FluentBuilder<TEntity> : IFluentBuilder<TEntity>
     }
 }
 
-
-internal class FluentBuilder<TEntity, TProperty, TGeneric>(IQueryable<TEntity> query, IOrderedQueryable<TEntity>? order, FluentBuilder<TEntity> root) : FluentBuilder<TEntity>(query, order, root), IFluentBuilder<TEntity, TProperty, TGeneric>
+internal class FluentBuilder<TEntity, TProperty, TGeneric>(
+    IQueryable<TEntity> query,
+    IOrderedQueryable<TEntity>? order,
+    FluentBuilder<TEntity> root)
+    : FluentBuilder<TEntity>(query, order, root), IFluentBuilder<TEntity, TProperty, TGeneric>
     where TEntity : class, IEntity
 {
-    public IFluentBuilder<TEntity, IEnumerable<TNextProperty>, TNextProperty> ThenInclude<TNextProperty>(Expression<Func<TGeneric, IEnumerable<TNextProperty>>> navigationProperty)
+    public IFluentBuilder<TEntity, IEnumerable<TNextProperty>, TNextProperty> ThenInclude<TNextProperty>(
+        Expression<Func<TGeneric, IEnumerable<TNextProperty>>> navigationProperty
+    )
     {
         if (_root?.Query is IIncludableQueryable<TEntity, TGeneric> singleInclude)
         {
             _root.Query = singleInclude.ThenInclude(navigationProperty);
 
-            return new FluentBuilder<TEntity, IEnumerable<TNextProperty>, TNextProperty>(_root.Query, _root.QueryOrder, _root);
+            return new FluentBuilder<TEntity, IEnumerable<TNextProperty>, TNextProperty>(
+                _root.Query,
+                _root.QueryOrder,
+                _root
+            );
         }
 
         if (_root?.Query is IIncludableQueryable<TEntity, IEnumerable<TGeneric>> collectionInclude)
         {
             _root.Query = collectionInclude.ThenInclude(navigationProperty);
 
-            return new FluentBuilder<TEntity, IEnumerable<TNextProperty>, TNextProperty>(_root.Query, _root.QueryOrder, _root);
+            return new FluentBuilder<TEntity, IEnumerable<TNextProperty>, TNextProperty>(
+                _root.Query,
+                _root.QueryOrder,
+                _root
+            );
         }
 
         throw new InvalidOperationException("Theninclude do not support type");
     }
 
-    public IFluentBuilder<TEntity, TNextProperty, TNextProperty> ThenInclude<TNextProperty>(Expression<Func<TGeneric, TNextProperty?>> navigationProperty) where TNextProperty : class, IEntity
+    public IFluentBuilder<TEntity, TNextProperty, TNextProperty> ThenInclude<TNextProperty>(
+        Expression<Func<TGeneric, TNextProperty?>> navigationProperty
+    )
+        where TNextProperty : class, IEntity
     {
         if (_root?.Query is IIncludableQueryable<TEntity, TGeneric> singleInclude)
         {
             _root.Query = singleInclude.ThenInclude(navigationProperty);
 
-            return new FluentBuilder<TEntity, TNextProperty, TNextProperty>(_root.Query, _order, _root);
+            return new FluentBuilder<TEntity, TNextProperty, TNextProperty>(
+                _root.Query,
+                _order,
+                _root
+            );
         }
 
         if (_root?.Query is IIncludableQueryable<TEntity, IEnumerable<TGeneric>> collectionInclude)
         {
             _root.Query = collectionInclude.ThenInclude(navigationProperty);
 
-            return new FluentBuilder<TEntity, TNextProperty, TNextProperty>(_root.Query, _order, _root);
+            return new FluentBuilder<TEntity, TNextProperty, TNextProperty>(
+                _root.Query,
+                _order,
+                _root
+            );
         }
 
         throw new InvalidOperationException("Theninclude do not support type");

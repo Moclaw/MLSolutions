@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using sample.Domain.Constants;
 using sample.Infrastructure.Persistence.EfCore;
 using sample.Infrastructure.Repositories;
@@ -19,7 +20,10 @@ namespace sample.Infrastructure
         {
             // Register DbContext
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlite(configuration.GetConnectionString("DefaultConnection"))
+                    .EnableSensitiveDataLogging()
+                    .LogTo(Console.WriteLine, LogLevel.Information)
+                );
             // Register repositories
             services.AddKeyedScoped(
                 typeof(ICommandRepository),

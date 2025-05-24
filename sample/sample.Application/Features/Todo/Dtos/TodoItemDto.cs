@@ -1,4 +1,5 @@
-﻿using sample.Domain.Entities;
+﻿using System.Collections.Generic;
+using sample.Domain.Entities;
 
 namespace sample.Application.Features.Todo.Dtos
 {
@@ -10,5 +11,8 @@ namespace sample.Application.Features.Todo.Dtos
         public bool IsCompleted { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
+        public int? CategoryId { get; set; }
+        public string? CategoryName { get; set; }
+        public ICollection<TagDto> Tags { get; set; } = new List<TagDto>();
     }
 }

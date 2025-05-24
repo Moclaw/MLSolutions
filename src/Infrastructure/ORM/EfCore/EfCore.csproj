@@ -5,7 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>Moclawr.EfCore</PackageId>
-		<Version>2.0.0</Version>
+		<Version>2.0.1</Version>
 		<Authors>moclaw</Authors>
 		<Company>moclaw</Company>
 		<Description>EF Core integration for the moclaw project. Provides base context, repositories, and builders for relational data access.</Description>

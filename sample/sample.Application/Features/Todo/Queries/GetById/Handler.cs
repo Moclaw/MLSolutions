@@ -17,6 +17,9 @@ public class Handler([FromKeyedServices(ServiceKeys.QueryRepository)] IQueryRepo
     {
         var todoItem = await queryRepository.FirstOrDefaultAsync(
             t => t.Id == request.Id,
+            builder: b => b
+                .Include(t => t.Category)
+                .Include(t => t.Tags),
             cancellationToken: cancellationToken
         );
 

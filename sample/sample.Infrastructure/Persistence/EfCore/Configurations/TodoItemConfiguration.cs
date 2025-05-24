@@ -17,6 +17,12 @@ namespace sample.Infrastructure.Persistence.EfCore.Configurations
             builder.Property(t => t.IsCompleted).IsRequired();
 
             builder.Property(t => t.CreatedAt).IsRequired();
+
+            // Configure the relationship from the TodoItem side
+            builder.HasOne(t => t.Category)
+                .WithMany(c => c.TodoItems)
+                .HasForeignKey(t => t.CategoryId)
+                .IsRequired(false); // Allow null CategoryId
         }
     }
 }
