@@ -5,6 +5,11 @@ using sample.Application.Features.Todo.Commands.AssignTags;
 using Response = sample.Application.Features.Todo.Commands.AssignTags.Response;
 
 namespace sample.API.Endpoints.Todo.Commands;
+
+[MinimalAPI.Attributes.EndpointSummary("Assign tags to todo", Description = "Assigns multiple tags to a specific todo item")]
+[OpenApiParameter("todoId", typeof(int), Description = "The ID of the todo item", Required = true, Location = ParameterLocation.Path)]
+[OpenApiResponse(200, ResponseType = typeof(Response), Description = "Tags assigned successfully")]
+[OpenApiResponse(404, Description = "Todo item or tags not found")]
 public class AssignTagsEndpoint(IMediator mediator)
     : SingleEndpointBase<Request, Response>(mediator)
 {

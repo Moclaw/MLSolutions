@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using MinimalAPI.OpenApi;
 
 namespace MinimalAPI;
 
@@ -41,6 +42,32 @@ public static partial class Register
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssemblies([.. allAssemblies.Distinct()])
         );
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds MinimalAPI services with enhanced OpenAPI documentation
+    /// </summary>
+    /// <param name="services">The service collection</param>
+    /// <param name="title">API title</param>
+    /// <param name="version">API version</param>
+    /// <param name="description">API description</param>
+    /// <param name="assemblies">Assemblies to scan for endpoint handlers</param>
+    /// <returns>The service collection</returns>
+    public static IServiceCollection AddMinimalApiWithOpenApi(
+        this IServiceCollection services,
+        string title = "API",
+        string version = "v1",
+        string? description = null,
+        params Assembly[] assemblies
+    )
+    {
+        // Add base MinimalAPI services
+        services.AddMinimalApi(assemblies);
+
+        // Add enhanced OpenAPI documentation
+        services.AddMinimalApiOpenApi(title, version, description, assemblies);
 
         return services;
     }

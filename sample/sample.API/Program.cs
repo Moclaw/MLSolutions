@@ -2,6 +2,7 @@ using Host;
 using Host.Services;
 using Microsoft.EntityFrameworkCore;
 using MinimalAPI;
+using MinimalAPI.OpenApi;
 using sample.Application;
 using sample.Infrastructure;
 using sample.Infrastructure.Persistence.EfCore;
@@ -15,26 +16,29 @@ var configuration = builder.Configuration;
 builder.AddSerilog(configuration, appName);
 
 // Register other services
-builder
-    .Services.AddCorsServices(configuration)
-    .AddMinimalApi(
-        typeof(Program).Assembly,
-        typeof(sample.Application.Register).Assembly,
-        typeof(sample.Infrastructure.Register).Assembly
+builder.Services
+    .AddCorsServices(configuration)
+    .AddMinimalApiWithOpenApi(
+        title: "Todo API",
+        version: "v1",
+        description: "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR and CQRS pattern",
+        assemblies: [
+            typeof(Program).Assembly,
+            typeof(sample.Application.Register).Assembly,
+            typeof(sample.Infrastructure.Register).Assembly
+        ]
     )
     .AddGlobalExceptionHandling(appName)
     .AddHealthCheck(configuration)
     // Register Infrastructure and Application services
     .AddInfrastructureServices(configuration)
-    .AddApplicationServices(configuration)
-    // Register OpenAPI/Swagger
-    .AddOpenApi();
+    .AddApplicationServices(configuration);
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseMinimalApiOpenApi();
 }
 
 using (var scope = app.Services.CreateScope())
