@@ -376,3 +376,5 @@ sample/.idea/.idea.sample/.idea/vcs.xml
 sample/.idea/.idea.sample/.idea/projectSettingsUpdater.xml
 sample/.idea/.idea.sample/.idea/workspace.xml
 /.editorconfig
+sample/sample.API/todo.db-wal
+sample/sample.API/todo.db-shm
