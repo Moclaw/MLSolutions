@@ -10,6 +10,7 @@ Key Features:
 - Strong typing for requests and responses
 - **Smart automatic parameter binding with intelligent defaults**
 - **Enhanced OpenAPI documentation with automatic parameter detection**
+- **Rich SwaggerUI integration with custom styling and functionality**
 - Standardized response handling
 - Support for versioning and authorization
 - **Command/Query pattern support with automatic binding defaults**
@@ -25,18 +26,37 @@ Key Features:
 
 ### Step 1: Register Services
 
-In your `Program.cs` file, register the Minimal API services with enhanced OpenAPI:
-
+#### Option A: OpenAPI Only
 ```csharp
-// Register Minimal API services with OpenAPI documentation
+// Register Minimal API services with OpenAPI documentation only
 builder.Services.AddMinimalApiWithOpenApi(
     title: "Todo API",
     version: "v1", 
     description: "Comprehensive API for Todo Management",
     assemblies: [
-        typeof(Program).Assembly,  // Endpoints assembly
-        typeof(Application.Register).Assembly,  // Handlers assembly
-        typeof(Infrastructure.Register).Assembly  // Infrastructure assembly
+        typeof(Program).Assembly,
+        typeof(Application.Register).Assembly,
+        typeof(Infrastructure.Register).Assembly
+    ]
+);
+```
+
+#### Option B: Complete Documentation with SwaggerUI (Recommended)
+```csharp
+// Register Minimal API services with enhanced SwaggerUI
+builder.Services.AddMinimalApiWithSwaggerUI(
+    title: "Todo API",
+    version: "v1",
+    description: "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR and CQRS pattern",
+    contactName: "Your Development Team",
+    contactEmail: "dev@yourcompany.com",
+    contactUrl: "https://yourcompany.com/contact",
+    licenseName: "MIT",
+    licenseUrl: "https://opensource.org/licenses/MIT",
+    assemblies: [
+        typeof(Program).Assembly,
+        typeof(Application.Register).Assembly,
+        typeof(Infrastructure.Register).Assembly
     ]
 );
 
@@ -44,17 +64,49 @@ builder.Services.AddMinimalApiWithOpenApi(
 
 var app = builder.Build();
 
-// Enable OpenAPI in development
+// Enable complete documentation (OpenAPI + SwaggerUI)
 if (app.Environment.IsDevelopment())
 {
-    app.UseMinimalApiOpenApi();
+    app.UseMinimalApiDocs(
+        swaggerRoutePrefix: "docs",  // Custom route: /docs
+        enableTryItOut: true,
+        enableDeepLinking: true,
+        enableFilter: true
+    );
 }
 
 // Map all endpoints from the assembly
 app.MapMinimalEndpoints(typeof(Program).Assembly);
 ```
 
-### Step 2: Create Request Classes with Smart Defaults
+### Step 2: SwaggerUI-Specific Features
+
+#### Enhanced UI Configuration
+```csharp
+// Advanced SwaggerUI configuration
+app.UseMinimalApiSwaggerUI(
+    routePrefix: "api-docs",           // Custom route prefix
+    enableTryItOut: true,              // Enable "Try it out" by default
+    enableDeepLinking: true,           // Enable deep linking
+    enableFilter: true,                // Enable endpoint filtering
+    enableValidator: false,            // Disable validator
+    docExpansion: DocExpansion.List,   // Expand operations list
+    defaultModelRendering: ModelRendering.Example, // Show examples
+    persistAuthorization: true        // Remember auth tokens
+);
+```
+
+#### Custom Styling and Assets
+The SwaggerUI comes with enhanced styling and custom functionality:
+
+**Features:**
+- **Custom CSS**: Modern gradient header, enhanced colors, better readability
+- **Copy Buttons**: Automatic copy buttons for code blocks
+- **Enhanced Buttons**: Styled "Try it out" and "Execute" buttons
+- **Responsive Design**: Better mobile and tablet experience
+- **Custom JavaScript**: Enhanced functionality and user experience
+
+### Step 3: Create Request Classes with Smart Defaults
 
 #### Command Requests (Default to Request Body)
 
@@ -117,14 +169,18 @@ public class GetTodoByIdRequest : IQueryRequest<TodoItemDto>
 }
 ```
 
-### Step 3: Create Endpoint Classes with OpenAPI Documentation
+### Step 4: Create Endpoint Classes with Enhanced Documentation
 
-#### Command Endpoints with Auto-Generated Documentation
+#### Command Endpoints with Rich SwaggerUI Documentation
 
 ```csharp
-[EndpointSummary("Create a new todo", Description = "Creates a new todo item with the provided details")]
-[OpenApiResponse(201, ResponseType = typeof(Response<CreateTodoResponse>), Description = "Todo created successfully")]
-[OpenApiResponse(400, Description = "Invalid request data")]
+[OpenApiSummary("Create a new todo", 
+    Description = "Creates a new todo item with the provided details. Supports categorization and tagging.",
+    Tags = new[] { "Todo Management", "CRUD Operations" })]
+[OpenApiResponse(201, ResponseType = typeof(Response<CreateTodoResponse>), 
+    Description = "Todo created successfully with generated ID")]
+[OpenApiResponse(400, Description = "Invalid request data - validation failed")]
+[OpenApiResponse(409, Description = "Todo with similar title already exists")]
 public class CreateTodoEndpoint(IMediator mediator)
     : SingleEndpointBase<CreateTodoRequest, CreateTodoResponse>(mediator)
 {
@@ -139,16 +195,24 @@ public class CreateTodoEndpoint(IMediator mediator)
 }
 ```
 
-The OpenAPI documentation will automatically show:
-- `Title`, `Description`, `CategoryId`, `TagIds` as request body parameters
-- `ParentId` as a route parameter (due to `[FromRoute]` attribute)
+The enhanced SwaggerUI will automatically show:
+- **Rich Documentation**: Detailed descriptions, examples, and response codes
+- **Interactive Examples**: "Try it out" functionality with sample data
+- **Request Body Schema**: Automatically generated from `CreateTodoRequest`
+- **Response Examples**: Sample responses for different status codes
+- **Parameter Validation**: Required/optional field indicators
 
-#### Query Endpoints with Auto-Generated Documentation
+#### Query Endpoints with Advanced Filtering UI
 
 ```csharp
-[EndpointSummary("Get all todos", Description = "Retrieves a paginated list of todos with optional filtering")]
-[OpenApiResponse(200, ResponseType = typeof(ResponseCollection<TodoItemDto>), Description = "Successfully retrieved todos")]
-[OpenApiResponse(400, Description = "Invalid request parameters")]
+[OpenApiSummary("Get all todos with filtering", 
+    Description = "Retrieves a paginated list of todos with advanced filtering, sorting, and search capabilities")]
+[OpenApiParameter("search", typeof(string), Description = "Search term for filtering todos by title or description", Example = "grocery")]
+[OpenApiParameter("pageSize", typeof(int), Description = "Number of items per page (max 100)", Example = 10)]
+[OpenApiParameter("categoryIds", typeof(List<int>), Description = "Filter by specific category IDs", Example = new[] { 1, 2, 3 })]
+[OpenApiResponse(200, ResponseType = typeof(ResponseCollection<TodoItemDto>), 
+    Description = "Successfully retrieved todos with pagination metadata")]
+[OpenApiResponse(400, Description = "Invalid pagination or filter parameters")]
 public class GetAllTodosEndpoint(IMediator mediator)
     : CollectionEndpointBase<GetAllTodosRequest, TodoItemDto>(mediator)
 {
@@ -163,158 +227,97 @@ public class GetAllTodosEndpoint(IMediator mediator)
 }
 ```
 
-The OpenAPI documentation will automatically show:
-- `Search`, `PageIndex`, `PageSize`, `OrderBy`, `IsAscending`, `CategoryIds` as query parameters
-- `UserAgent` as a header parameter (due to `[FromHeader]` attribute)
+## SwaggerUI Advanced Features
 
-### Step 4: Advanced Parameter Binding with Custom Attributes
+### Custom Theming and Branding
 
-You can override the smart defaults using explicit binding attributes:
+The SwaggerUI comes with a professional, modern theme:
+
+```css
+/* Automatic features included */
+- Gradient header with company branding
+- Enhanced operation blocks with status-specific colors
+- Modern button styling with hover effects
+- Improved typography and spacing
+- Mobile-responsive design
+- Dark mode friendly colors
+```
+
+### Enhanced Functionality
+
+**Automatic Features:**
+- **Copy to Clipboard**: All code blocks get copy buttons
+- **Request Duration Display**: Shows API response times
+- **Persistent Authorization**: Remembers auth tokens across sessions
+- **Deep Linking**: Direct links to specific operations
+- **Advanced Filtering**: Search through endpoints
+- **Example Generation**: Automatic request/response examples
+
+### Security Integration
 
 ```csharp
-public class AdvancedRequest : ICommand<AdvancedResponse>
+// SwaggerUI automatically detects and displays security requirements
+[Authorize] // Automatically adds security icon and requirements
+public class SecureEndpoint : SingleEndpointBase<SecureRequest, SecureResponse>
 {
-    [FromRoute]
-    public int Id { get; set; }
-    
-    [FromQuery]  // Override: Force this to be a query parameter instead of body
-    public bool ForceUpdate { get; set; }
-    
-    [FromHeader("X-User-Id")]
-    public string? UserId { get; set; }
-    
-    // These still go to request body (default for commands)
-    public string Title { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    
-    [FromServices]
-    public ICurrentUserService CurrentUser { get; set; } = null!;
+    // Security requirements automatically documented
 }
 ```
 
-## Advanced Features
+### Custom Examples and Documentation
 
-### Smart Parameter Binding Defaults
-
-The framework provides intelligent defaults based on request type:
-
-#### Command Requests (`ICommand`, `ICommand<T>`)
-- **Default**: All properties go to request body (perfect for POST, PUT, PATCH)
-- **Override**: Use `[FromRoute]`, `[FromQuery]`, `[FromHeader]` for exceptions
-- **Auto-detected**: Properties named `Id`, `TodoId` automatically become route parameters
-
-#### Query Requests (`IQueryRequest`, `IQueryCollectionRequest`)
-- **Default**: All properties become query parameters (perfect for GET requests)
-- **Override**: Use `[FromRoute]`, `[FromHeader]`, `[FromBody]` for exceptions
-- **Auto-detected**: Properties named `Id`, `TodoId` automatically become route parameters
-
-### Enhanced OpenAPI Documentation
-
-The library automatically generates comprehensive OpenAPI documentation:
-
-#### Automatic Parameter Detection
 ```csharp
-[EndpointSummary("Update todo status")]
-public class UpdateTodoStatusEndpoint : SingleEndpointBase<UpdateStatusRequest, UpdateStatusResponse>
+[OpenApiParameter("userId", typeof(int), 
+    Description = "Unique identifier for the user", 
+    Example = 12345,
+    Required = true)]
+[OpenApiResponse(200, 
+    ResponseType = typeof(UserProfileResponse),
+    Description = "User profile retrieved successfully")]
+public class GetUserProfileEndpoint : SingleEndpointBase<GetUserRequest, UserProfileResponse>
 {
-    // OpenAPI automatically detects:
-    // - Id as route parameter
-    // - IsCompleted as request body parameter
-    // - LastModified as request body parameter
+    // Rich documentation with examples automatically displayed in SwaggerUI
 }
 ```
 
-#### Custom Parameter Documentation
+## Configuration Options
+
+### Basic Setup (OpenAPI Only)
 ```csharp
-[OpenApiParameter("search", typeof(string), Description = "Search term for filtering todos", Example = "grocery")]
-[OpenApiParameter("pageSize", typeof(int), Description = "Number of items per page", Example = 10)]
-[OpenApiResponse(200, Description = "Search completed successfully")]
-public class SearchTodosEndpoint : CollectionEndpointBase<SearchRequest, TodoItemDto>
-{
-    // Custom documentation with examples and detailed descriptions
-}
+// Minimal setup for basic OpenAPI documentation
+builder.Services.AddMinimalApiWithOpenApi("My API", "v1", "API Description");
+
+app.UseMinimalApiOpenApi(); // Only enables OpenAPI endpoint
 ```
 
-### Model Binding Attributes
-
-Available binding attributes for fine-grained control:
-
+### Full Setup (OpenAPI + SwaggerUI)
 ```csharp
-public class ComprehensiveRequest : ICommand<ComprehensiveResponse>
-{
-    [FromRoute("todoId")]           // Bind from route parameter 'todoId'
-    public int Id { get; set; }
-    
-    [FromQuery("q")]                // Bind from query parameter 'q'
-    public string? SearchTerm { get; set; }
-    
-    [FromHeader("Authorization")]   // Bind from Authorization header
-    public string? AuthToken { get; set; }
-    
-    [FromBody]                      // Explicitly from request body (default for commands)
-    public TodoUpdateData Data { get; set; } = new();
-    
-    [FromForm]                      // Bind from form data
-    public IFormFile? Attachment { get; set; }
-    
-    [FromServices]                  // Inject from DI container
-    public ILogger<ComprehensiveRequest> Logger { get; set; } = null!;
-}
-```
-
-### Response Handling
-
-The library provides standardized response handling:
-
-```csharp
-// Success response with data
-return new Response<TodoItemDto>(
-    IsSuccess: true,
-    StatusCode: 200,
-    Message: "Todo retrieved successfully",
-    Data: todoDto
+// Complete setup with enhanced SwaggerUI
+builder.Services.AddMinimalApiWithSwaggerUI(
+    title: "My API",
+    version: "v2.0",
+    description: "Comprehensive API with full documentation",
+    contactName: "API Support Team",
+    contactEmail: "support@company.com",
+    licenseName: "MIT"
 );
 
-// Collection response
-return new ResponseCollection<TodoItemDto>(
-    IsSuccess: true,
-    StatusCode: 200,
-    Message: "Todos retrieved successfully",
-    Data: todos
+app.UseMinimalApiDocs(
+    swaggerRoutePrefix: "documentation",
+    enableTryItOut: true,
+    enableFilter: true
 );
-
-// Error responses
-return new Response(false, 404, "Todo not found");
-return new Response(false, 400, "Invalid request data");
 ```
 
-### Versioning Support
+### Production Considerations
 
 ```csharp
-// Configure versioning in Program.cs
-services.Configure<VersioningOptions>(options => 
+// SwaggerUI only in development/staging
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
-    options.Prefix = "v";
-    options.DefaultVersion = 1;
-});
-
-// Use versioning in endpoints
-[HttpGet("api/v{version}/todos")]
-public override async Task<ResponseCollection<TodoItemDto>> HandleAsync(GetAllRequest req, CancellationToken ct)
-{
-    return await _mediator.Send(req, ct);
+    app.UseMinimalApiDocs();
 }
+
+// OpenAPI can be enabled in production for API clients
+app.UseMinimalApiOpenApi(); // Always available for API consumers
 ```
-
-## Key Benefits
-
-1. **Zero Configuration**: Smart defaults work out of the box
-2. **Type Safety**: Strong typing for all requests and responses
-3. **Automatic Documentation**: OpenAPI docs generated automatically
-4. **Flexible Override**: Easy to customize when needed
-5. **CQRS Pattern**: Built-in support for Command/Query separation
-6. **Clean Architecture**: Minimal boilerplate, maximum productivity
-
-## Conclusion
-
-This MinimalAPI library provides an intuitive approach to building APIs with intelligent defaults that follow REST conventions, while maintaining full flexibility for customization. The smart parameter binding reduces boilerplate code and the automatic OpenAPI documentation ensures your APIs are always well-documented.

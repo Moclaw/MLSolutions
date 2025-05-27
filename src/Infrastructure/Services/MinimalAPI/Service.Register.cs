@@ -67,7 +67,7 @@ public static partial class Register
         services.AddMinimalApi(assemblies);
 
         // Add enhanced OpenAPI documentation
-        services.AddMinimalApiOpenApi(title, version, description, assemblies);
+        services.AddMinimalApiWithOpenApi(title, version, description, assemblies);
 
         return services;
     }
