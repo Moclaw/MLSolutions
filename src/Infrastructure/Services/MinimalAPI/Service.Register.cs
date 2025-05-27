@@ -67,7 +67,7 @@ public static partial class Register
         services.AddMinimalApi(assemblies);
 
         // Add enhanced OpenAPI documentation
-        services.AddMinimalApiWithOpenApi(title, version, description, assemblies);
+        services.AddOpenAPIDocument(title, version, description, assemblies);
 
         return services;
     }
@@ -106,13 +106,10 @@ public static partial class Register
             foreach (var method in methods)
             {
                 // Get HTTP method attribute
-                var httpMethodAttr =
-                    method
-                        .GetCustomAttributes()
-                        .FirstOrDefault(a => a is MinimalAPI.Attributes.HttpMethodAttribute)
-                    as MinimalAPI.Attributes.HttpMethodAttribute;
 
-                if (httpMethodAttr == null || string.IsNullOrEmpty(httpMethodAttr.Route))
+                if (method
+                        .GetCustomAttributes()
+                        .FirstOrDefault(a => a is MinimalAPI.Attributes.HttpMethodAttribute) is not MinimalAPI.Attributes.HttpMethodAttribute httpMethodAttr || string.IsNullOrEmpty(httpMethodAttr.Route))
                     continue;
 
                 // Use the route template directly from the HTTP method attribute
@@ -121,14 +118,11 @@ public static partial class Register
                 // Create the endpoint handler
                 var handler = app.MapMethods(
                     routeTemplate,
-                    new[] { httpMethodAttr.Method },
+                    [httpMethodAttr.Method],
                     async (HttpContext context, IServiceProvider serviceProvider) =>
                     {
                         // Create endpoint instance from service provider
-                        var endpoint =
-                            ActivatorUtilities.CreateInstance(serviceProvider, endpointType)
-                            as MinimalAPI.Endpoints.EndpointAbstractBase;
-                        if (endpoint == null)
+                        if (ActivatorUtilities.CreateInstance(serviceProvider, endpointType) is not MinimalAPI.Endpoints.EndpointAbstractBase endpoint)
                             return Results.StatusCode(500);
 
                         // Set HttpContext on the endpoint

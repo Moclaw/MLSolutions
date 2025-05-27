@@ -4,7 +4,7 @@ using MinimalAPI.Endpoints;
 using sample.Application.Features.Todo.Commands.CreateTag;
 using Response = sample.Application.Features.Todo.Commands.CreateTag.Response;
 
-namespace sample.API.Endpoints.Todo.Commands;
+namespace sample.API.Endpoints.Tags.Commands;
 
 [OpenApiSummary("Create a new tag", 
     Description = "Creates a new tag that can be assigned to todo items",
@@ -15,11 +15,8 @@ public class CreateTagEndpoint(IMediator mediator)
     : SingleEndpointBase<Request, Response>(mediator)
 {
     [HttpPost("api/tags")]
-    public override async Task<Shared.Responses.Response<Response>> HandleAsync(
+    public override async Task<Response<Response>> HandleAsync(
         Request req,
         CancellationToken ct
-    )
-    {
-        return await _mediator.Send(req, ct);
-    }
+    ) => await _mediator.Send(req, ct);
 }

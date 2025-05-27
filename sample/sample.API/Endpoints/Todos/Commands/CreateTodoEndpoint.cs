@@ -1,9 +1,8 @@
 using MediatR;
 using MinimalAPI.Attributes;
-using MinimalAPI.Endpoints;
 using sample.Application.Features.Todo.Commands.Create;
 
-namespace sample.API.Endpoints.Todo.Commands;
+namespace sample.API.Endpoints.Todos.Commands;
 
 [OpenApiSummary("Create a new todo", 
     Description = "Creates a new todo item with the provided details",
@@ -14,11 +13,8 @@ public class CreateTodoEndpoint(IMediator mediator)
     : SingleEndpointBase<CreateRequest, CreateResponse>(mediator)
 {
     [HttpPost("api/todos")]
-    public override async Task<Shared.Responses.Response<CreateResponse>> HandleAsync(
+    public override async Task<Response<CreateResponse>> HandleAsync(
         CreateRequest req,
         CancellationToken ct
-    )
-    {
-        return await _mediator.Send(req, ct);
-    }
+    ) => await _mediator.Send(req, ct);
 }

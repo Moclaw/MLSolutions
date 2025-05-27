@@ -4,9 +4,6 @@ namespace MinimalAPI.Attributes;
 /// Identifies an endpoint that supports the HTTP GET method
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public class HttpGetAttribute : HttpMethodAttribute
+public class HttpGetAttribute(string route = "") : HttpMethodAttribute("GET", route)
 {
-    public HttpGetAttribute(string route = "") : base("GET", route)
-    {
-    }
 }

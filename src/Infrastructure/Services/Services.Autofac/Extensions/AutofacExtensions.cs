@@ -21,9 +21,7 @@ namespace Services.Autofac.Extensions
             this IHostBuilder hostBuilder,
             Action<ContainerBuilder>? configureContainer = null,
             params Assembly[] assemblies
-        )
-        {
-            return hostBuilder
+        ) => hostBuilder
                 .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                 .ConfigureContainer<ContainerBuilder>(builder =>
                 {
@@ -36,7 +34,6 @@ namespace Services.Autofac.Extensions
                     // Apply additional container configuration if provided
                     configureContainer?.Invoke(builder);
                 });
-        }
 
         /// <summary>
         /// Configure Autofac container for ASP.NET Core applications
@@ -163,13 +160,10 @@ namespace Services.Autofac.Extensions
             ServiceLifetime lifetime = ServiceLifetime.Scoped
         )
             where TService : class
-            where TImplementation : class, TService
-        {
-            return containerBuilder.RegisterService(
+            where TImplementation : class, TService => containerBuilder.RegisterService(
                 typeof(TService),
                 typeof(TImplementation),
                 lifetime
             );
-        }
     }
 }

@@ -4,7 +4,7 @@ using MinimalAPI.Endpoints;
 using sample.Application.Features.Todo.Commands.AssignTags;
 using Response = sample.Application.Features.Todo.Commands.AssignTags.Response;
 
-namespace sample.API.Endpoints.Todo.Commands;
+namespace sample.API.Endpoints.Tags.Commands;
 
 [OpenApiSummary("Assign tags to todo", 
     Description = "Assigns multiple tags to a specific todo item",
@@ -16,12 +16,9 @@ public class AssignTagsEndpoint(IMediator mediator)
     : SingleEndpointBase<Request, Response>(mediator)
 {
     [HttpPost("api/todos/{todoId}/tags")]
-    public override async Task<Shared.Responses.Response<Application.Features.Todo.Commands.AssignTags.Response>>
+    public override async Task<Response<Response>>
         HandleAsync(
             Request req,
             CancellationToken ct
-        )
-    {
-        return await _mediator.Send(req, ct);
-    }
+        ) => await _mediator.Send(req, ct);
 }

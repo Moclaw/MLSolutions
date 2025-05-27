@@ -1,3 +1,4 @@
+using EfCore.IRepositories;
 using Microsoft.Extensions.DependencyInjection;
 using MinimalAPI.Attributes;
 using MinimalAPI.Handlers;
@@ -7,6 +8,7 @@ using Shared.Responses;
 using Shared.Utils;
 
 namespace sample.Application.Features.Todo.Queries.GetAllTags;
+
 public class Handler(
     [FromKeyedServices(ServiceKeys.QueryRepository)]
     IQueryRepository<Tag, int> queryRepository
@@ -21,7 +23,7 @@ public class Handler(
             predicate: t =>
                 string.IsNullOrEmpty(request.Search)
                 || t.Name.Contains(request.Search)
-                || t.Color!.Contains(request.Search),
+                || (t.Color != null && t.Color.Contains(request.Search)),
             projector: query =>
                 query.Select(item => new Response
                 {

@@ -109,22 +109,16 @@ public class CommandRepository(BaseDbContext context, ILogger<CommandRepository>
     public async Task BeginTransactionAsync(
         bool acceptAllChangesOnSuccess = true,
         CancellationToken cancellationToken = default
-    )
-    {
-        _currentTransaction = await context.Database.BeginTransactionAsync(cancellationToken);
-    }
+    ) => _currentTransaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
     public async Task BeginTransactionAsync(
         IsolationLevel isolationLevel,
         bool acceptAllChangesOnSuccess = true,
         CancellationToken cancellationToken = default
-    )
-    {
-        _currentTransaction = await context.Database.BeginTransactionAsync(
+    ) => _currentTransaction = await context.Database.BeginTransactionAsync(
             isolationLevel,
             cancellationToken
         );
-    }
 
     public async Task CommitAsync(
         bool acceptAllChangesOnSuccess = true,

@@ -6,8 +6,7 @@ namespace Services.Autofac.Modules
 {
     public class ControllerModule(params Assembly[] assemblies) : global::Autofac.Module
     {
-        protected override void Load(ContainerBuilder builder)
-        {
+        protected override void Load(ContainerBuilder builder) =>
             // Register all MVC controllers
             builder
                 .RegisterAssemblyTypes(assemblies)
@@ -23,6 +22,5 @@ namespace Services.Autofac.Modules
                 )
                 .AsSelf()
                 .InstancePerLifetimeScope();
-        }
     }
 }

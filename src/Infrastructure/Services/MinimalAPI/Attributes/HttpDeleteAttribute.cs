@@ -4,9 +4,6 @@ namespace MinimalAPI.Attributes;
 /// Identifies an endpoint that supports the HTTP DELETE method
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public class HttpDeleteAttribute : HttpMethodAttribute
+public class HttpDeleteAttribute(string route = "") : HttpMethodAttribute("DELETE", route)
 {
-    public HttpDeleteAttribute(string route = "") : base("DELETE", route)
-    {
-    }
 }

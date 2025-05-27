@@ -65,10 +65,7 @@ public static class StringExtensions
     /// <param name="value">The collection of strings to join.</param>
     /// <param name="separator">The string separator to use.</param>
     /// <returns>A single string with the elements of the collection separated by the specified separator.</returns>
-    public static string Join(this IEnumerable<string> value, string separator)
-    {
-        return string.Join(separator, value);
-    }
+    public static string Join(this IEnumerable<string> value, string separator) => string.Join(separator, value);
 
     /// <summary>
     /// Joins a collection of strings into a single string, using the specified character as a separator.
@@ -76,8 +73,5 @@ public static class StringExtensions
     /// <param name="value">The collection of strings to join.</param>
     /// <param name="separator">The character separator to use.</param>
     /// <returns>A single string with the elements of the collection separated by the specified character.</returns>
-    public static string Join(this IEnumerable<string> value, char separator)
-    {
-        return string.Join(separator, value);
-    }
+    public static string Join(this IEnumerable<string> value, char separator) => string.Join(separator, value);
 }

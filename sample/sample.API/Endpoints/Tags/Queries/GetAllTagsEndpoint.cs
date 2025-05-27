@@ -3,7 +3,7 @@ using MinimalAPI.Attributes;
 using sample.Application.Features.Todo.Queries.GetAllTags;
 using Response = sample.Application.Features.Todo.Queries.GetAllTags.Response;
 
-namespace sample.API.Endpoints.Todo.Queries;
+namespace sample.API.Endpoints.Tags.Queries;
 
 [OpenApiSummary("Get all tags", 
     Description = "Retrieves a paginated list of all available tags",
@@ -17,8 +17,5 @@ public class GetAllTagsEndpoint(IMediator mediator)
     public override async Task<ResponseCollection<Response>> HandleAsync(
         Request req,
         CancellationToken ct
-    )
-    {
-        return await mediator.Send(req, ct);
-    }
+    ) => await _mediator.Send(req, ct);
 }

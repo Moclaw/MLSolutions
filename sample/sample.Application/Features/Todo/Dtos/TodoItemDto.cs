@@ -13,6 +13,6 @@ namespace sample.Application.Features.Todo.Dtos
         public DateTime? CompletedAt { get; set; }
         public int? CategoryId { get; set; }
         public string? CategoryName { get; set; }
-        public ICollection<TagDto> Tags { get; set; } = new List<TagDto>();
+        public ICollection<TagDto> Tags { get; set; } = [];
     }
 }

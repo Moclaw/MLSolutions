@@ -1,9 +1,8 @@
 using MediatR;
 using MinimalAPI.Attributes;
-using MinimalAPI.Endpoints;
 using sample.Application.Features.Todo.Commands.Delete;
 
-namespace sample.API.Endpoints.Todo.Commands;
+namespace sample.API.Endpoints.Todos.Commands;
 
 [OpenApiSummary("Delete a todo", 
     Description = "Permanently deletes a todo item from the system",
@@ -14,8 +13,5 @@ namespace sample.API.Endpoints.Todo.Commands;
 public class DeleteTodoEndpoint(IMediator mediator) : SingleEndpointBase<Request>(mediator)
 {
     [HttpDelete("api/todos/{id}")]
-    public override async Task<Response> HandleAsync(Request req, CancellationToken ct)
-    {
-        return await _mediator.Send(req, ct);
-    }
+    public override async Task<Response> HandleAsync(Request req, CancellationToken ct) => await _mediator.Send(req, ct);
 }

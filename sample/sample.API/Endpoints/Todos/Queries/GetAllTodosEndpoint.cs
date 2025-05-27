@@ -2,7 +2,7 @@ using MediatR;
 using MinimalAPI.Attributes;
 using sample.Application.Features.Todo.Queries.GetAll;
 
-namespace sample.API.Endpoints.Todo.Queries;
+namespace sample.API.Endpoints.Todos.Queries;
 
 [OpenApiSummary("Get all todos", 
     Description = "Retrieves a paginated list of todos with optional search filtering",
@@ -16,8 +16,5 @@ public class GetAllTodosEndpoint(IMediator mediator)
     public override async Task<ResponseCollection<GetallResponse>> HandleAsync(
         GetAllRequest req,
         CancellationToken ct
-    )
-    {
-        return await mediator.Send(req, ct);
-    }
+    ) => await _mediator.Send(req, ct);
 }

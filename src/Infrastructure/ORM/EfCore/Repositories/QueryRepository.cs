@@ -2,6 +2,7 @@ using System.Data;
 using System.Linq.Expressions;
 using Domain.Builders;
 using EfCore.Builders;
+using EfCore.IRepositories;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Shared.Entities;
@@ -399,9 +400,7 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
         int? commandTimeout = null,
         CommandType? commandType = null,
         CancellationToken cancellationToken = default
-    )
-    {
-        return context.SingleOrDefaultAsync<TResult>(
+    ) => context.SingleOrDefaultAsync<TResult>(
             sql,
             param,
             transaction,
@@ -409,7 +408,6 @@ public class QueryRepository<TEntity, TKey>(BaseDbContext context) : IQueryRepos
             commandType,
             cancellationToken
         );
-    }
 
     public virtual ValueTask<IEnumerable<TEntities>> QueryAsync<TEntities>(
         string rawQuery,

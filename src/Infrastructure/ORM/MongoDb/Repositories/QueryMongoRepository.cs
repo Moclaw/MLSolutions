@@ -51,11 +51,8 @@ public class QueryMongoRepository<TEntity, TKey>(MongoBaseContext context)
         TKey id,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
-    )
-    {
-        return GetQueryable(enableTracking)
+    ) => GetQueryable(enableTracking)
             .FirstOrDefaultAsync(e => e.Id.Equals(id), cancellationToken);
-    }
 
     public Task<TProjector?> GetByIdAsync<TProjector>(
         TKey id,
@@ -91,7 +88,9 @@ public class QueryMongoRepository<TEntity, TKey>(MongoBaseContext context)
 
     public async Task<IEnumerable<TProjector>> GetByIdAsync<TProjector>(
         List<TKey> ids,
+#pragma warning disable IDE0060 // Remove unused parameter
         Func<IQueryable<TEntity>, IQueryable<TProjector>>? projector = null,
+#pragma warning restore IDE0060 // Remove unused parameter
         TypeAdapterConfig? typeAdapterConfig = null,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
@@ -185,10 +184,7 @@ public class QueryMongoRepository<TEntity, TKey>(MongoBaseContext context)
         TypeAdapterConfig? typeAdapterConfig = null,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
-    )
-    {
-        throw new NotImplementedException();
-    }
+    ) => throw new NotImplementedException();
 
     public async Task<TEntity?> LastOrDefaultAsync(
         Expression<Func<TEntity, bool>>? predicate = null,

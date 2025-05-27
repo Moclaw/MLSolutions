@@ -18,12 +18,22 @@ builder.AddSerilog(configuration, appName);
 // Register other services
 builder.Services
     .AddCorsServices(configuration)
+    .AddMinimalApiWithOpenApi(
+        title: "Todo API",
+        version: "v1",
+        description: "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR and CQRS pattern",
+        assemblies: [
+            typeof(Program).Assembly,
+            typeof(sample.Application.Register).Assembly,
+            typeof(sample.Infrastructure.Register).Assembly
+        ]
+        )
     .AddMinimalApiWithSwaggerUI(
         title: "Todo API",
         version: "v1",
         description: "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR and CQRS pattern",
         contactName: "Todo API Development Team",
-        contactEmail: "dev@todoapi.com", 
+        contactEmail: "dev@todoapi.com",
         contactUrl: "https://github.com/Moclaw/MLSolutions",
         licenseName: "MIT",
         licenseUrl: "https://opensource.org/licenses/MIT",
@@ -44,6 +54,9 @@ var app = builder.Build();
 // Enable enhanced documentation with SwaggerUI
 if (app.Environment.IsDevelopment())
 {
+    // OpenAPI documentation for MinimalAPI endpoints: openapi/v1.json
+    app.UseMinimalApiOpenApi();
+
     app.UseMinimalApiDocs(
         swaggerRoutePrefix: "docs",
         enableTryItOut: true,
@@ -99,7 +112,7 @@ using (var scope = app.Services.CreateScope())
                 Description = "Milk, bread, eggs",
                 IsCompleted = false,
                 Category = categories[0],
-                Tags = new List<sample.Domain.Entities.Tag> { tags[0], tags[1] },
+                Tags = [tags[0], tags[1]],
             },
             new()
             {
@@ -107,7 +120,7 @@ using (var scope = app.Services.CreateScope())
                 Description = "Complete the pending tasks",
                 IsCompleted = false,
                 Category = categories[1],
-                Tags = new List<sample.Domain.Entities.Tag> { tags[0], tags[2], tags[3] },
+                Tags = [tags[0], tags[2], tags[3]],
             },
             new()
             {
@@ -124,7 +137,7 @@ using (var scope = app.Services.CreateScope())
                 IsCompleted = true,
                 CompletedAt = DateTime.UtcNow.AddDays(-2),
                 Category = categories[3],
-                Tags = new List<sample.Domain.Entities.Tag> { tags[5] },
+                Tags = [tags[5]],
             },
             new()
             {
@@ -132,7 +145,7 @@ using (var scope = app.Services.CreateScope())
                 Description = "Due by end of month",
                 IsCompleted = false,
                 Category = categories[4],
-                Tags = new List<sample.Domain.Entities.Tag> { tags[6], tags[4] },
+                Tags = [tags[6], tags[4]],
             },
             new()
             {
@@ -140,7 +153,7 @@ using (var scope = app.Services.CreateScope())
                 Description = "Complete online course",
                 IsCompleted = false,
                 Category = categories[5],
-                Tags = new List<sample.Domain.Entities.Tag> { tags[2], tags[1] },
+                Tags = [tags[2], tags[1]],
             },
             new()
             {
@@ -148,7 +161,7 @@ using (var scope = app.Services.CreateScope())
                 Description = "Prepare dinner for Sunday",
                 IsCompleted = false,
                 Category = categories[0],
-                Tags = new List<sample.Domain.Entities.Tag> { tags[7], tags[1] },
+                Tags = [tags[7], tags[1]],
             },
             new()
             {
@@ -156,7 +169,7 @@ using (var scope = app.Services.CreateScope())
                 Description = "Annual checkup",
                 IsCompleted = false,
                 Category = categories[3],
-                Tags = new List<sample.Domain.Entities.Tag> { tags[3], tags[5] },
+                Tags = [tags[3], tags[5]],
             },
         };
 

@@ -26,6 +26,8 @@ public static class SwaggerUIExtensions
         params Assembly[] endpointAssemblies
     )
     {
+        services.AddMinimalApi(endpointAssemblies);
+
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc(version, new OpenApiInfo
@@ -96,13 +98,27 @@ public static class SwaggerUIExtensions
     public static WebApplication UseMinimalApiSwaggerUI(
         this WebApplication app,
         string? routePrefix = null,
+#pragma warning disable IDE0060 // Remove unused parameter
         bool enableTryItOut = true,
+#pragma warning restore IDE0060 // Remove unused parameter
+#pragma warning disable IDE0060 // Remove unused parameter
         bool enableDeepLinking = true,
+#pragma warning restore IDE0060 // Remove unused parameter
+#pragma warning disable IDE0060 // Remove unused parameter
         bool enableFilter = true,
+#pragma warning restore IDE0060 // Remove unused parameter
+#pragma warning disable IDE0060 // Remove unused parameter
         bool enableValidator = false,
+#pragma warning restore IDE0060 // Remove unused parameter
+#pragma warning disable IDE0060 // Remove unused parameter
         DocExpansion docExpansion = DocExpansion.List,
+#pragma warning restore IDE0060 // Remove unused parameter
+#pragma warning disable IDE0060 // Remove unused parameter
         ModelRendering defaultModelRendering = ModelRendering.Example,
+#pragma warning restore IDE0060 // Remove unused parameter
+#pragma warning disable IDE0060 // Remove unused parameter
         bool persistAuthorization = true
+#pragma warning restore IDE0060 // Remove unused parameter
     )
     {
         if (app.Environment.IsDevelopment() || app.Environment.IsStaging())

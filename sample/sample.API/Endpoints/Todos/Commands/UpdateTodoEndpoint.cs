@@ -4,7 +4,7 @@ using MinimalAPI.Endpoints;
 using sample.Application.Features.Todo.Commands.Update;
 using Shared.Responses;
 
-namespace sample.API.Endpoints.Todo.Commands;
+namespace sample.API.Endpoints.Todos.Commands;
 
 [OpenApiSummary("Update an existing todo", 
     Description = "Updates an existing todo item with new information",
@@ -20,8 +20,5 @@ public class UpdateTodoEndpoint(IMediator mediator)
     public override async Task<Response<UpdateResponse>> HandleAsync(
         UpdateRequest req,
         CancellationToken ct
-    )
-    {
-        return await _mediator.Send(req, ct);
-    }
+    ) => await _mediator.Send(req, ct);
 }

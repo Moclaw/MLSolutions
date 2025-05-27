@@ -8,15 +8,8 @@ using MinimalAPI.Handlers.Command;
 
 namespace MinimalAPI.SwaggerUI;
 
-public class MinimalApiOperationFilter : IOperationFilter
+public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFilter
 {
-    private readonly SwaggerUIOptions _options;
-
-    public MinimalApiOperationFilter(SwaggerUIOptions options)
-    {
-        _options = options;
-    }
-
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         // Find the endpoint type for this operation
@@ -34,17 +27,14 @@ public class MinimalApiOperationFilter : IOperationFilter
 
         // Process parameters from request type
         ProcessRequestParameters(operation, requestType, isCommandRequest, isQueryRequest);
-
-        // Add examples
-        AddOperationExamples(operation, requestType, endpointType);
     }
 
     private Type? FindEndpointType(OperationFilterContext context)
     {
-        if (_options.EndpointAssemblies == null || _options.EndpointAssemblies.Length == 0)
+        if (options.EndpointAssemblies == null || options.EndpointAssemblies.Length == 0)
             return null;
 
-        var endpointTypes = _options.EndpointAssemblies
+        var endpointTypes = options.EndpointAssemblies
             .SelectMany(a => a.GetTypes())
             .Where(t => !t.IsAbstract && !t.IsInterface && t.IsAssignableTo(typeof(EndpointAbstractBase)))
             .ToList();
@@ -78,12 +68,9 @@ public class MinimalApiOperationFilter : IOperationFilter
         return null;
     }
 
-    private string NormalizeRoute(string route)
-    {
-        return route.TrimStart('/').ToLower();
-    }
+    private static string NormalizeRoute(string route) => route.TrimStart('/').ToLower();
 
-    private Type? GetRequestType(Type endpointType)
+    private static Type? GetRequestType(Type endpointType)
     {
         var baseType = endpointType.BaseType;
         while (baseType != null && !baseType.IsGenericType)
@@ -94,7 +81,7 @@ public class MinimalApiOperationFilter : IOperationFilter
         return baseType?.IsGenericType == true ? baseType.GetGenericArguments().FirstOrDefault() : null;
     }
 
-    private bool IsCommandRequest(Type? requestType)
+    private static bool IsCommandRequest(Type? requestType)
     {
         if (requestType == null) return false;
 
@@ -103,7 +90,7 @@ public class MinimalApiOperationFilter : IOperationFilter
             (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>)));
     }
 
-    private bool IsQueryRequest(Type? requestType)
+    private static bool IsQueryRequest(Type? requestType)
     {
         if (requestType == null) return false;
 
@@ -114,62 +101,44 @@ public class MinimalApiOperationFilter : IOperationFilter
                 i.GetGenericTypeDefinition() == typeof(IQueryCollectionRequest<>))));
     }
 
-    private void GenerateOperationTags(OpenApiOperation operation, Type endpointType)
+    private static void GenerateOperationTags(OpenApiOperation operation, Type endpointType)
     {
         var tags = new List<string>();
 
-        // Extract from namespace
+        // Use endpoint namespace structure: sample.API.Endpoints.{Feature}.{OperationType}
         var namespaceParts = endpointType.Namespace?.Split('.') ?? [];
-        var featureIndex = Array.FindIndex(namespaceParts, part => 
-            part.Equals("Features", StringComparison.OrdinalIgnoreCase));
+        var endpointsIndex = Array.FindIndex(namespaceParts, part => 
+            part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
 
-        if (featureIndex >= 0 && featureIndex + 1 < namespaceParts.Length)
+        if (endpointsIndex >= 0 && endpointsIndex + 1 < namespaceParts.Length)
         {
-            var featureName = namespaceParts[featureIndex + 1];
-            tags.Add(featureName);
-
-            if (featureIndex + 2 < namespaceParts.Length)
+            var featureName = namespaceParts[endpointsIndex + 1]; // Todo
+            
+            if (endpointsIndex + 2 < namespaceParts.Length)
             {
-                var operationType = namespaceParts[featureIndex + 2];
-                tags.Add($"{featureName} {operationType}");
-            }
-        }
-        else
-        {
-            // Fallback to class name analysis
-            var className = endpointType.Name;
-            if (className.EndsWith("Endpoint"))
-                className = className[..^8];
-
-            // Extract feature from patterns like "CreateTodoEndpoint"
-            if (className.Contains("Todo"))
-            {
-                tags.Add("Todo");
+                var operationType = namespaceParts[endpointsIndex + 2]; // Commands or Queries
                 
-                var operationType = className switch
+                // Only add tags for Commands or Queries
+                if (operationType.Contains("Command", StringComparison.OrdinalIgnoreCase) ||
+                    operationType.Contains("Quer", StringComparison.OrdinalIgnoreCase))
                 {
-                    var name when name.StartsWith("Create") || name.StartsWith("Add") => "Commands",
-                    var name when name.StartsWith("Update") || name.StartsWith("Edit") => "Commands", 
-                    var name when name.StartsWith("Delete") || name.StartsWith("Remove") => "Commands",
-                    var name when name.StartsWith("Get") || name.StartsWith("List") || name.StartsWith("Search") => "Queries",
-                    _ => "Operations"
-                };
-                tags.Add($"Todo {operationType}");
+                    tags.Add($"{featureName} {operationType}");
+                }
             }
         }
 
-        if (tags.Any())
+        if (tags.Count != 0)
         {
-            operation.Tags = tags.Select(tag => new OpenApiTag { Name = tag }).ToList();
+            operation.Tags = [.. tags.Select(tag => new OpenApiTag { Name = tag })];
         }
     }
 
-    private void ProcessRequestParameters(OpenApiOperation operation, Type requestType, bool isCommandRequest, bool isQueryRequest)
+    private static void ProcessRequestParameters(OpenApiOperation operation, Type requestType, bool isCommandRequest, bool isQueryRequest)
     {
         var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         // Clear existing parameters to rebuild them properly
-        operation.Parameters ??= new List<OpenApiParameter>();
+        operation.Parameters ??= [];
 
         foreach (var property in properties)
         {
@@ -180,7 +149,7 @@ public class MinimalApiOperationFilter : IOperationFilter
             var parameterLocation = DetermineParameterLocation(property, isCommandRequest, isQueryRequest);
 
             // For command requests, body parameters are handled in request body, not as parameters
-            if (parameterLocation == MinimalAPI.Attributes.ParameterLocation.Body && isCommandRequest)
+            if (parameterLocation == Attributes.ParameterLocation.Body && isCommandRequest)
             {
                 continue;
             }
@@ -207,41 +176,41 @@ public class MinimalApiOperationFilter : IOperationFilter
         }
     }
 
-    private MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(PropertyInfo property, bool isCommandRequest, bool isQueryRequest)
+    private static MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(PropertyInfo property, bool isCommandRequest, bool isQueryRequest)
     {
         // Check for explicit binding attributes
         if (property.GetCustomAttribute<FromRouteAttribute>() != null)
-            return MinimalAPI.Attributes.ParameterLocation.Path;
+            return Attributes.ParameterLocation.Path;
         if (property.GetCustomAttribute<FromQueryAttribute>() != null)
-            return MinimalAPI.Attributes.ParameterLocation.Query;
+            return Attributes.ParameterLocation.Query;
         if (property.GetCustomAttribute<FromHeaderAttribute>() != null)
-            return MinimalAPI.Attributes.ParameterLocation.Header;
+            return Attributes.ParameterLocation.Header;
         if (property.GetCustomAttribute<FromBodyAttribute>() != null)
-            return MinimalAPI.Attributes.ParameterLocation.Body;
+            return Attributes.ParameterLocation.Body;
 
         // Auto-detection for common route parameters
         var propertyName = property.Name.ToLower();
         if (propertyName == "id" || propertyName.EndsWith("id"))
         {
-            return MinimalAPI.Attributes.ParameterLocation.Path;
+            return Attributes.ParameterLocation.Path;
         }
 
         // Smart defaults based on request type
         if (isCommandRequest)
         {
-            return MinimalAPI.Attributes.ParameterLocation.Body;
+            return Attributes.ParameterLocation.Body;
         }
         else if (isQueryRequest)
         {
-            return MinimalAPI.Attributes.ParameterLocation.Query;
+            return Attributes.ParameterLocation.Query;
         }
 
-        return MinimalAPI.Attributes.ParameterLocation.Query;
+        return Attributes.ParameterLocation.Query;
     }
 
-    private OpenApiParameter? CreateParameterFromProperty(PropertyInfo property, MinimalAPI.Attributes.ParameterLocation location)
+    private static OpenApiParameter? CreateParameterFromProperty(PropertyInfo property, MinimalAPI.Attributes.ParameterLocation location)
     {
-        if (location == MinimalAPI.Attributes.ParameterLocation.Body)
+        if (location == Attributes.ParameterLocation.Body)
             return null;
 
         var parameter = new OpenApiParameter
@@ -263,7 +232,7 @@ public class MinimalApiOperationFilter : IOperationFilter
         return parameter;
     }
 
-    private string GetParameterName(PropertyInfo property)
+    private static string GetParameterName(PropertyInfo property)
     {
         // Check for custom name in binding attributes
         var routeAttr = property.GetCustomAttribute<FromRouteAttribute>();
@@ -281,19 +250,16 @@ public class MinimalApiOperationFilter : IOperationFilter
         return property.Name;
     }
 
-    private bool IsRequiredParameter(PropertyInfo property)
+    private static bool IsRequiredParameter(PropertyInfo property)
     {
         var propertyType = property.PropertyType;
         var isNullable = !propertyType.IsValueType || Nullable.GetUnderlyingType(propertyType) != null;
         return !isNullable;
     }
 
-    private string GetParameterDescription(PropertyInfo property)
-    {
-        return $"{property.Name} parameter";
-    }
+    private static string GetParameterDescription(PropertyInfo property) => $"{property.Name} parameter";
 
-    private Microsoft.OpenApi.Any.IOpenApiAny? GetParameterExample(PropertyInfo property)
+    private static Microsoft.OpenApi.Any.IOpenApiAny? GetParameterExample(PropertyInfo property)
     {
         var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
@@ -307,19 +273,16 @@ public class MinimalApiOperationFilter : IOperationFilter
         return null;
     }
 
-    private Microsoft.OpenApi.Models.ParameterLocation? MapParameterLocation(MinimalAPI.Attributes.ParameterLocation location)
+    private static Microsoft.OpenApi.Models.ParameterLocation? MapParameterLocation(MinimalAPI.Attributes.ParameterLocation location) => location switch
     {
-        return location switch
-        {
-            MinimalAPI.Attributes.ParameterLocation.Query => Microsoft.OpenApi.Models.ParameterLocation.Query,
-            MinimalAPI.Attributes.ParameterLocation.Path => Microsoft.OpenApi.Models.ParameterLocation.Path,
-            MinimalAPI.Attributes.ParameterLocation.Header => Microsoft.OpenApi.Models.ParameterLocation.Header,
-            MinimalAPI.Attributes.ParameterLocation.Cookie => Microsoft.OpenApi.Models.ParameterLocation.Cookie,
-            _ => Microsoft.OpenApi.Models.ParameterLocation.Query
-        };
-    }
+        Attributes.ParameterLocation.Query => Microsoft.OpenApi.Models.ParameterLocation.Query,
+        Attributes.ParameterLocation.Path => Microsoft.OpenApi.Models.ParameterLocation.Path,
+        Attributes.ParameterLocation.Header => Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Attributes.ParameterLocation.Cookie => Microsoft.OpenApi.Models.ParameterLocation.Cookie,
+        _ => Microsoft.OpenApi.Models.ParameterLocation.Query
+    };
 
-    private OpenApiSchema CreateSchemaForType(Type type)
+    private static OpenApiSchema CreateSchemaForType(Type type)
     {
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
 
@@ -355,7 +318,7 @@ public class MinimalApiOperationFilter : IOperationFilter
         else if (underlyingType.IsEnum)
         {
             schema.Type = "string";
-            schema.Enum = new List<Microsoft.OpenApi.Any.IOpenApiAny>();
+            schema.Enum = [];
             foreach (var enumName in Enum.GetNames(underlyingType))
             {
                 schema.Enum.Add(new Microsoft.OpenApi.Any.OpenApiString(enumName));
@@ -376,7 +339,7 @@ public class MinimalApiOperationFilter : IOperationFilter
         return schema;
     }
 
-    private void GenerateRequestBodyForCommand(OpenApiOperation operation, Type requestType)
+    private static void GenerateRequestBodyForCommand(OpenApiOperation operation, Type requestType)
     {
         var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
         var bodyProperties = new Dictionary<string, OpenApiSchema>();
@@ -421,59 +384,8 @@ public class MinimalApiOperationFilter : IOperationFilter
         }
     }
 
-    private bool HasExplicitNonBodyBinding(PropertyInfo property)
-    {
-        return property.GetCustomAttribute<FromRouteAttribute>() != null ||
+    private static bool HasExplicitNonBodyBinding(PropertyInfo property) => property.GetCustomAttribute<FromRouteAttribute>() != null ||
                property.GetCustomAttribute<FromQueryAttribute>() != null ||
                property.GetCustomAttribute<FromHeaderAttribute>() != null ||
                property.GetCustomAttribute<FromServicesAttribute>() != null;
-    }
-
-    private void AddOperationExamples(OpenApiOperation operation, Type requestType, Type endpointType)
-    {
-        // Add basic examples based on the operation type
-        var className = endpointType.Name;
-        
-        if (className.Contains("Todo"))
-        {
-            AddTodoExamples(operation, requestType, className);
-        }
-    }
-
-    private void AddTodoExamples(OpenApiOperation operation, Type requestType, string className)
-    {
-        // Add examples for Todo operations
-        if (operation.RequestBody?.Content?.ContainsKey("application/json") == true)
-        {
-            var mediaType = operation.RequestBody.Content["application/json"];
-            mediaType.Examples ??= new Dictionary<string, OpenApiExample>();
-
-            if (className.Contains("Create"))
-            {
-                mediaType.Examples["create-example"] = new OpenApiExample
-                {
-                    Summary = "Create Todo Example",
-                    Value = new Microsoft.OpenApi.Any.OpenApiObject
-                    {
-                        ["title"] = new Microsoft.OpenApi.Any.OpenApiString("Buy groceries"),
-                        ["description"] = new Microsoft.OpenApi.Any.OpenApiString("Milk, bread, eggs"),
-                        ["categoryId"] = new Microsoft.OpenApi.Any.OpenApiInteger(1)
-                    }
-                };
-            }
-            else if (className.Contains("Update"))
-            {
-                mediaType.Examples["update-example"] = new OpenApiExample
-                {
-                    Summary = "Update Todo Example", 
-                    Value = new Microsoft.OpenApi.Any.OpenApiObject
-                    {
-                        ["title"] = new Microsoft.OpenApi.Any.OpenApiString("Updated task"),
-                        ["description"] = new Microsoft.OpenApi.Any.OpenApiString("Updated description"),
-                        ["isCompleted"] = new Microsoft.OpenApi.Any.OpenApiBoolean(true)
-                    }
-                };
-            }
-        }
-    }
 }

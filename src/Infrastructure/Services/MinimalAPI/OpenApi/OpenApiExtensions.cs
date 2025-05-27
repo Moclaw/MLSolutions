@@ -15,7 +15,7 @@ public static class OpenApiExtensions
     /// <summary>
     /// Adds enhanced OpenAPI documentation with custom parameter support
     /// </summary>
-    public static IServiceCollection AddMinimalApiWithOpenApi(
+    public static IServiceCollection AddOpenAPIDocument(
         this IServiceCollection services,
         string title = "API",
         string version = "v1",
@@ -57,7 +57,7 @@ public static class OpenApiExtensions
     {
         // Add SwaggerUI (which includes Swagger generation)
         services.AddMinimalApiSwaggerUI(
-            title, version, description, 
+            title, version, description,
             contactName, contactEmail, contactUrl,
             licenseName, licenseUrl,
             endpointAssemblies);
@@ -76,13 +76,12 @@ public static class OpenApiExtensions
 
     /// <summary>
     /// Uses enhanced OpenAPI with custom documentation
+    /// <paramref name="prefix"/>   is the route prefix for the OpenAPI document
     /// </summary>
-    public static WebApplication UseMinimalApiOpenApi(this WebApplication app)
+    public static WebApplication UseMinimalApiOpenApi(this WebApplication app,
+        string prefix = "openapi/v1.json")
     {
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-        }
+        app.MapOpenApi(prefix);
 
         return app;
     }
@@ -98,16 +97,12 @@ public static class OpenApiExtensions
         bool enableFilter = true
     )
     {
-        if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
-        {
-            // Enable SwaggerUI with custom assets
-            app.UseMinimalApiSwaggerUI(
-                routePrefix: swaggerRoutePrefix,
-                enableTryItOut: enableTryItOut,
-                enableDeepLinking: enableDeepLinking,
-                enableFilter: enableFilter
-            );
-        }
+        app.UseMinimalApiSwaggerUI(
+               routePrefix: swaggerRoutePrefix,
+               enableTryItOut: enableTryItOut,
+               enableDeepLinking: enableDeepLinking,
+               enableFilter: enableFilter
+           );
 
         return app;
     }

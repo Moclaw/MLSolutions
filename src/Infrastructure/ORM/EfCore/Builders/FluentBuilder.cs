@@ -35,10 +35,7 @@ internal class FluentBuilder<TEntity> : IFluentBuilder<TEntity>
         _root = root;
     }
 
-    internal void UpdateQuery(IQueryable<TEntity> updateQuery)
-    {
-        _query = updateQuery;
-    }
+    internal void UpdateQuery(IQueryable<TEntity> updateQuery) => _query = updateQuery;
 
     public virtual IFluentBuilder<TEntity> Order<TProperty>(IComparer<TEntity>? comparer = default)
     {

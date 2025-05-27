@@ -1,7 +1,6 @@
 using EfCore.IRepositories;
 using Microsoft.Extensions.DependencyInjection;
 using MinimalAPI.Attributes;
-using MinimalAPI.Handlers;
 using MinimalAPI.Handlers.Command;
 using sample.Domain.Constants;
 using sample.Domain.Entities;
@@ -9,6 +8,7 @@ using Shared.Responses;
 using Shared.Utils;
 
 namespace sample.Application.Features.Todo.Commands.AssignTags;
+
 public class Handler(
     [FromKeyedServices(ServiceKeys.QueryRepository)]
     IQueryRepository<TodoItem, int> queryRepository,
@@ -42,7 +42,7 @@ public class Handler(
         var foundTagIds = tags.Entities.Select(t => t.Id).ToList();
         var notFoundTagIds = request.TagIds.Except(foundTagIds).ToList();
 
-        if (notFoundTagIds.Any())
+        if (notFoundTagIds.Count != 0)
         {
             return ResponseUtils.Error<Response>(
                 404,
