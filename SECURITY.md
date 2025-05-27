@@ -31,7 +31,7 @@ Older versions are not supported unless otherwise noted.
 To report a security vulnerability:
 
 1. **Do not open public issues for security vulnerabilities.**
-2. Please email the maintainers at **security@moclawr.com** with details of the vulnerability, including:
+2. Please email the maintainers at **mocduonglam86@gmail.com** with details of the vulnerability, including:
    - A description of the issue and its impact
    - Steps to reproduce (if applicable)
    - Affected package(s) and version(s)
