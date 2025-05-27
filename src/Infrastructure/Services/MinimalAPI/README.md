@@ -5,10 +5,14 @@
 ## Overview
 
 Moclawr.MinimalAPI is a powerful library for building clean, structured, and maintainable ASP.NET Core Minimal APIs for .NET 9. It provides a class-based approach to endpoint definition with built-in MediatR integration for implementing the CQRS pattern, making it easy to create scalable API applications with clear separation of concerns.
+
+Key Features:
 - Strong typing for requests and responses
-- Automatic model binding from various sources (route, query, body, form, header)
+- **Smart automatic parameter binding with intelligent defaults**
+- **Enhanced OpenAPI documentation with automatic parameter detection**
 - Standardized response handling
 - Support for versioning and authorization
+- **Command/Query pattern support with automatic binding defaults**
 
 ## Getting Started
 
@@ -21,317 +25,296 @@ Moclawr.MinimalAPI is a powerful library for building clean, structured, and mai
 
 ### Step 1: Register Services
 
-In your `Program.cs` file, register the Minimal API services:
+In your `Program.cs` file, register the Minimal API services with enhanced OpenAPI:
 
 ```csharp
-// Register Minimal API services
-builder.Services.AddMinimalApi(
-    typeof(Program).Assembly,  // Endpoints assembly
-    typeof(Application).Assembly,  // Handlers assembly
-    typeof(Infrastructure).Assembly  // Infrastructure assembly
+// Register Minimal API services with OpenAPI documentation
+builder.Services.AddMinimalApiWithOpenApi(
+    title: "Todo API",
+    version: "v1", 
+    description: "Comprehensive API for Todo Management",
+    assemblies: [
+        typeof(Program).Assembly,  // Endpoints assembly
+        typeof(Application.Register).Assembly,  // Handlers assembly
+        typeof(Infrastructure.Register).Assembly  // Infrastructure assembly
+    ]
 );
 
 // ... other service registrations
 
 var app = builder.Build();
 
+// Enable OpenAPI in development
+if (app.Environment.IsDevelopment())
+{
+    app.UseMinimalApiOpenApi();
+}
+
 // Map all endpoints from the assembly
 app.MapMinimalEndpoints(typeof(Program).Assembly);
 ```
 
-### Step 2: Create Endpoint Classes
+### Step 2: Create Request Classes with Smart Defaults
 
-You can create endpoints in three different ways depending on your response type:
+#### Command Requests (Default to Request Body)
 
-1. For endpoints that return a single item:
-
-```csharp
-public class GetTodoEndpoint(IMediator mediator) : SingleEndpointBase<GetRequest, TodoItemDto>(mediator)
-{
-    [HttpGet("api/todos/{id}")]
-    public override async Task<Response<TodoItemDto>> HandleAsync(GetRequest req, CancellationToken ct)
-    {
-        return await _mediator.Send(req, ct);
-    }
-}
-```
-
-2. For endpoints that return a collection:
+Commands automatically use request body for all properties by default:
 
 ```csharp
-public class GetAllTodosEndpoint(IMediator mediator) : CollectionEndpointBase<GetAllRequest, TodoItemDto>(mediator)
+public class CreateTodoRequest : ICommand<CreateTodoResponse>
 {
-    [HttpGet("api/todos")]
-    public override async Task<ResponseCollection<TodoItemDto>> HandleAsync(GetAllRequest req, CancellationToken ct)
-    {
-        return await _mediator.Send(req, ct);
-    }
-}
-```
-
-3. Or use the general base class for custom response formats:
-
-```csharp
-public class DeleteTodoEndpoint(IMediator mediator) : EndpointBase<DeleteRequest, object, Response>(mediator)
-{
-    [HttpDelete("api/todos/{id}")]
-    public override async Task<Response> HandleAsync(DeleteRequest req, CancellationToken ct)
-    {
-        return await _mediator.Send(req, ct);
-    }
-}
-```
-
-### Step 3: Create Request Classes
-
-For commands that modify data and return a result:
-
-```csharp
-public class CreateRequest : ICommand<CreateResponse>
-{
+    // These properties automatically go to request body for POST requests
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-}
-
-public class CreateResponse
-{
-    public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-}
-```
-
-For commands that don't return data:
-
-```csharp
-public class DeleteRequest : ICommand
-{
+    public int CategoryId { get; set; }
+    public List<int> TagIds { get; set; } = new();
+    
+    // Override default behavior with attributes when needed
     [FromRoute]
+    public int? ParentId { get; set; }  // This comes from route parameter
+}
+
+public class UpdateTodoRequest : ICommand<UpdateTodoResponse>
+{
+    [FromRoute]  // Route parameters need explicit attribute
     public int Id { get; set; }
+    
+    // These automatically go to request body (smart default for commands)
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsCompleted { get; set; }
 }
 ```
 
-For queries that return data:
+#### Query Requests (Default to Query Parameters)
+
+Queries automatically use query parameters for all properties by default:
 
 ```csharp
-public class GetAllRequest : IQueryRequest<GetAllResponse>
+public class GetAllTodosRequest : IQueryCollectionRequest<TodoItemDto>
 {
+    // These properties automatically become query parameters for GET requests
     public string? Search { get; set; }
     public int PageIndex { get; set; } = 0;
     public int PageSize { get; set; } = 10;
+    public string OrderBy { get; set; } = "Id";
+    public bool IsAscending { get; set; } = true;
+    public List<int>? CategoryIds { get; set; }
+    
+    // Override default behavior when needed
+    [FromHeader]
+    public string? UserAgent { get; set; }  // This comes from header
 }
 
-public class GetAllResponse
+public class GetTodoByIdRequest : IQueryRequest<TodoItemDto>
 {
-    public List<TodoItemDto> Items { get; set; } = new();
-    public int TotalCount { get; set; }
+    [FromRoute]  // Route parameters need explicit attribute
+    public int Id { get; set; }
+    
+    // These automatically become query parameters (smart default for queries)
+    public bool IncludeTags { get; set; } = false;
+    public bool IncludeCategory { get; set; } = false;
 }
 ```
 
-### Step 4: Implement Command/Query Handlers
+### Step 3: Create Endpoint Classes with OpenAPI Documentation
 
-Command handler with response:
+#### Command Endpoints with Auto-Generated Documentation
 
 ```csharp
-public class CreateHandler(ITodoRepository repository) : ICommandHandler<CreateRequest, CreateResponse>
+[EndpointSummary("Create a new todo", Description = "Creates a new todo item with the provided details")]
+[OpenApiResponse(201, ResponseType = typeof(Response<CreateTodoResponse>), Description = "Todo created successfully")]
+[OpenApiResponse(400, Description = "Invalid request data")]
+public class CreateTodoEndpoint(IMediator mediator)
+    : SingleEndpointBase<CreateTodoRequest, CreateTodoResponse>(mediator)
 {
-    private readonly ITodoRepository _repository = repository;
-
-    public async Task<Response<CreateResponse>> Handle(CreateRequest request, CancellationToken cancellationToken)
+    [HttpPost("api/todos")]
+    public override async Task<Response<CreateTodoResponse>> HandleAsync(
+        CreateTodoRequest req,
+        CancellationToken ct
+    )
     {
-        var todo = new TodoItem
-        {
-            Title = request.Title,
-            Description = request.Description
-        };
-
-        var id = await _repository.AddAsync(todo, cancellationToken);
-        await _repository.SaveChangeAsync(cancellationToken);
-
-        return new Response<CreateResponse>
-        {
-            Data = new CreateResponse { Id = id, Title = todo.Title }
-        };
+        return await _mediator.Send(req, ct);
     }
 }
 ```
 
-Command handler without response:
+The OpenAPI documentation will automatically show:
+- `Title`, `Description`, `CategoryId`, `TagIds` as request body parameters
+- `ParentId` as a route parameter (due to `[FromRoute]` attribute)
+
+#### Query Endpoints with Auto-Generated Documentation
 
 ```csharp
-public class DeleteHandler(ITodoRepository repository) : ICommandHandler<DeleteRequest>
+[EndpointSummary("Get all todos", Description = "Retrieves a paginated list of todos with optional filtering")]
+[OpenApiResponse(200, ResponseType = typeof(ResponseCollection<TodoItemDto>), Description = "Successfully retrieved todos")]
+[OpenApiResponse(400, Description = "Invalid request parameters")]
+public class GetAllTodosEndpoint(IMediator mediator)
+    : CollectionEndpointBase<GetAllTodosRequest, TodoItemDto>(mediator)
 {
-    private readonly ITodoRepository _repository = repository;
-
-    public async Task<Response> Handle(DeleteRequest request, CancellationToken cancellationToken)
+    [HttpGet("api/todos")]
+    public override async Task<ResponseCollection<TodoItemDto>> HandleAsync(
+        GetAllTodosRequest req,
+        CancellationToken ct
+    )
     {
-        var todo = await _repository.GetByIdAsync(request.Id, cancellationToken);
-        if (todo == null)
-            return Response.NotFound($"Todo with id {request.Id} not found");
-
-        _repository.Remove(todo);
-        await _repository.SaveChangeAsync(cancellationToken);
-
-        return Response.Success();
+        return await mediator.Send(req, ct);
     }
 }
 ```
 
-Query handler:
+The OpenAPI documentation will automatically show:
+- `Search`, `PageIndex`, `PageSize`, `OrderBy`, `IsAscending`, `CategoryIds` as query parameters
+- `UserAgent` as a header parameter (due to `[FromHeader]` attribute)
+
+### Step 4: Advanced Parameter Binding with Custom Attributes
+
+You can override the smart defaults using explicit binding attributes:
 
 ```csharp
-public class GetAllHandler(ITodoRepository repository) : IQueryHandler<GetAllRequest, GetAllResponse>
-{
-    private readonly ITodoRepository _repository = repository;
-
-    public async Task<Response<GetAllResponse>> Handle(GetAllRequest request, CancellationToken cancellationToken)
-    {
-        var (items, totalCount) = await _repository.GetPaginatedAsync(
-            request.Search, 
-            request.PageIndex, 
-            request.PageSize, 
-            cancellationToken
-        );
-
-        return new Response<GetAllResponse>
-        {
-            Data = new GetAllResponse
-            {
-                Items = items.Select(i => new TodoItemDto
-                {
-                    Id = i.Id,
-                    Title = i.Title,
-                    Description = i.Description,
-                    IsCompleted = i.IsCompleted
-                }).ToList(),
-                TotalCount = totalCount
-            }
-        };
-    }
-}
-```
-
-## Advanced Features
-
-### Model Binding
-
-The framework automatically binds request data from various sources:
-
-- `[FromRoute]` - Bind from route parameters
-- `[FromQuery]` - Bind from query string
-- `[FromBody]` - Bind from request body (JSON)
-- `[FromForm]` - Bind from form data
-- `[FromHeader]` - Bind from HTTP headers
-- `[FromServices]` - Inject services from DI container
-
-Example:
-```csharp
-public class UpdateRequest : ICommand<UpdateResponse>
+public class AdvancedRequest : ICommand<AdvancedResponse>
 {
     [FromRoute]
     public int Id { get; set; }
     
-    [FromBody]
+    [FromQuery]  // Override: Force this to be a query parameter instead of body
+    public bool ForceUpdate { get; set; }
+    
+    [FromHeader("X-User-Id")]
+    public string? UserId { get; set; }
+    
+    // These still go to request body (default for commands)
     public string Title { get; set; } = string.Empty;
-    
-    [FromBody]
     public string? Description { get; set; }
-    
-    [FromQuery]
-    public bool IsCompleted { get; set; }
     
     [FromServices]
     public ICurrentUserService CurrentUser { get; set; } = null!;
 }
 ```
 
+## Advanced Features
+
+### Smart Parameter Binding Defaults
+
+The framework provides intelligent defaults based on request type:
+
+#### Command Requests (`ICommand`, `ICommand<T>`)
+- **Default**: All properties go to request body (perfect for POST, PUT, PATCH)
+- **Override**: Use `[FromRoute]`, `[FromQuery]`, `[FromHeader]` for exceptions
+- **Auto-detected**: Properties named `Id`, `TodoId` automatically become route parameters
+
+#### Query Requests (`IQueryRequest`, `IQueryCollectionRequest`)
+- **Default**: All properties become query parameters (perfect for GET requests)
+- **Override**: Use `[FromRoute]`, `[FromHeader]`, `[FromBody]` for exceptions
+- **Auto-detected**: Properties named `Id`, `TodoId` automatically become route parameters
+
+### Enhanced OpenAPI Documentation
+
+The library automatically generates comprehensive OpenAPI documentation:
+
+#### Automatic Parameter Detection
+```csharp
+[EndpointSummary("Update todo status")]
+public class UpdateTodoStatusEndpoint : SingleEndpointBase<UpdateStatusRequest, UpdateStatusResponse>
+{
+    // OpenAPI automatically detects:
+    // - Id as route parameter
+    // - IsCompleted as request body parameter
+    // - LastModified as request body parameter
+}
+```
+
+#### Custom Parameter Documentation
+```csharp
+[OpenApiParameter("search", typeof(string), Description = "Search term for filtering todos", Example = "grocery")]
+[OpenApiParameter("pageSize", typeof(int), Description = "Number of items per page", Example = 10)]
+[OpenApiResponse(200, Description = "Search completed successfully")]
+public class SearchTodosEndpoint : CollectionEndpointBase<SearchRequest, TodoItemDto>
+{
+    // Custom documentation with examples and detailed descriptions
+}
+```
+
+### Model Binding Attributes
+
+Available binding attributes for fine-grained control:
+
+```csharp
+public class ComprehensiveRequest : ICommand<ComprehensiveResponse>
+{
+    [FromRoute("todoId")]           // Bind from route parameter 'todoId'
+    public int Id { get; set; }
+    
+    [FromQuery("q")]                // Bind from query parameter 'q'
+    public string? SearchTerm { get; set; }
+    
+    [FromHeader("Authorization")]   // Bind from Authorization header
+    public string? AuthToken { get; set; }
+    
+    [FromBody]                      // Explicitly from request body (default for commands)
+    public TodoUpdateData Data { get; set; } = new();
+    
+    [FromForm]                      // Bind from form data
+    public IFormFile? Attachment { get; set; }
+    
+    [FromServices]                  // Inject from DI container
+    public ILogger<ComprehensiveRequest> Logger { get; set; } = null!;
+}
+```
+
 ### Response Handling
 
-The library provides standardized response handling with different response types:
-
-- `Response` - Base response with success status, HTTP status code, and an optional message
-- `Response<T>` - Response with data of type T
-- `ResponseCollection<T>` - Response with a collection of items of type T
+The library provides standardized response handling:
 
 ```csharp
 // Success response with data
 return new Response<TodoItemDto>(
     IsSuccess: true,
     StatusCode: 200,
-    Message: "Todo item retrieved successfully",
+    Message: "Todo retrieved successfully",
     Data: todoDto
 );
-
-// Success response without data
-return new Response(true, 200, "Operation completed successfully");
 
 // Collection response
 return new ResponseCollection<TodoItemDto>(
     IsSuccess: true,
     StatusCode: 200,
-    Message: "Todo items retrieved successfully",
+    Message: "Todos retrieved successfully",
     Data: todos
 );
 
 // Error responses
-return new Response(false, 404, "Todo item not found");
-return new Response(false, 400, "Invalid input data");
-return new Response(false, 403, "You don't have permission to access this resource");
-return new Response(false, 500, "An error occurred");
+return new Response(false, 404, "Todo not found");
+return new Response(false, 400, "Invalid request data");
 ```
 
-### Versioning
-
-The library includes enhanced versioning support:
+### Versioning Support
 
 ```csharp
-// Define versioning options in your Program.cs
+// Configure versioning in Program.cs
 services.Configure<VersioningOptions>(options => 
 {
-    options.Prefix = "v";            // Default prefix for version number
-    options.DefaultVersion = 1;      // Default version if not specified
-    options.PrependToRoute = false;  // Whether to prepend version to the route
+    options.Prefix = "v";
+    options.DefaultVersion = 1;
 });
 
-// Use versioning in your endpoint
+// Use versioning in endpoints
 [HttpGet("api/v{version}/todos")]
-public override async Task<Response<GetAllResponse>> HandleAsync(GetAllRequest req, CancellationToken ct)
+public override async Task<ResponseCollection<TodoItemDto>> HandleAsync(GetAllRequest req, CancellationToken ct)
 {
-    // Use version-specific logic if needed
     return await _mediator.Send(req, ct);
 }
 ```
 
-### Authorization
+## Key Benefits
 
-The library offers enhanced authorization features:
-
-```csharp
-// Method 1: Using attributes
-[HttpPost("api/todos")]
-[Authorize(Roles = "Admin,Editor")]
-public override async Task<Response<CreateResponse>> HandleAsync(CreateRequest req, CancellationToken ct)
-{
-    return await _mediator.Send(req, ct);
-}
-
-// Method 2: Using endpoint definition
-public class CreateTodoEndpoint(IMediator mediator) : SingleEndpointBase<CreateRequest, CreateResponse>(mediator)
-{
-    [HttpPost("api/todos")]
-    public override async Task<Response<CreateResponse>> HandleAsync(CreateRequest req, CancellationToken ct)
-    {
-        // Configure authorization in constructor or initialization code
-        Definition.EnabledAuthorization = true;
-        Definition.Roles("Admin", "Editor");
-        Definition.Policies("RequireMinimumAge");
-        Definition.AuthSchemes("Bearer");
-        
-        return await _mediator.Send(req, ct);
-    }
-}
-```
+1. **Zero Configuration**: Smart defaults work out of the box
+2. **Type Safety**: Strong typing for all requests and responses
+3. **Automatic Documentation**: OpenAPI docs generated automatically
+4. **Flexible Override**: Easy to customize when needed
+5. **CQRS Pattern**: Built-in support for Command/Query separation
+6. **Clean Architecture**: Minimal boilerplate, maximum productivity
 
 ## Conclusion
 
-This MinimalAPI library provides a structured approach to building APIs with minimal boilerplate while maintaining the benefits of strong typing, dependency injection, and separation of concerns through the CQRS pattern with .NET 9 features.
-*
+This MinimalAPI library provides an intuitive approach to building APIs with intelligent defaults that follow REST conventions, while maintaining full flexibility for customization. The smart parameter binding reduces boilerplate code and the automatic OpenAPI documentation ensures your APIs are always well-documented.

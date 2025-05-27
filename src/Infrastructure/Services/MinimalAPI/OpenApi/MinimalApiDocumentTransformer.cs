@@ -143,10 +143,13 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
         var isCommandRequest = IsCommandRequest(requestType);
         var isQueryRequest = IsQueryRequest(requestType);
 
-        // Process EndpointSummary attribute
+        // Auto-generate feature-based tags
+        var featureTags = GenerateFeatureBasedTags(endpointType, method);
+        
+        // Process OpenApiSummary attribute
         var summaryAttr =
-            method.GetCustomAttribute<EndpointSummaryAttribute>()
-            ?? endpointType.GetCustomAttribute<EndpointSummaryAttribute>();
+            method.GetCustomAttribute<OpenApiSummaryAttribute>()
+            ?? endpointType.GetCustomAttribute<OpenApiSummaryAttribute>();
 
         if (summaryAttr != null)
         {
@@ -155,12 +158,25 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
             {
                 operation.Description = summaryAttr.Description;
             }
+            
+            // Combine custom tags with feature-based tags
+            var allTags = new List<string>();
             if (summaryAttr.Tags != null && summaryAttr.Tags.Length > 0)
             {
-                operation.Tags = summaryAttr.Tags
-                    .Select(tag => new OpenApiTag { Name = tag })
-                    .ToList();
+                allTags.AddRange(summaryAttr.Tags);
             }
+            allTags.AddRange(featureTags);
+            
+            operation.Tags = allTags.Distinct()
+                .Select(tag => new OpenApiTag { Name = tag })
+                .ToList();
+        }
+        else
+        {
+            // Use feature-based tags if no custom summary
+            operation.Tags = featureTags
+                .Select(tag => new OpenApiTag { Name = tag })
+                .ToList();
         }
 
         // Process OpenApiParameter attributes
@@ -169,14 +185,24 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
             .Concat(endpointType.GetCustomAttributes<OpenApiParameterAttribute>())
             .ToList();
 
+        // Handle body parameters for command requests
+        if (isCommandRequest && requestType != null)
+        {
+            GenerateRequestBodySchema(operation, requestType, parameterAttrs);
+        }
+
         foreach (var paramAttr in parameterAttrs)
         {
             var effectiveLocation = DetermineParameterLocation(
-                paramAttr.Location, 
-                isCommandRequest, 
+                paramAttr.Location,
+                isCommandRequest,
                 isQueryRequest,
                 paramAttr.Name
             );
+
+            // Skip body parameters as they're handled in request body
+            if (effectiveLocation == MinimalAPI.Attributes.ParameterLocation.Body)
+                continue;
 
             var parameter = new OpenApiParameter
             {
@@ -187,9 +213,7 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
                 Schema = CreateSchemaForType(paramAttr.Type),
                 Example =
                     paramAttr.Example != null
-                        ? OpenApiAnyFactory.CreateFromJson(
-                            System.Text.Json.JsonSerializer.Serialize(paramAttr.Example)
-                        )
+                        ? CreateOpenApiAnyFromObject(paramAttr.Example)
                         : null
             };
 
@@ -205,7 +229,12 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
         // Auto-generate parameters from request type if no explicit attributes
         if (!parameterAttrs.Any() && requestType != null)
         {
-            GenerateParametersFromRequestType(operation, requestType, isCommandRequest, isQueryRequest);
+            GenerateParametersFromRequestType(
+                operation,
+                requestType,
+                isCommandRequest,
+                isQueryRequest
+            );
         }
 
         // Process OpenApiResponse attributes
@@ -259,32 +288,44 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
 
     private bool IsCommandRequest(Type? requestType)
     {
-        if (requestType == null) return false;
+        if (requestType == null)
+            return false;
 
-        return requestType.GetInterfaces().Any(i =>
-            i == typeof(ICommand) ||
-            (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>))
-        );
+        return requestType
+            .GetInterfaces()
+            .Any(
+                i =>
+                    i == typeof(ICommand)
+                    || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>))
+            );
     }
 
     private bool IsQueryRequest(Type? requestType)
     {
-        if (requestType == null) return false;
+        if (requestType == null)
+            return false;
 
-        return requestType.GetInterfaces().Any(i =>
-            i == typeof(IQueryRequest) ||
-            (i.IsGenericType && (
-                i.GetGenericTypeDefinition() == typeof(IQueryRequest<>) ||
-                i.GetGenericTypeDefinition() == typeof(IQueryCollectionRequest<>)
-            ))
-        );
+        return requestType
+            .GetInterfaces()
+            .Any(
+                i =>
+                    i == typeof(IQueryRequest)
+                    || (
+                        i.IsGenericType
+                        && (
+                            i.GetGenericTypeDefinition() == typeof(IQueryRequest<>)
+                            || i.GetGenericTypeDefinition() == typeof(IQueryCollectionRequest<>)
+                        )
+                    )
+            );
     }
 
     private MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(
         MinimalAPI.Attributes.ParameterLocation specifiedLocation,
         bool isCommandRequest,
         bool isQueryRequest,
-        string parameterName)
+        string parameterName
+    )
     {
         // If explicitly specified, use that
         if (specifiedLocation != MinimalAPI.Attributes.ParameterLocation.Auto)
@@ -293,8 +334,10 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
         }
 
         // Check if it's a route parameter (contains parameter name in curly braces)
-        if (parameterName.Equals("id", StringComparison.OrdinalIgnoreCase) ||
-            parameterName.Equals("todoId", StringComparison.OrdinalIgnoreCase))
+        if (
+            parameterName.Equals("id", StringComparison.OrdinalIgnoreCase)
+            || parameterName.Equals("todoId", StringComparison.OrdinalIgnoreCase)
+        )
         {
             return MinimalAPI.Attributes.ParameterLocation.Path;
         }
@@ -313,11 +356,226 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
         return MinimalAPI.Attributes.ParameterLocation.Query;
     }
 
+    private List<string> GenerateFeatureBasedTags(Type endpointType, MethodInfo method)
+    {
+        var tags = new List<string>();
+        
+        // Extract feature from namespace
+        var namespaceParts = endpointType.Namespace?.Split('.') ?? [];
+        
+        // Look for feature patterns like "Features.Todo.Commands" or "Features.Todo.Queries"
+        var featureIndex = Array.FindIndex(namespaceParts, part => 
+            part.Equals("Features", StringComparison.OrdinalIgnoreCase));
+            
+        if (featureIndex >= 0 && featureIndex + 1 < namespaceParts.Length)
+        {
+            var featureName = namespaceParts[featureIndex + 1]; // e.g., "Todo"
+            tags.Add(featureName);
+            
+            // Add operation type if available
+            if (featureIndex + 2 < namespaceParts.Length)
+            {
+                var operationType = namespaceParts[featureIndex + 2]; // e.g., "Commands", "Queries"
+                tags.Add($"{featureName} {operationType}");
+            }
+        }
+        else
+        {
+            // Fallback: extract from endpoint class name
+            var className = endpointType.Name;
+            if (className.EndsWith("Endpoint"))
+            {
+                className = className[..^8]; // Remove "Endpoint" suffix
+            }
+            
+            // Extract feature from class name patterns like "CreateTodoEndpoint" -> "Todo"
+            if (className.Contains("Todo"))
+            {
+                tags.Add("Todo");
+                
+                // Determine operation type from method
+                var httpMethodAttr = method.GetCustomAttributes()
+                    .FirstOrDefault(a => a is HttpMethodAttribute) as HttpMethodAttribute;
+                    
+                if (httpMethodAttr != null)
+                {
+                    var operationType = httpMethodAttr.Method.ToUpper() switch
+                    {
+                        "GET" => "Queries",
+                        "POST" => "Commands",
+                        "PUT" => "Commands", 
+                        "PATCH" => "Commands",
+                        "DELETE" => "Commands",
+                        _ => "Operations"
+                    };
+                    tags.Add($"Todo {operationType}");
+                }
+            }
+        }
+        
+        return tags;
+    }
+
+    private OpenApiSchema CreateSchemaForType(Type type)
+    {
+        var schema = new OpenApiSchema();
+
+        // Handle nullable types
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+
+        if (underlyingType == typeof(string))
+        {
+            schema.Type = "string";
+        }
+        else if (underlyingType == typeof(int))
+        {
+            schema.Type = "integer";
+            schema.Format = "int32";
+        }
+        else if (underlyingType == typeof(long))
+        {
+            schema.Type = "integer";
+            schema.Format = "int64";
+        }
+        else if (underlyingType == typeof(bool))
+        {
+            schema.Type = "boolean";
+        }
+        else if (underlyingType == typeof(DateTime))
+        {
+            schema.Type = "string";
+            schema.Format = "date-time";
+        }
+        else if (underlyingType == typeof(DateTimeOffset))
+        {
+            schema.Type = "string";
+            schema.Format = "date-time";
+        }
+        else if (underlyingType == typeof(decimal) || underlyingType == typeof(double) || underlyingType == typeof(float))
+        {
+            schema.Type = "number";
+            if (underlyingType == typeof(float))
+                schema.Format = "float";
+            else if (underlyingType == typeof(double))
+                schema.Format = "double";
+        }
+        else if (underlyingType == typeof(Guid))
+        {
+            schema.Type = "string";
+            schema.Format = "uuid";
+        }
+        else if (underlyingType.IsEnum)
+        {
+            schema.Type = "string";
+            schema.Enum = new List<IOpenApiAny>();
+            foreach (var enumName in Enum.GetNames(underlyingType))
+            {
+                schema.Enum.Add(new OpenApiString(enumName));
+            }
+        }
+        else if (underlyingType.IsGenericType && underlyingType.GetGenericTypeDefinition() == typeof(List<>))
+        {
+            schema.Type = "array";
+            var itemType = underlyingType.GetGenericArguments()[0];
+            schema.Items = CreateSchemaForType(itemType);
+        }
+        else if (underlyingType.IsArray)
+        {
+            schema.Type = "array";
+            var elementType = underlyingType.GetElementType();
+            if (elementType != null)
+            {
+                schema.Items = CreateSchemaForType(elementType);
+            }
+        }
+        else
+        {
+            schema.Type = "object";
+            schema.Properties = new Dictionary<string, OpenApiSchema>();
+            schema.AdditionalPropertiesAllowed = true;
+        }
+
+        // Set nullable if the original type was nullable
+        if (type != underlyingType)
+        {
+            schema.Nullable = true;
+        }
+
+        return schema;
+    }
+
+    private void GenerateRequestBodySchema(OpenApiOperation operation, Type requestType, List<OpenApiParameterAttribute> parameterAttrs)
+    {
+        var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var bodyProperties = new Dictionary<string, OpenApiSchema>();
+        var requiredProperties = new HashSet<string>();
+
+        foreach (var property in properties)
+        {
+            // Skip properties that are not body parameters
+            if (property.GetCustomAttribute<FromServicesAttribute>() != null ||
+                property.GetCustomAttribute<FromRouteAttribute>() != null ||
+                property.GetCustomAttribute<FromQueryAttribute>() != null ||
+                property.GetCustomAttribute<FromHeaderAttribute>() != null)
+                continue;
+
+            // Check if there's an explicit FromBody attribute or if it's a command (default to body)
+            var fromBodyAttr = property.GetCustomAttribute<FromBodyAttribute>();
+            if (fromBodyAttr != null || !HasExplicitBindingAttribute(property))
+            {
+                var propertySchema = CreateSchemaForType(property.PropertyType);
+                
+                // Add description from XML comments if available
+                propertySchema.Description = $"The {property.Name} property";
+                
+                bodyProperties[property.Name] = propertySchema;
+
+                if (!IsNullableType(property.PropertyType))
+                {
+                    requiredProperties.Add(property.Name);
+                }
+            }
+        }
+
+        if (bodyProperties.Count > 0)
+        {
+            var requestBodySchema = new OpenApiSchema
+            {
+                Type = "object",
+                Properties = bodyProperties,
+                Required = requiredProperties,
+                AdditionalPropertiesAllowed = false
+            };
+
+            operation.RequestBody = new OpenApiRequestBody
+            {
+                Required = requiredProperties.Count > 0,
+                Content = new Dictionary<string, OpenApiMediaType>
+                {
+                    ["application/json"] = new OpenApiMediaType
+                    {
+                        Schema = requestBodySchema
+                    }
+                }
+            };
+        }
+    }
+
+    private bool HasExplicitBindingAttribute(PropertyInfo property)
+    {
+        return property.GetCustomAttribute<FromRouteAttribute>() != null ||
+               property.GetCustomAttribute<FromQueryAttribute>() != null ||
+               property.GetCustomAttribute<FromHeaderAttribute>() != null ||
+               property.GetCustomAttribute<FromFormAttribute>() != null ||
+               property.GetCustomAttribute<FromServicesAttribute>() != null;
+    }
+
     private void GenerateParametersFromRequestType(
-        OpenApiOperation operation, 
-        Type requestType, 
-        bool isCommandRequest, 
-        bool isQueryRequest)
+        OpenApiOperation operation,
+        Type requestType,
+        bool isCommandRequest,
+        bool isQueryRequest
+    )
     {
         var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -344,6 +602,10 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
             else if (property.GetCustomAttribute<FromHeaderAttribute>() != null)
                 location = MinimalAPI.Attributes.ParameterLocation.Header;
 
+            // Skip body parameters for commands as they're handled in request body
+            if (location == MinimalAPI.Attributes.ParameterLocation.Body && isCommandRequest)
+                continue;
+
             var parameter = new OpenApiParameter
             {
                 Name = property.Name,
@@ -363,103 +625,48 @@ public class MinimalApiDocumentTransformer : IOpenApiDocumentTransformer
         return !type.IsValueType || Nullable.GetUnderlyingType(type) != null;
     }
 
-    private Microsoft.OpenApi.Models.ParameterLocation? MapParameterLocation(MinimalAPI.Attributes.ParameterLocation location)
+    private Microsoft.OpenApi.Models.ParameterLocation? MapParameterLocation(
+        MinimalAPI.Attributes.ParameterLocation location
+    )
     {
         return location switch
         {
-            MinimalAPI.Attributes.ParameterLocation.Query => Microsoft.OpenApi.Models.ParameterLocation.Query,
-            MinimalAPI.Attributes.ParameterLocation.Path => Microsoft.OpenApi.Models.ParameterLocation.Path,
-            MinimalAPI.Attributes.ParameterLocation.Header => Microsoft.OpenApi.Models.ParameterLocation.Header,
-            MinimalAPI.Attributes.ParameterLocation.Cookie => Microsoft.OpenApi.Models.ParameterLocation.Cookie,
+            MinimalAPI.Attributes.ParameterLocation.Query
+                => Microsoft.OpenApi.Models.ParameterLocation.Query,
+            MinimalAPI.Attributes.ParameterLocation.Path
+                => Microsoft.OpenApi.Models.ParameterLocation.Path,
+            MinimalAPI.Attributes.ParameterLocation.Header
+                => Microsoft.OpenApi.Models.ParameterLocation.Header,
+            MinimalAPI.Attributes.ParameterLocation.Cookie
+                => Microsoft.OpenApi.Models.ParameterLocation.Cookie,
             MinimalAPI.Attributes.ParameterLocation.Body => null, // Body parameters are handled differently in OpenAPI
             _ => Microsoft.OpenApi.Models.ParameterLocation.Query
         };
     }
 
-    private OpenApiSchema CreateSchemaForType(Type type)
-    {
-        var schema = new OpenApiSchema();
-
-        if (type == typeof(string))
-        {
-            schema.Type = "string";
-        }
-        else if (type == typeof(int) || type == typeof(int?))
-        {
-            schema.Type = "integer";
-            schema.Format = "int32";
-        }
-        else if (type == typeof(long) || type == typeof(long?))
-        {
-            schema.Type = "integer";
-            schema.Format = "int64";
-        }
-        else if (type == typeof(bool) || type == typeof(bool?))
-        {
-            schema.Type = "boolean";
-        }
-        else if (type == typeof(DateTime) || type == typeof(DateTime?))
-        {
-            schema.Type = "string";
-            schema.Format = "date-time";
-        }
-        else if (
-            type == typeof(decimal)
-            || type == typeof(decimal?)
-            || type == typeof(double)
-            || type == typeof(double?)
-            || type == typeof(float)
-            || type == typeof(float?)
-        )
-        {
-            schema.Type = "number";
-        }
-        else if (type.IsEnum)
-        {
-            schema.Type = "string";
-            schema.Enum = Enum.GetNames(type)
-                .Select(
-                    name => CreateOpenApiString(name)
-                )
-                .ToList<IOpenApiAny>();
-        }
-        else
-        {
-            schema.Type = "object";
-        }
-
-        return schema;
-    }
-
     private IOpenApiAny CreateOpenApiAnyFromObject(object value)
     {
         if (value == null)
-            return null;
+            return new OpenApiNull();
 
-        if (value is string stringValue)
-            return CreateOpenApiString(stringValue);
-
-        if (value is int intValue)
-            return new OpenApiInteger(intValue);
-
-        if (value is long longValue)
-            return new OpenApiLong(longValue);
-
-        if (value is bool boolValue)
-            return new OpenApiBoolean(boolValue);
-
-        if (value is double doubleValue)
-            return new OpenApiDouble(doubleValue);
-
-        if (value is float floatValue)
-            return new OpenApiFloat(floatValue);
-
-        // For complex objects, serialize to JSON string
-        return CreateOpenApiString(JsonSerializer.Serialize(value));
+        return value switch
+        {
+            string stringValue => new OpenApiString(stringValue),
+            int intValue => new OpenApiInteger(intValue),
+            long longValue => new OpenApiLong(longValue),
+            bool boolValue => new OpenApiBoolean(boolValue),
+            double doubleValue => new OpenApiDouble(doubleValue),
+            float floatValue => new OpenApiFloat(floatValue),
+            decimal decimalValue => new OpenApiDouble((double)decimalValue),
+            DateTime dateTimeValue => new OpenApiString(dateTimeValue.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")),
+            DateTimeOffset dateTimeOffsetValue => new OpenApiString(dateTimeOffsetValue.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")),
+            Guid guidValue => new OpenApiString(guidValue.ToString()),
+            _ => new OpenApiString(JsonSerializer.Serialize(value))
+        };
     }
 
     private OpenApiString CreateOpenApiString(string value)
     {
-        return new OpenApiString(value);
+        return new OpenApiString(value ?? string.Empty);
     }
 }
