@@ -171,8 +171,13 @@ public class MyCustomExceptionHandler : IExceptionHandler
 This package works seamlessly with other packages in the Moclawr ecosystem:
 
 - **Moclawr.Core**: Provides core utilities and extensions
-- **Moclawr.Shared**: Contains shared models and settings
+- **Moclawr.Shared**: Contains shared models, interfaces, and settings
+- **Moclawr.Domain**: Domain entities and business logic primitives
 - **Moclawr.EfCore**: Integrates with Entity Framework Core for database health checks
+- **Moclawr.MongoDb**: Supports MongoDB health monitoring
+- **Moclawr.MinimalAPI**: Works together for complete API solutions with exception handling
+- **Moclawr.Services.Caching**: Integrates with caching health checks
+- **Moclawr.Services.External**: External service health monitoring
 
 ## Requirements
 

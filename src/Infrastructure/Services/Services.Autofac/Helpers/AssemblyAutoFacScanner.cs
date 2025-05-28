@@ -52,7 +52,7 @@ namespace Services.Autofac.Helpers
                 // If no matching interfaces, try to find any interface the type implements
                 if (interfaces.Count == 0)
                 {
-                    interfaces = implementation.GetInterfaces().ToList();
+                    interfaces = [.. implementation.GetInterfaces()];
                 }
 
                 // Add the implementation to the result

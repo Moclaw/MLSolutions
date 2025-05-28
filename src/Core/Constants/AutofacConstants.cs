@@ -7,10 +7,7 @@ namespace Core.Constants
             /// <summary>
             /// Returns the default suffixes for service types
             /// </summary>
-            public static string[] GetDefaultSuffixes()
-            {
-                return ["Service", "Repository", "Manager"];
-            }
+            public static string[] GetDefaultSuffixes() => ["Service", "Repository", "Manager"];
         }
     }
 }

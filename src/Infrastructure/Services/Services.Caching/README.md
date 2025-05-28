@@ -149,9 +149,12 @@ await _redisServices.RemoveCacheRangeAsync(
 
 This package works seamlessly with other packages in the Moclawr ecosystem:
 
-- **Moclawr.Core**: Provides configuration models and constants used by the caching service
-- **Moclawr.Host**: Can be used together for building complete API solutions
-- **Moclawr.EfCore**: Use with Entity Framework Core for caching query results
+- **Moclawr.Core**: Provides configuration models, constants, and cache key search operators
+- **Moclawr.Host**: Can be used together for building complete API solutions with health checks
+- **Moclawr.EfCore**: Perfect for caching Entity Framework Core query results and repositories
+- **Moclawr.MongoDb**: Use with MongoDB repositories for caching document queries
+- **Moclawr.MinimalAPI**: Integrates with endpoint handlers for response caching
+- **Moclawr.Services.External**: Cache external API responses and reduce third-party calls
 
 ## Requirements
 

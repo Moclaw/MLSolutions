@@ -1,7 +1,6 @@
 using EfCore.IRepositories;
 using Microsoft.Extensions.DependencyInjection;
 using MinimalAPI.Attributes;
-using MinimalAPI.Handlers;
 using MinimalAPI.Handlers.Command;
 using sample.Application.Features.Todo.Dtos;
 using sample.Domain.Constants;
@@ -10,6 +9,7 @@ using Shared.Responses;
 using Shared.Utils;
 
 namespace sample.Application.Features.Todo.Commands.CreateTag;
+
 public class Handler(
     [FromKeyedServices(ServiceKeys.CommandRepository)]
     ICommandRepository commandRepository

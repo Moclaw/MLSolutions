@@ -28,7 +28,7 @@ internal class ExceptionHandlerFactory : IExceptionHandlerFactory
             : new UnknownExceptionHandler();
     }
 
-    private Dictionary<Type, IExceptionHanlder> LoadHandlers() =>
+    private static Dictionary<Type, IExceptionHanlder> LoadHandlers() =>
         Assembly
             .GetAssembly(typeof(IExceptionHanlder))!
             .GetTypes()
@@ -39,8 +39,5 @@ internal class ExceptionHandlerFactory : IExceptionHandlerFactory
             )
             .ToDictionary(k => k.ExceptionType, v => v.Handler);
 
-    private static IExceptionHanlder CreateHandlerInstance(Type type)
-    {
-        return Activator.CreateInstance(type) as IExceptionHanlder ?? new UnknownExceptionHandler();
-    }
+    private static IExceptionHanlder CreateHandlerInstance(Type type) => Activator.CreateInstance(type) as IExceptionHanlder ?? new UnknownExceptionHandler();
 }

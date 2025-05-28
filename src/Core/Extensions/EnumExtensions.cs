@@ -43,13 +43,10 @@ public static partial class EnumExtensions
     /// <typeparam name="TEnum">The enum type.</typeparam>
     /// <param name="enumType">The type of the enum.</param>
     /// <returns>A list of display names for the enum values.</returns>
-    public static List<string> GetDisplayNames<TEnum>(this Type enumType) where TEnum : Enum
-    {
-        return Enum.GetValues(enumType)
+    public static List<string> GetDisplayNames<TEnum>(this Type enumType) where TEnum : Enum => Enum.GetValues(enumType)
             .Cast<TEnum>()
             .Select(x => x.GetDisplayName())
             .ToList()!;
-    }
 
     /// <summary>
     /// Retrieves a list of descriptions for all values of a specified enum type.
@@ -57,13 +54,10 @@ public static partial class EnumExtensions
     /// <typeparam name="TEnum">The enum type.</typeparam>
     /// <param name="enumType">The type of the enum.</param>
     /// <returns>A list of descriptions for the enum values.</returns>
-    public static List<string> GetDescriptions<TEnum>(this Type enumType) where TEnum : Enum
-    {
-        return Enum.GetValues(enumType)
+    public static List<string> GetDescriptions<TEnum>(this Type enumType) where TEnum : Enum => Enum.GetValues(enumType)
             .Cast<TEnum>()
             .Select(x => x.GetDescription())
             .ToList()!;
-    }
 
     /// <summary>
     /// Converts an enum type to a read-only list of metadata, including name, display name, description, and value.

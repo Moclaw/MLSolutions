@@ -7,10 +7,9 @@ namespace sample.Application
     {
         public static IServiceCollection AddApplicationServices(
             this IServiceCollection services,
+#pragma warning disable IDE0060 // Remove unused parameter
             IConfiguration configuration
-        )
-        {
-            return services;
-        }
+#pragma warning restore IDE0060 // Remove unused parameter
+        ) => services;
     }
 }

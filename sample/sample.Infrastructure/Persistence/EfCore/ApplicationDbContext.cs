@@ -12,9 +12,6 @@ namespace sample.Infrastructure.Persistence.EfCore
         protected override Func<Type, bool> RegisterConfigurationsPredicate =>
             t => t.Namespace == typeof(ConfigurationFilter).Namespace;
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-        }
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => base.OnModelCreating(modelBuilder);
     }
 }

@@ -10,7 +10,7 @@ namespace Services.Autofac.Modules
         ServiceLifetime defaultLifetime = ServiceLifetime.Scoped
     ) : global::Autofac.Module
     {
-        private readonly List<GenericRegistration> _registrations = new();
+        private readonly List<GenericRegistration> _registrations = [];
 
         public GenericModule RegisterGeneric(
             Type openGenericServiceType,
@@ -32,10 +32,7 @@ namespace Services.Autofac.Modules
 
         public GenericModule RegisterGeneric<TService, TImplementation>(
             ServiceLifetime lifetime = ServiceLifetime.Scoped
-        )
-        {
-            return RegisterGeneric(typeof(TService), typeof(TImplementation), lifetime);
-        }
+        ) => RegisterGeneric(typeof(TService), typeof(TImplementation), lifetime);
 
         protected override void Load(ContainerBuilder builder)
         {
@@ -91,7 +88,7 @@ namespace Services.Autofac.Modules
             }
         }
 
-        private void ApplyLifetime<TLimit, TActivatorData, TRegistrationStyle>(
+        private static void ApplyLifetime<TLimit, TActivatorData, TRegistrationStyle>(
             IRegistrationBuilder<TLimit, TActivatorData, TRegistrationStyle> registrationBuilder,
             ServiceLifetime lifetime
         )

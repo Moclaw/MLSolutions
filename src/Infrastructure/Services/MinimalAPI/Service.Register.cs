@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using MinimalAPI.OpenApi;
 
 namespace MinimalAPI;
 
@@ -46,6 +47,32 @@ public static partial class Register
     }
 
     /// <summary>
+    /// Adds MinimalAPI services with enhanced OpenAPI documentation
+    /// </summary>
+    /// <param name="services">The service collection</param>
+    /// <param name="title">API title</param>
+    /// <param name="version">API version</param>
+    /// <param name="description">API description</param>
+    /// <param name="assemblies">Assemblies to scan for endpoint handlers</param>
+    /// <returns>The service collection</returns>
+    public static IServiceCollection AddMinimalApiWithOpenApi(
+        this IServiceCollection services,
+        string title = "API",
+        string version = "v1",
+        string? description = null,
+        params Assembly[] assemblies
+    )
+    {
+        // Add base MinimalAPI services
+        services.AddMinimalApi(assemblies);
+
+        // Add enhanced OpenAPI documentation
+        services.AddOpenAPIDocument(title, version, description, assemblies);
+
+        return services;
+    }
+
+    /// <summary>
     /// Maps all endpoints from classes implementing IEndpointHandler found in the specified assemblies
     /// </summary>
     /// <param name="app">The WebApplication</param>
@@ -79,13 +106,10 @@ public static partial class Register
             foreach (var method in methods)
             {
                 // Get HTTP method attribute
-                var httpMethodAttr =
-                    method
-                        .GetCustomAttributes()
-                        .FirstOrDefault(a => a is MinimalAPI.Attributes.HttpMethodAttribute)
-                    as MinimalAPI.Attributes.HttpMethodAttribute;
 
-                if (httpMethodAttr == null || string.IsNullOrEmpty(httpMethodAttr.Route))
+                if (method
+                        .GetCustomAttributes()
+                        .FirstOrDefault(a => a is MinimalAPI.Attributes.HttpMethodAttribute) is not MinimalAPI.Attributes.HttpMethodAttribute httpMethodAttr || string.IsNullOrEmpty(httpMethodAttr.Route))
                     continue;
 
                 // Use the route template directly from the HTTP method attribute
@@ -94,14 +118,11 @@ public static partial class Register
                 // Create the endpoint handler
                 var handler = app.MapMethods(
                     routeTemplate,
-                    new[] { httpMethodAttr.Method },
+                    [httpMethodAttr.Method],
                     async (HttpContext context, IServiceProvider serviceProvider) =>
                     {
                         // Create endpoint instance from service provider
-                        var endpoint =
-                            ActivatorUtilities.CreateInstance(serviceProvider, endpointType)
-                            as MinimalAPI.Endpoints.EndpointAbstractBase;
-                        if (endpoint == null)
+                        if (ActivatorUtilities.CreateInstance(serviceProvider, endpointType) is not MinimalAPI.Endpoints.EndpointAbstractBase endpoint)
                             return Results.StatusCode(500);
 
                         // Set HttpContext on the endpoint

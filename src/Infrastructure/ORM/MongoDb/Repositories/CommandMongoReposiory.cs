@@ -55,10 +55,7 @@ public class CommandMongoReposiory(
     }
 
     public void Update<TEntity>(TEntity entity)
-        where TEntity : class, IEntity
-    {
-        context.Update(entity);
-    }
+        where TEntity : class, IEntity => context.Update(entity);
 
     public void UpdateRange<TEntity>(IEnumerable<TEntity> entities)
         where TEntity : class, IEntity
@@ -68,10 +65,7 @@ public class CommandMongoReposiory(
     }
 
     public void Remove<TEntity>(TEntity entity)
-        where TEntity : class, IEntity
-    {
-        context.Remove(entity);
-    }
+        where TEntity : class, IEntity => context.Remove(entity);
 
     public void RemoveRange<TEntity>(IEnumerable<TEntity> entities)
         where TEntity : class, IEntity

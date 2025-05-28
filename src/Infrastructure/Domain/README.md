@@ -89,9 +89,11 @@ var customers = await repository.GetAllAsync(builder =>
 
 Moclawr.Domain is designed to work with:
 
-- **Moclawr.Shared**: Builds on base entity interfaces
-- **Moclawr.EfCore** and **Moclawr.MongoDb**: Provides base classes for data models
-- **Moclawr.Core**: Leverages extension methods and utilities
+- **Moclawr.Core**: Leverages extension methods and utilities for enhanced functionality
+- **Moclawr.Shared**: Builds on base entity interfaces and standardized response models
+- **Moclawr.EfCore** and **Moclawr.MongoDb**: Provides base classes for data models and repository patterns
+- **Moclawr.MinimalAPI**: Perfect for CQRS handlers and domain-driven endpoint design
+- **Moclawr.Host**: Integrates with domain event handling and business logic validation
 
 ## Requirements
 

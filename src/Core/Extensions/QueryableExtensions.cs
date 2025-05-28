@@ -18,10 +18,7 @@ public static class QueryableExtensions
     /// <param name="propertyName">The name of the property to order by.</param>
     /// <param name="isDescending">Indicates whether the sorting should be descending.</param>
     /// <returns>An <see cref="IQueryable{T}"/> whose elements are sorted according to the specified property.</returns>
-    public static IQueryable<T> OrderByProperty<T>(this IQueryable<T> source, string propertyName, bool isDescending)
-    {
-        return ApplyOrder(source, propertyName, isDescending);
-    }
+    public static IQueryable<T> OrderByProperty<T>(this IQueryable<T> source, string propertyName, bool isDescending) => ApplyOrder(source, propertyName, isDescending);
 
     /// <summary>
     /// Applies ordering to the elements of a sequence based on a specified property name and sort direction.
@@ -73,10 +70,7 @@ public static class QueryableExtensions
     /// <param name="propertyName">The name of the property to order by.</param>
     /// <param name="isDescending">Indicates whether the sorting should be descending.</param>
     /// <returns>An <see cref="IQueryable{T}"/> whose elements are sorted according to the specified property.</returns>
-    public static IQueryable<T> ThenOrderByProperty<T>(this IQueryable<T> source, string propertyName, bool isDescending)
-    {
-        return ApplyOrder(source, propertyName, isDescending, true);
-    }
+    public static IQueryable<T> ThenOrderByProperty<T>(this IQueryable<T> source, string propertyName, bool isDescending) => ApplyOrder(source, propertyName, isDescending, true);
 
     /// <summary>
     /// Converts an <see cref="IQueryable{T}"/> to a <see cref="List{T}"/> asynchronously.
