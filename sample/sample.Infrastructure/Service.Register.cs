@@ -25,16 +25,20 @@ namespace sample.Infrastructure
                     .LogTo(Console.WriteLine, LogLevel.Information)
                 );
             // Register repositories
-            services.AddKeyedScoped(
-                typeof(ICommandRepository),
-                ServiceKeys.CommandRepository,
-                typeof(CommandDefaultRepository)
-            );
+            services.AddKeyedScoped<ICommandRepository, CommandDefaultRepository>(ServiceKeys.CommandRepository);
+            
             services.TryAddKeyedScoped(
                 typeof(IQueryRepository<,>),
                 ServiceKeys.QueryRepository,
                 typeof(QueryDefaultRepository<,>)
             );
+
+            //S3 storage, caching, and other services can be registered here
+
+
+
+
+
             return services;
         }
     }

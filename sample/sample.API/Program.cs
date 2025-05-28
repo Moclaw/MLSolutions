@@ -72,6 +72,14 @@ using (var scope = app.Services.CreateScope())
     // Ensure the database is created and apply migrations
     await db.Database.EnsureCreatedAsync();
     await db.Database.MigrateAsync();
+    
+    // Initialize S3 bucket (useful for LocalStack)
+    var s3Service = scope.ServiceProvider.GetService<Services.AWS.S3.Interfaces.IS3Service>();
+    if (s3Service != null)
+    {
+        await s3Service.EnsureBucketExistsAsync();
+    }
+    
     // Seed data if the database is empty
     if (!db.Set<sample.Domain.Entities.TodoItem>().Any())
     {

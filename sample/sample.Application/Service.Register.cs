@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Services.AWS.S3;
 
 namespace sample.Application
 {
@@ -9,7 +10,11 @@ namespace sample.Application
             this IServiceCollection services,
 #pragma warning disable IDE0060 // Remove unused parameter
             IConfiguration configuration
-#pragma warning restore IDE0060 // Remove unused parameter
-        ) => services;
+        )
+        {
+            // Register AWS S3 services with default configuration section "AWS:S3"
+            services.AddS3Services(configuration);
+            return services;
+        }
     }
 }

@@ -62,4 +62,11 @@ public interface IS3Service
         string destinationKey,
         string? destinationBucket = null
     );
+
+    /// <summary>
+    /// Create bucket if it doesn't exist (mainly for LocalStack)
+    /// </summary>
+    /// <param name="bucketName">Bucket name to create</param>
+    /// <returns>True if bucket was created or already exists</returns>
+    Task<bool> EnsureBucketExistsAsync(string? bucketName = null);
 }

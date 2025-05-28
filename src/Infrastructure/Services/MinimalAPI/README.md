@@ -251,60 +251,99 @@ public class UploadFileEndpoint(IMediator mediator)
 }
 ```
 
-#### Bulk Operations with Transaction Support
+#### Multiple File Upload
 
 ```csharp
-public class BulkUpdateProductsRequest : ICommand<BulkUpdateProductsResponse>
+public class UploadMultipleFilesRequest : ICommand<UploadMultipleFilesResponse>
 {
-    public List<ProductUpdateDto> Products { get; set; } = new();
-    public bool ValidateStock { get; set; } = true;
-    public bool NotifySuppliers { get; set; } = false;
+    [FromForm]
+    public List<IFormFile> Files { get; set; } = new();
     
-    [FromHeader("X-Batch-Id")]
-    public string? BatchId { get; set; }
-}
-
-[OpenApiSummary("Bulk update products with transaction support")]
-[OpenApiResponse(200, typeof(Response<BulkUpdateProductsResponse>), "Bulk update completed")]
-[OpenApiResponse(207, typeof(Response<BulkUpdateProductsResponse>), "Partial success with errors")]
-[OpenApiResponse(409, Description = "Concurrency conflict detected")]
-public class BulkUpdateProductsEndpoint(IMediator mediator)
-    : SingleEndpointBase<BulkUpdateProductsRequest, BulkUpdateProductsResponse>(mediator)
-{
-    [HttpPatch("api/products/bulk")]
-    public override async Task<Response<BulkUpdateProductsResponse>> HandleAsync(
-        BulkUpdateProductsRequest req, CancellationToken ct)
-        => await _mediator.Send(req, ct);
-}
-```
-
-#### Real-Time WebSocket Integration
-
-```csharp
-public class GetLiveNotificationsRequest : IQueryRequest<NotificationStreamDto>
-{
+    [FromForm]
+    public string Category { get; set; } = string.Empty;
+    
+    [FromForm]
+    public bool GenerateThumbnails { get; set; } = true;
+    
     [FromRoute]
-    public string UserId { get; set; } = string.Empty;
-    
-    public List<NotificationType>? Types { get; set; }
-    public bool IncludeRead { get; set; } = false;
-    
-    [FromHeader("X-Connection-Id")]
-    public string? ConnectionId { get; set; }
+    public int FolderId { get; set; }
 }
 
-[OpenApiSummary("Get live notifications stream")]
-[OpenApiResponse(200, typeof(Response<NotificationStreamDto>), "Stream established")]
-[Authorize]
-public class GetLiveNotificationsEndpoint(IMediator mediator)
-    : SingleEndpointBase<GetLiveNotificationsRequest, NotificationStreamDto>(mediator)
+[OpenApiSummary("Upload multiple files with batch processing")]
+[OpenApiResponse(201, typeof(Response<UploadMultipleFilesResponse>), "Files uploaded successfully")]
+[OpenApiResponse(400, Description = "Invalid file types or empty file list")]
+public class UploadMultipleFilesEndpoint(IMediator mediator)
+    : SingleEndpointBase<UploadMultipleFilesRequest, UploadMultipleFilesResponse>(mediator)
 {
-    [HttpGet("api/users/{userId}/notifications/live")]
-    public override async Task<Response<NotificationStreamDto>> HandleAsync(
-        GetLiveNotificationsRequest req, CancellationToken ct)
+    [HttpPost("api/folders/{folderId}/files/batch")]
+    public override async Task<Response<UploadMultipleFilesResponse>> HandleAsync(
+        UploadMultipleFilesRequest req, CancellationToken ct)
         => await _mediator.Send(req, ct);
 }
 ```
+
+#### Mixed Form Data with File Upload
+
+```csharp
+public class CreateProductWithImageRequest : ICommand<CreateProductResponse>
+{
+    [FromForm]
+    public string Name { get; set; } = string.Empty;
+    
+    [FromForm]
+    public decimal Price { get; set; }
+    
+    [FromForm]
+    public string Description { get; set; } = string.Empty;
+    
+    [FromForm]
+    public IFormFile? MainImage { get; set; }
+    
+    [FromForm]
+    public List<IFormFile> GalleryImages { get; set; } = new();
+    
+    [FromForm]
+    public List<string> Tags { get; set; } = new();
+    
+    [FromRoute]
+    public int CategoryId { get; set; }
+}
+
+[OpenApiSummary("Create product with images")]
+[OpenApiResponse(201, typeof(Response<CreateProductResponse>), "Product created with images")]
+[OpenApiResponse(400, Description = "Validation failed or invalid image formats")]
+public class CreateProductWithImageEndpoint(IMediator mediator)
+    : SingleEndpointBase<CreateProductWithImageRequest, CreateProductResponse>(mediator)
+{
+    [HttpPost("api/categories/{categoryId}/products")]
+    public override async Task<Response<CreateProductResponse>> HandleAsync(
+        CreateProductWithImageRequest req, CancellationToken ct)
+        => await _mediator.Send(req, ct);
+}
+```
+
+## Smart Parameter Binding Features
+
+### Automatic Request Body Detection
+
+The framework automatically detects the appropriate request body format:
+
+- **JSON Body**: For commands without form data or file uploads
+- **Form Data**: For commands with `IFormFile` properties or `[FromForm]` attributes
+- **Mixed Binding**: Route parameters, query parameters, headers, and body/form data in the same request
+
+### Enhanced SwaggerUI Features
+
+**File Upload Support:**
+- **Drag & Drop Interface**: Modern file upload UI in SwaggerUI
+- **Multiple File Selection**: Support for array/list of files
+- **File Type Validation**: Automatic MIME type detection and validation
+- **Progress Indicators**: Real-time upload progress display
+
+**Form Data Documentation:**
+- **Rich Schema Generation**: Automatic form field documentation
+- **File Upload Examples**: Sample file upload requests
+- **Mixed Content Support**: JSON + file uploads in the same request
 
 ## Production-Ready Features
 

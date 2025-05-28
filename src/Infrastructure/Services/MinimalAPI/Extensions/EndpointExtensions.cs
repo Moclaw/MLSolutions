@@ -141,7 +141,33 @@ public static class EndpointExtensions
         if (httpContext.Request.HasFormContentType)
         {
             var form = await httpContext.Request.ReadFormAsync();
-            if (form.TryGetValue(property.Name, out var value))
+
+            // Handle IFormFile types
+            if (property.PropertyType == typeof(IFormFile))
+            {
+                var file = form.Files.GetFile(property.Name);
+                if (file != null)
+                {
+                    property.SetValue(request, file);
+                }
+            }
+            else if (property.PropertyType == typeof(IFormFile[]))
+            {
+                var files = form.Files.GetFiles(property.Name);
+                if (files != null && files.Count > 0)
+                {
+                    property.SetValue(request, files.ToArray());
+                }
+            }
+            else if (property.PropertyType == typeof(List<IFormFile>))
+            {
+                var files = form.Files.GetFiles(property.Name);
+                if (files != null && files.Count > 0)
+                {
+                    property.SetValue(request, files.ToList());
+                }
+            }
+            else if (form.TryGetValue(property.Name, out var value))
             {
                 SetPropertyValue(property, request, value);
             }
@@ -212,7 +238,21 @@ public static class EndpointExtensions
             return;
         }
 
-        // Try body for POST, PUT, PATCH requests
+        // Try form data for POST, PUT, PATCH requests with form content type
+        if (
+            httpContext.Request.HasFormContentType
+            && (
+                httpContext.Request.Method == "POST"
+                || httpContext.Request.Method == "PUT"
+                || httpContext.Request.Method == "PATCH"
+            )
+        )
+        {
+            await BindFromFormAsync(httpContext, request, property);
+            return;
+        }
+
+        // Try body for POST, PUT, PATCH requests with JSON content
         if (
             httpContext.Request.ContentLength > 0
             && (
@@ -379,8 +419,7 @@ public static class EndpointExtensions
                 }
             }
             else if (
-                propertyType == typeof(DateTimeOffset)
-                && element.ValueKind == JsonValueKind.String
+                propertyType == typeof(DateTimeOffset) && element.ValueKind == JsonValueKind.String
             )
             {
                 if (element.TryGetDateTimeOffset(out var dateOffsetValue))

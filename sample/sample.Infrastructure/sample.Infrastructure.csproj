@@ -13,6 +13,7 @@
 		</PackageReference>
 		<ProjectReference Include="..\..\src\Infrastructure\ORM\EfCore\EfCore.csproj" />
 		<ProjectReference Include="..\..\src\Infrastructure\Services\DotnetCap\DotnetCap.csproj" />
+		<ProjectReference Include="..\..\src\Infrastructure\Services\Services.AWS.S3\Services.AWS.S3.csproj" />
 		<ProjectReference Include="..\..\src\Infrastructure\Services\Services.External\Services.External.csproj" />
 		<ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
 	</ItemGroup>
