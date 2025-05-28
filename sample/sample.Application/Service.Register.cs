@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Services.AWS.S3;
 
 namespace sample.Application
 {
@@ -10,6 +11,9 @@ namespace sample.Application
             IConfiguration configuration
         )
         {
+            // Add S3 services using centralized registration
+            services.AddS3Services(configuration);
+            
             return services;
         }
     }

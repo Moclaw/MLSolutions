@@ -9,4 +9,9 @@ public class S3Configuration
     public string Region { get; set; } = string.Empty;
     public bool UseCredentialsFile { get; set; } = false;
     public string CredentialsFilePath { get; set; } = string.Empty;
+    
+    // LocalStack support
+    public bool UseLocalStack { get; set; } = false;
+    public string LocalStackServiceUrl { get; set; } = "http://localhost:4566";
+    public bool ForcePathStyle { get; set; } = true;
 }

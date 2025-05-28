@@ -21,6 +21,13 @@ public class S3Service : IS3Service, IDisposable
             RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(_config.Region),
         };
 
+        // Configure for LocalStack if enabled
+        if (_config.UseLocalStack)
+        {
+            s3Config.ServiceURL = _config.LocalStackServiceUrl;
+            s3Config.ForcePathStyle = _config.ForcePathStyle;
+        }
+
         if (_config.UseCredentialsFile)
         {
             _s3Client = new AmazonS3Client(s3Config);
@@ -129,6 +136,35 @@ public class S3Service : IS3Service, IDisposable
         };
 
         return await _s3Client.CopyObjectAsync(request);
+    }
+
+    public async Task<bool> EnsureBucketExistsAsync(string? bucketName = null)
+    {
+        var bucket = bucketName ?? _config.BucketName;
+
+        try
+        {
+            await _s3Client.GetBucketLocationAsync(bucket);
+            return true;
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            try
+            {
+                var request = new PutBucketRequest
+                {
+                    BucketName = bucket,
+                    UseClientRegion = true
+                };
+
+                await _s3Client.PutBucketAsync(request);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
     public void Dispose()
