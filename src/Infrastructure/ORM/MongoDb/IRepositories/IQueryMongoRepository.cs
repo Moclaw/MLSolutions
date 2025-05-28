@@ -68,13 +68,10 @@ public interface IQueryMongoRepository<TEntity, in TKey>
         TypeAdapterConfig? typeAdapterConfig = null,
         bool enableTracking = false,
         CancellationToken cancellationToken = default
-    );
-
-    /// <summary>
+    );    /// <summary>
     /// Retrieves the first entity matching the specified predicate.
     /// </summary>
     /// <param name="predicate">A predicate to filter the entities.</param>
-    /// <param name="builder">A builder to customize the query.</param>
     /// <param name="enableTracking">Indicates whether tracking should be disabled.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The first entity if found; otherwise, null.</returns>
