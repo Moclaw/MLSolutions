@@ -144,9 +144,13 @@ builder.UseAutofacServiceProvider(
 
 This package works seamlessly with other packages in the Moclawr ecosystem:
 
-- **Moclawr.Core**: Provides core utilities and extensions
-- **Moclawr.Host**: Can be used together for building complete API solutions
-- **Moclawr.MinimalAPI**: Works with Autofac for dependency injection in Minimal API applications
+- **Moclawr.Core**: Provides core utilities and extensions for enhanced functionality
+- **Moclawr.Shared**: Uses dependency injection for shared services and interfaces
+- **Moclawr.Host**: Can be used together for building complete API solutions with advanced DI patterns
+- **Moclawr.MinimalAPI**: Perfect for dependency injection in Minimal API applications with MediatR
+- **Moclawr.EfCore**: Registers repository and context services automatically
+- **Moclawr.MongoDb**: Supports MongoDB context and repository registration
+- **Moclawr.Services.Caching**: Integrates caching services with Autofac container
 
 ## Requirements
 

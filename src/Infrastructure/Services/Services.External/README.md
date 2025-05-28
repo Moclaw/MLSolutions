@@ -134,8 +134,12 @@ public class AlertService
 
 This package works seamlessly with other packages in the Moclawr ecosystem:
 
-- **Moclawr.Core**: Provides configuration models used by this package
-- **Moclawr.Host**: Can be used together for building complete API solutions
+- **Moclawr.Core**: Leverages configuration models and utility extensions
+- **Moclawr.Shared**: Uses standardized response models for consistent error handling
+- **Moclawr.Host**: Perfect companion for building complete API solutions with global exception handling
+- **Moclawr.Services.Caching**: Cache external service responses to improve performance and reduce costs
+- **Moclawr.MinimalAPI**: Integrates with endpoint handlers for email/SMS functionality in APIs
+- **Moclawr.DotNetCore.CAP**: Use with event-driven messaging for asynchronous notifications
 
 ## Requirements
 

@@ -15,10 +15,7 @@ namespace Services.External.SmsService
         private readonly int _timeout = options.Value.Timeout;
         private readonly bool _useDefaultCredentials = options.Value.UseDefaultCredentials;
 
-        public void SendSms(string to, string message)
-        {
-            SendSms([to], message);
-        }
+        public void SendSms(string to, string message) => SendSms([to], message);
 
         public void SendSms(List<string> to, string message)
         {

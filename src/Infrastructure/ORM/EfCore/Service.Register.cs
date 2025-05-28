@@ -6,10 +6,7 @@ namespace EfCore
     {
         public static IServiceCollection AddGlobalExceptionHandling(
             this IServiceCollection services
-        )
-        {
-            return services;
-        }
+        ) => services;
 
     }
 }

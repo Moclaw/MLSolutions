@@ -14,5 +14,5 @@ public class GetallResponse
     public int? CategoryId { get; set; }
     public string? CategoryName { get; set; }
 
-    public List<TagDto> Tags { get; set; } = new List<TagDto>();
+    public List<TagDto> Tags { get; set; } = [];
 }

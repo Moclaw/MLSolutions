@@ -102,12 +102,9 @@ namespace DotnetCap
 #pragma warning restore CA2208
         }
 
-        private static DbProvider ParseDbProvider(string dbProvider)
-        {
-            return Enum.TryParse<DbProvider>(dbProvider, true, out var provider)
+        private static DbProvider ParseDbProvider(string dbProvider) => Enum.TryParse<DbProvider>(dbProvider, true, out var provider)
                 ? provider
                 : throw new ArgumentException($"Invalid database provider: {dbProvider}", nameof(dbProvider));
-        }
 
         private static void ConfigureDatabase(CapOptions capOptions, DbProvider dbProvider, string connectionString)
         {
@@ -133,12 +130,9 @@ namespace DotnetCap
             }
         }
 
-        private static void ConfigureDashboard(CapOptions capOptions, DotnetCapConfiguration config)
-        {
-            capOptions.UseDashboard(dashboard =>
-            {
-                dashboard.PathMatch = config.DashboardPath ?? "/cap";
-            });
-        }
+        private static void ConfigureDashboard(CapOptions capOptions, DotnetCapConfiguration config) => capOptions.UseDashboard(dashboard =>
+                                                                                                                 {
+                                                                                                                     dashboard.PathMatch = config.DashboardPath ?? "/cap";
+                                                                                                                 });
     }
 }

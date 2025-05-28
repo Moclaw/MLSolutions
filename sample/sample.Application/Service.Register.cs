@@ -8,12 +8,10 @@ namespace sample.Application
     {
         public static IServiceCollection AddApplicationServices(
             this IServiceCollection services,
+#pragma warning disable IDE0060 // Remove unused parameter
             IConfiguration configuration
         )
         {
-            // Add S3 services using centralized registration
-            services.AddS3Services(configuration);
-            
             return services;
         }
     }

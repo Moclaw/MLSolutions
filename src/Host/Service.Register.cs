@@ -32,12 +32,9 @@ public static partial class Register
 
     public static IApplicationBuilder UseGlobalExceptionHandling(
         this IApplicationBuilder builder
-    )
-    {
-        return builder
+    ) => builder
             .UseMiddleware<ExceptionHandlingMiddleware>()
             .UseStatusCodePagesWithReExecute("/Error/{0}");
-    }
 
     public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder,
         IConfiguration configuration, string applicationName)

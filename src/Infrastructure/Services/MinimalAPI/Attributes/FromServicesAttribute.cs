@@ -1,9 +1,9 @@
 namespace MinimalAPI.Attributes;
 
 /// <summary>
-/// Specifies that a parameter or property should be bound using the request service provider.
+/// Specifies that a parameter should be bound from the dependency injection container
 /// </summary>
-[AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
 public class FromServicesAttribute : Attribute
 {
 }

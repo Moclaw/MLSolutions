@@ -18,6 +18,6 @@ public class TodoItem : IEntity<int>
     public virtual TodoCategory? Category { get; set; }
 
     // Navigation properties for many-to-many relationship
-    public virtual ICollection<TodoTagItem> TodoTagItems { get; set; } = new List<TodoTagItem>();
-    public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
+    public virtual ICollection<TodoTagItem> TodoTagItems { get; set; } = [];
+    public virtual ICollection<Tag> Tags { get; set; } = [];
 }

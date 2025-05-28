@@ -9,5 +9,5 @@ public class TodoCategory : IEntity<int>
     public string? Description { get; set; }
 
     // Navigation property for the relationship
-    public virtual ICollection<TodoItem> TodoItems { get; set; } = new List<TodoItem>();
+    public virtual ICollection<TodoItem> TodoItems { get; set; } = [];
 }

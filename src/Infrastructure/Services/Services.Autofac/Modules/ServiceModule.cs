@@ -125,7 +125,7 @@ namespace Services.Autofac.Modules
                     )
                     .ToList();
 
-                if (interfaces.Any())
+                if (interfaces.Count != 0)
                 {
                     // Register with all matching interfaces
                     builder
@@ -136,8 +136,7 @@ namespace Services.Autofac.Modules
             }
         }
 
-        private void RegisterConcreteTypes(ContainerBuilder builder)
-        {
+        private void RegisterConcreteTypes(ContainerBuilder builder) =>
             // Auto-register concrete types not already registered
             builder
                 .RegisterAssemblyTypes(assemblies)
@@ -150,6 +149,5 @@ namespace Services.Autofac.Modules
                 )
                 .AsSelf()
                 .InstancePerDependency();
-        }
     }
 }

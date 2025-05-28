@@ -5,10 +5,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>Moclawr.MinimalAPI</PackageId>
-        <Version>2.0.1</Version>
+        <Version>2.1.0</Version>
         <Authors>moclaw</Authors>
         <Company>moclaw</Company>
-        <Description>Minimal API utilities with MediatR integration for .NET 9. Provides a class-based approach to endpoint definition with built-in CQRS support.</Description>
+        <Description>Minimal API utilities with MediatR integration for .NET 9. Provides a class-based approach to endpoint definition with built-in CQRS support and SwaggerUI.</Description>
         <Copyright>Copyright © Moclaw 2025</Copyright>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageIcon>icon.png</PackageIcon>
@@ -16,8 +16,8 @@
         <PackageProjectUrl>https://github.com/Moclaw/MLSolutions</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Moclaw/MLSolutions</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <PackageTags>minimalapi;mediator;cqrs;endpoints;dotnet;mlsolutions</PackageTags>
-        <PackageReleaseNotes>Added improved XML documentation and bug fixes.</PackageReleaseNotes>
+        <PackageTags>minimalapi;mediator;cqrs;endpoints;dotnet;mlsolutions;swagger</PackageTags>
+        <PackageReleaseNotes>Added SwaggerUI support for enhanced API documentation experience.</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
@@ -26,6 +26,9 @@
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
         <PackageReference Include="MediatR" Version="12.2.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.2" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.2" />
     </ItemGroup>
     
     <ItemGroup>

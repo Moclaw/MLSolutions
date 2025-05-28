@@ -241,9 +241,12 @@ public async Task<List<ProductSalesReport>> GetProductSalesReportAsync(
 
 This package works seamlessly with other packages in the Moclawr ecosystem:
 
-- **Moclawr.Core**: Provides core utilities and extensions
-- **Moclawr.Domain**: Contains base entity types and builder interfaces
-- **Moclawr.Shared**: Contains interfaces for entities and pagination utilities
+- **Moclawr.Core**: Provides essential utilities and extension methods
+- **Moclawr.Shared**: Uses entity interfaces, response models, and pagination utilities
+- **Moclawr.Domain**: Contains base entity types and builder interfaces for domain modeling
+- **Moclawr.Host**: Integrates with health checks and global exception handling
+- **Moclawr.Services.Caching**: Perfect companion for caching query results and repositories
+- **Moclawr.MinimalAPI**: Works with CQRS handlers and endpoint patterns for clean API design
 
 ## Requirements
 

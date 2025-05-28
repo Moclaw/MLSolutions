@@ -27,6 +27,7 @@ public record Response<T>(bool IsSuccess, int StatusCode, string? Message, T? Da
 /// <param name="StatusCode">The HTTP status code associated with the response.</param>
 /// <param name="Message">An optional message providing additional information about the response.</param>
 /// <param name="Data">A collection of responses included in the response.</param>
+/// <param name="Pagination"> Optional pagination information for the collection.</param>
 public record ResponseCollection(
     bool IsSuccess,
     int StatusCode,

@@ -23,35 +23,17 @@ namespace Services.External.SmtpService
             };
         }
 
-        public void SendEmail(string to, string subject, string body)
-        {
-            SendEmailInternal(to, subject, body, null, null, null, false, null);
-        }
+        public void SendEmail(string to, string subject, string body) => SendEmailInternal(to, subject, body, null, null, null, false, null);
 
-        public void SendEmail(string to, string subject, string body, List<string> cc)
-        {
-            SendEmailInternal(to, subject, body, cc, null, null, false, null);
-        }
+        public void SendEmail(string to, string subject, string body, List<string> cc) => SendEmailInternal(to, subject, body, cc, null, null, false, null);
 
-        public void SendEmail(string to, string subject, string body, List<string> cc, List<string> bcc)
-        {
-            SendEmailInternal(to, subject, body, cc, bcc, null, false, null);
-        }
+        public void SendEmail(string to, string subject, string body, List<string> cc, List<string> bcc) => SendEmailInternal(to, subject, body, cc, bcc, null, false, null);
 
-        public void SendEmail(string to, string subject, string body, List<string> cc, List<string> bcc, List<string> attachments)
-        {
-            SendEmailInternal(to, subject, body, cc, bcc, attachments, false, null);
-        }
+        public void SendEmail(string to, string subject, string body, List<string> cc, List<string> bcc, List<string> attachments) => SendEmailInternal(to, subject, body, cc, bcc, attachments, false, null);
 
-        public void SendEmail(string to, string subject, string body, List<string> cc, List<string> bcc, List<string> attachments, bool isBodyHtml)
-        {
-            SendEmailInternal(to, subject, body, cc, bcc, attachments, isBodyHtml, null);
-        }
+        public void SendEmail(string to, string subject, string body, List<string> cc, List<string> bcc, List<string> attachments, bool isBodyHtml) => SendEmailInternal(to, subject, body, cc, bcc, attachments, isBodyHtml, null);
 
-        public void SendEmail(string to, string subject, string body, List<string> cc, List<string> bcc, List<string> attachments, bool isBodyHtml, string replyTo)
-        {
-            SendEmailInternal(to, subject, body, cc, bcc, attachments, isBodyHtml, replyTo);
-        }
+        public void SendEmail(string to, string subject, string body, List<string> cc, List<string> bcc, List<string> attachments, bool isBodyHtml, string replyTo) => SendEmailInternal(to, subject, body, cc, bcc, attachments, isBodyHtml, replyTo);
 
         private void SendEmailInternal(
             string to,

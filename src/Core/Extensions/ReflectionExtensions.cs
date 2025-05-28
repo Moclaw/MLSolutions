@@ -34,15 +34,12 @@ public static class ReflectionExtensions
     /// <param name="expression">An expression representing a property or field access.</param>
     /// <returns>The name of the property or field.</returns>
     /// <exception cref="NotSupportedException">Thrown if the expression is not a valid member expression.</exception>
-    public static string PropertyName<T>(this Expression<T> expression)
+    public static string PropertyName<T>(this Expression<T> expression) => expression.Body switch
     {
-        return expression.Body switch
-        {
-            MemberExpression m => m.Member.Name,
-            UnaryExpression { Operand: MemberExpression m } => m.Member.Name,
-            _ => throw new NotSupportedException($"[{expression}] is not a valid member expression!")
-        };
-    }
+        MemberExpression m => m.Member.Name,
+        UnaryExpression { Operand: MemberExpression m } => m.Member.Name,
+        _ => throw new NotSupportedException($"[{expression}] is not a valid member expression!")
+    };
 
     /// <summary>
     /// Retrieves the generic arguments of a type if it matches a specified generic type definition.

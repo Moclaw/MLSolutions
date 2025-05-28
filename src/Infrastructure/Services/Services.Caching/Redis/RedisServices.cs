@@ -65,13 +65,10 @@ namespace Services.Caching.Redis
                 : typeof(T).GetFields().All(field => IsNullOrDefault(field.GetValue(value)));
         }
 
-        public async Task RemoveCacheValueAsync(string key, CancellationToken cancellation = default)
-        {
-            await Task.WhenAll(
+        public async Task RemoveCacheValueAsync(string key, CancellationToken cancellation = default) => await Task.WhenAll(
                 SyncCacheKeyOutbox(key, true, cancellation),
                 _distributedCache.RemoveAsync(key, cancellation)
             );
-        }
 
         public async Task SetCacheValueAsync<T>(
             string key,
@@ -117,13 +114,10 @@ namespace Services.Caching.Redis
             }
         }
 
-        private static DistributedCacheEntryOptions GetOutBoxCacheTimeOut()
+        private static DistributedCacheEntryOptions GetOutBoxCacheTimeOut() => new DistributedCacheEntryOptions()
         {
-            return new DistributedCacheEntryOptions()
-            {
-                AbsoluteExpiration = DateTime.UtcNow.AddYears(20),
-            };
-        }
+            AbsoluteExpiration = DateTime.UtcNow.AddYears(20),
+        };
 
         public async Task<(bool found, T? cacheData)> TryGetCacheValueAsync<T>(
             string key,
@@ -141,19 +135,13 @@ namespace Services.Caching.Redis
             return option;
         }
 
-        public string BuildCacheKey(params string[] keys)
-        {
-            return string.Join(':', keys);
-        }
+        public string BuildCacheKey(params string[] keys) => string.Join(':', keys);
 
         public async Task RemoveCacheRangeAsync(
             string keyPattern,
             CacheKeySearchOperator searchOperator = CacheKeySearchOperator.StartsWith,
             CancellationToken cancellation = default
-        )
-        {
-            await RedisRemoveRange(keyPattern, searchOperator);
-        }
+        ) => await RedisRemoveRange(keyPattern, searchOperator);
 
         private async Task RedisRemoveRange(
             string keyPattern,

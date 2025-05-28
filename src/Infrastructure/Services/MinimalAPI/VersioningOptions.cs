@@ -16,10 +16,7 @@ public abstract class VersioningOptions
     /// </summary>
     public bool? PrependToRoute { internal get; set; }
 
-    public override string ToString()
-    {
-        return string.Join(string.Empty, [Prefix, DefaultVersion]);
-    }
+    public override string ToString() => string.Join(string.Empty, [Prefix, DefaultVersion]);
 }
 
 /// <summary>

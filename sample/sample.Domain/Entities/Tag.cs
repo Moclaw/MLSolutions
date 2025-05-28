@@ -9,6 +9,6 @@ public class Tag : IEntity<int>
     public string? Color { get; set; }
     
     // Navigation properties for many-to-many relationship
-    public virtual ICollection<TodoTagItem> TodoTagItems { get; set; } = new List<TodoTagItem>();
-    public virtual ICollection<TodoItem> TodoItems { get; set; } = new List<TodoItem>();
+    public virtual ICollection<TodoTagItem> TodoTagItems { get; set; } = [];
+    public virtual ICollection<TodoItem> TodoItems { get; set; } = [];
 }

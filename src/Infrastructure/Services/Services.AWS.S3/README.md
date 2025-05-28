@@ -252,8 +252,12 @@ await _s3Service.DeleteFileAsync("old/file.pdf");
 
 This package works seamlessly with other packages in the MLSolutions ecosystem:
 
-- **Core**: For configuration models
-- **Host**: Can be used together for building complete API solutions
+- **Moclawr.Core**: Leverages configuration models and utility extensions
+- **Moclawr.Shared**: Uses standardized response models for consistent error handling
+- **Moclawr.Host**: Perfect companion for building complete API solutions with cloud storage capabilities
+- **Moclawr.MinimalAPI**: Integrates with endpoint handlers for file upload/download operations
+- **Moclawr.Services.Caching**: Cache S3 metadata and file information for improved performance
+- **Moclawr.Services.External**: Use together for comprehensive cloud service integrations
 
 ## Requirements
 

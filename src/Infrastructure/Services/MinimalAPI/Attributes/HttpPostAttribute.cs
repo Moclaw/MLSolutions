@@ -4,9 +4,6 @@ namespace MinimalAPI.Attributes;
 /// Identifies an endpoint that supports the HTTP POST method
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public class HttpPostAttribute : HttpMethodAttribute
+public class HttpPostAttribute(string route = "") : HttpMethodAttribute("POST", route)
 {
-    public HttpPostAttribute(string route = "") : base("POST", route)
-    {
-    }
 }
