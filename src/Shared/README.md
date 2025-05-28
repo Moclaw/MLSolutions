@@ -65,10 +65,13 @@ bool isValid = PasswordHasher.VerifyPassword(hashedPassword, "userPassword");
 
 Moclawr.Shared serves as a dependency for virtually all other Moclawr packages:
 
-- **Moclawr.Core**: For extension methods and utilities
-- **Moclawr.Domain**: For entity base classes and interfaces
-- **Moclawr.EfCore** and **Moclawr.MongoDb**: For repository contracts and entity requirements
-- **Moclawr.MinimalAPI**: For standardized response handling
+- **Moclawr.Core**: Provides extension methods and utilities that work with Shared interfaces
+- **Moclawr.Domain**: Uses Shared entity interfaces for domain modeling and base classes
+- **Moclawr.EfCore** and **Moclawr.MongoDb**: Implement Shared repository contracts and entity requirements
+- **Moclawr.MinimalAPI**: Uses Shared response models for standardized API responses
+- **Moclawr.Host**: Leverages Shared exception types and response models for error handling
+- **Moclawr.Services.Caching**: Uses Shared response models for cached data structures
+- **Moclawr.Services.External**: Implements Shared response patterns for external service calls
 
 ## Requirements
 

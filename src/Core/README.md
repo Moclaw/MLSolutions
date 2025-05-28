@@ -55,9 +55,12 @@ bool isMatch = filename.MatchesWildcard("doc*.txt");
 
 Moclawr.Core is designed to work seamlessly with other packages in the Moclawr ecosystem, particularly:
 
-- **Moclawr.Shared**: For entity interfaces and response models
-- **Moclawr.Domain**: For domain modeling and business logic
-- **Moclawr.EfCore** and **Moclawr.MongoDb**: For data access
+- **Moclawr.Shared**: Provides foundational interfaces and response models that use Core extensions
+- **Moclawr.Domain**: For domain modeling and business logic that leverages Core utilities
+- **Moclawr.EfCore** and **Moclawr.MongoDb**: For data access operations using Core query extensions
+- **Moclawr.Host**: Uses Core configuration utilities and extension methods
+- **Moclawr.MinimalAPI**: Leverages Core extensions for endpoint and request handling
+- **Moclawr.Services.Caching**: Uses Core constants and configuration extensions
 
 ## Requirements
 

@@ -171,7 +171,7 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
             })];
     }
 
-    private List<FeatureStructure> DiscoverFeatureStructures(Assembly[] assemblies)
+    private static List<FeatureStructure> DiscoverFeatureStructures(Assembly[] assemblies)
     {
         var features = new Dictionary<string, FeatureStructure>();
 
@@ -212,10 +212,12 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
             return null;
 
         var parts = namespaceName.Split('.');
-        
+
         // Look for Endpoints pattern: *.Endpoints.{FeatureName}.{OperationType}
-        var endpointsIndex = Array.FindIndex(parts, part => 
-            part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
+        var endpointsIndex = Array.FindIndex(parts, part =>
+            (part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase) && !part.Contains("Controller", StringComparison.OrdinalIgnoreCase))
+            || (part.Contains("Controller", StringComparison.OrdinalIgnoreCase) && !part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase)));
+            
 
         if (endpointsIndex >= 0 && endpointsIndex + 1 < parts.Length)
         {

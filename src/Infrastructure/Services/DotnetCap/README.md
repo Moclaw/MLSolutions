@@ -171,9 +171,13 @@ public class OrderConsumer : ICapSubscribe
 
 This package works seamlessly with other packages in the Moclawr ecosystem:
 
-- **Moclawr.Core**: Provides configuration models used by DotnetCap
-- **Moclawr.Host**: Can be used together for building complete API solutions
-- **Moclawr.EfCore**: Integrates with Entity Framework Core for transactional operations
+- **Moclawr.Core**: Provides configuration models and utilities used by DotnetCap
+- **Moclawr.Shared**: Uses standardized response models for message handling
+- **Moclawr.Host**: Perfect companion for building complete API solutions with event-driven architecture
+- **Moclawr.EfCore**: Integrates with Entity Framework Core for transactional messaging and outbox patterns
+- **Moclawr.MongoDb**: Supports MongoDB integration for document-based event storage
+- **Moclawr.MinimalAPI**: Use with endpoint handlers for publishing events in API operations
+- **Moclawr.Services.External**: Trigger external notifications through event-driven messaging
 
 ## Requirements
 

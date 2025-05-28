@@ -197,8 +197,12 @@ public async Task<List<Product>> GetProductsByComplexCriteriaAsync(
 
 This package works seamlessly with other packages in the Moclawr ecosystem:
 
-- **Moclawr.Domain**: Contains base entity types and repository interfaces
-- **Moclawr.Shared**: Contains interfaces for entities and pagination utilities
+- **Moclawr.Core**: Provides essential utilities and extension methods
+- **Moclawr.Shared**: Uses entity interfaces, response models, and pagination utilities  
+- **Moclawr.Domain**: Contains base entity types and repository interfaces for domain modeling
+- **Moclawr.Host**: Integrates with health checks and application infrastructure
+- **Moclawr.Services.Caching**: Works together for caching MongoDB query results
+- **Moclawr.MinimalAPI**: Perfect for CQRS handlers and clean endpoint design
 - **Moclawr.EfCore**: Can be used alongside EF Core for hybrid database scenarios
 
 ## Requirements
