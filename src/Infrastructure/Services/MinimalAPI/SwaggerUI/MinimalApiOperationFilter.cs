@@ -5,6 +5,7 @@ using MinimalAPI.Attributes;
 using MinimalAPI.Endpoints;
 using MinimalAPI.Handlers;
 using MinimalAPI.Handlers.Command;
+using Microsoft.AspNetCore.Http;
 
 namespace MinimalAPI.SwaggerUI;
 
@@ -140,16 +141,24 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         // Clear existing parameters to rebuild them properly
         operation.Parameters ??= [];
 
+        // Check if this is a form data request (has IFormFile or FromForm attributes)
+        var hasFormData = properties.Any(p => 
+            p.PropertyType == typeof(IFormFile) || 
+            p.PropertyType == typeof(IFormFile[]) ||
+            p.PropertyType == typeof(List<IFormFile>) ||
+            p.GetCustomAttribute<FromFormAttribute>() != null);
+
         foreach (var property in properties)
         {
             // Skip service injection properties
             if (property.GetCustomAttribute<FromServicesAttribute>() != null)
                 continue;
 
-            var parameterLocation = DetermineParameterLocation(property, isCommandRequest, isQueryRequest);
+            var parameterLocation = DetermineParameterLocation(property, isCommandRequest, isQueryRequest, hasFormData);
 
-            // For command requests, body parameters are handled in request body, not as parameters
-            if (parameterLocation == Attributes.ParameterLocation.Body && isCommandRequest)
+            // For form data and body parameters, they're handled in request body, not as parameters
+            if (parameterLocation == Attributes.ParameterLocation.Form || 
+                parameterLocation == Attributes.ParameterLocation.Body)
             {
                 continue;
             }
@@ -172,11 +181,18 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         // Handle request body for command requests
         if (isCommandRequest)
         {
-            GenerateRequestBodyForCommand(operation, requestType);
+            if (hasFormData)
+            {
+                GenerateFormDataRequestBody(operation, requestType);
+            }
+            else
+            {
+                GenerateRequestBodyForCommand(operation, requestType);
+            }
         }
     }
 
-    private static MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(PropertyInfo property, bool isCommandRequest, bool isQueryRequest)
+    private static MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(PropertyInfo property, bool isCommandRequest, bool isQueryRequest, bool hasFormData)
     {
         // Check for explicit binding attributes
         if (property.GetCustomAttribute<FromRouteAttribute>() != null)
@@ -187,6 +203,16 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             return Attributes.ParameterLocation.Header;
         if (property.GetCustomAttribute<FromBodyAttribute>() != null)
             return Attributes.ParameterLocation.Body;
+        if (property.GetCustomAttribute<FromFormAttribute>() != null)
+            return Attributes.ParameterLocation.Form;
+
+        // Handle IFormFile types - these should always be form parameters, not body
+        if (property.PropertyType == typeof(IFormFile) || 
+            property.PropertyType == typeof(IFormFile[]) ||
+            property.PropertyType == typeof(List<IFormFile>))
+        {
+            return Attributes.ParameterLocation.Form;
+        }
 
         // Auto-detection for common route parameters
         var propertyName = property.Name.ToLower();
@@ -198,7 +224,7 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         // Smart defaults based on request type
         if (isCommandRequest)
         {
-            return Attributes.ParameterLocation.Body;
+            return hasFormData ? Attributes.ParameterLocation.Form : Attributes.ParameterLocation.Body;
         }
         else if (isQueryRequest)
         {
@@ -279,6 +305,8 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         Attributes.ParameterLocation.Path => Microsoft.OpenApi.Models.ParameterLocation.Path,
         Attributes.ParameterLocation.Header => Microsoft.OpenApi.Models.ParameterLocation.Header,
         Attributes.ParameterLocation.Cookie => Microsoft.OpenApi.Models.ParameterLocation.Cookie,
+        Attributes.ParameterLocation.Form => null, // Form parameters are handled in request body
+        Attributes.ParameterLocation.Body => null, // Body parameters are handled in request body
         _ => Microsoft.OpenApi.Models.ParameterLocation.Query
     };
 
@@ -384,8 +412,90 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         }
     }
 
+    private static void GenerateFormDataRequestBody(OpenApiOperation operation, Type requestType)
+    {
+        var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var formProperties = new Dictionary<string, OpenApiSchema>();
+        var requiredProperties = new HashSet<string>();
+
+        foreach (var property in properties)
+        {
+            // Skip properties with explicit non-form bindings
+            if (HasExplicitNonFormBinding(property))
+                continue;
+
+            OpenApiSchema propertySchema;
+
+            // Handle IFormFile types
+            if (property.PropertyType == typeof(IFormFile))
+            {
+                propertySchema = new OpenApiSchema
+                {
+                    Type = "string",
+                    Format = "binary",
+                    Description = $"File upload for {property.Name}"
+                };
+            }
+            else if (property.PropertyType == typeof(IFormFile[]) || property.PropertyType == typeof(List<IFormFile>))
+            {
+                propertySchema = new OpenApiSchema
+                {
+                    Type = "array",
+                    Items = new OpenApiSchema
+                    {
+                        Type = "string",
+                        Format = "binary"
+                    },
+                    Description = $"Multiple file uploads for {property.Name}"
+                };
+            }
+            else
+            {
+                propertySchema = CreateSchemaForType(property.PropertyType);
+            }
+
+            formProperties[property.Name] = propertySchema;
+
+            if (IsRequiredParameter(property))
+            {
+                requiredProperties.Add(property.Name);
+            }
+        }
+
+        if (formProperties.Count > 0)
+        {
+            var requestBodySchema = new OpenApiSchema
+            {
+                Type = "object",
+                Properties = formProperties,
+                Required = requiredProperties,
+                AdditionalPropertiesAllowed = false
+            };
+
+            operation.RequestBody = new OpenApiRequestBody
+            {
+                Required = requiredProperties.Count > 0,
+                Content = new Dictionary<string, OpenApiMediaType>
+                {
+                    ["multipart/form-data"] = new OpenApiMediaType
+                    {
+                        Schema = requestBodySchema
+                    }
+                }
+            };
+        }
+    }
+
     private static bool HasExplicitNonBodyBinding(PropertyInfo property) => property.GetCustomAttribute<FromRouteAttribute>() != null ||
                property.GetCustomAttribute<FromQueryAttribute>() != null ||
                property.GetCustomAttribute<FromHeaderAttribute>() != null ||
-               property.GetCustomAttribute<FromServicesAttribute>() != null;
+               property.GetCustomAttribute<FromServicesAttribute>() != null ||
+               property.GetCustomAttribute<FromBodyAttribute>() != null;
+
+    private static bool HasExplicitNonFormBinding(PropertyInfo property) => 
+        property.GetCustomAttribute<FromRouteAttribute>() != null ||
+        property.GetCustomAttribute<FromQueryAttribute>() != null ||
+        property.GetCustomAttribute<FromHeaderAttribute>() != null ||
+        property.GetCustomAttribute<FromServicesAttribute>() != null ||
+        property.GetCustomAttribute<FromBodyAttribute>() != null;
 }

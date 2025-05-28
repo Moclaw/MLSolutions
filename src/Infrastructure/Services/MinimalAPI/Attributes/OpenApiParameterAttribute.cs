@@ -14,13 +14,3 @@ public class OpenApiParameterAttribute(string name, Type type) : Attribute
     public object? Example { get; set; }
     public string? Format { get; set; }
 }
-
-public enum ParameterLocation
-{
-    Auto,    // Will be determined automatically based on request type
-    Query,
-    Path,
-    Header,
-    Cookie,
-    Body
-}

@@ -17,232 +17,385 @@ public static class EndpointBindingHelper
         where TRequest : class, new()
     {
         var request = new TRequest();
-        var properties = typeof(TRequest).GetProperties();
+        var properties = typeof(TRequest).GetProperties(
+            BindingFlags.Public | BindingFlags.Instance
+        );
 
         foreach (var property in properties)
         {
-            var value = await GetPropertyValueAsync(httpContext, property, cancellationToken);
-            if (value != null)
-            {
-                property.SetValue(request, value);
-            }
+            // Skip service injection properties
+            if (property.GetCustomAttribute<FromServicesAttribute>() != null)
+                continue;
+
+            await BindPropertyAsync(httpContext, request, property, cancellationToken);
         }
 
         return request;
     }
 
-    private static async Task<object?> GetPropertyValueAsync(
+    private static async Task BindPropertyAsync<T>(
         HttpContext httpContext,
+        T request,
         PropertyInfo property,
         CancellationToken cancellationToken
     )
+        where T : class
     {
-        // Check for FromRoute attribute
+        // Check for specific From attributes
         var fromRouteAttr = property.GetCustomAttribute<FromRouteAttribute>();
+        var fromQueryAttr = property.GetCustomAttribute<FromQueryAttribute>();
+        var fromBodyAttr = property.GetCustomAttribute<FromBodyAttribute>();
+        var fromHeaderAttr = property.GetCustomAttribute<FromHeaderAttribute>();
+        var fromFormAttr = property.GetCustomAttribute<FromFormAttribute>();
+
+        // If FromRoute attribute is present, bind from route values
         if (fromRouteAttr != null)
         {
-            var routeKey = !string.IsNullOrEmpty(fromRouteAttr.Name) ? fromRouteAttr.Name : property.Name;
-            if (httpContext.Request.RouteValues.TryGetValue(routeKey, out var routeValue))
-            {
-                return ConvertValue(routeValue?.ToString(), property.PropertyType);
-            }
+            BindFromRoute(httpContext, request, property, fromRouteAttr.Name);
+            return;
         }
 
-        // Check for FromQuery attribute
-        var fromQueryAttr = property.GetCustomAttribute<FromQueryAttribute>();
+        // If FromQuery attribute is present, bind from query string
         if (fromQueryAttr != null)
         {
-            var queryKey = !string.IsNullOrEmpty(fromQueryAttr.Name) ? fromQueryAttr.Name : property.Name;
-            if (httpContext.Request.Query.TryGetValue(queryKey, out var queryValue))
-            {
-                return ConvertValue(queryValue.ToString(), property.PropertyType);
-            }
+            BindFromQuery(httpContext, request, property, fromQueryAttr.Name);
+            return;
         }
 
-        // Check for FromHeader attribute
-        var fromHeaderAttr = property.GetCustomAttribute<FromHeaderAttribute>();
+        // If FromHeader attribute is present, bind from headers
         if (fromHeaderAttr != null)
         {
-            var headerKey = !string.IsNullOrEmpty(fromHeaderAttr.Name) ? fromHeaderAttr.Name : property.Name;
-            if (httpContext.Request.Headers.TryGetValue(headerKey, out var headerValue))
-            {
-                return ConvertValue(headerValue.ToString(), property.PropertyType);
-            }
+            BindFromHeader(httpContext, request, property, fromHeaderAttr.Name);
+            return;
         }
 
-        // Check for FromForm attribute
-        var fromFormAttr = property.GetCustomAttribute<FromFormAttribute>();
-        if (fromFormAttr != null && httpContext.Request.HasFormContentType)
+        // If FromForm attribute is present or it's an IFormFile, bind from form data
+        if (fromFormAttr != null || IsFormFileProperty(property))
         {
-            var form = await httpContext.Request.ReadFormAsync(cancellationToken);
-            var formKey = !string.IsNullOrEmpty(fromFormAttr.Name) ? fromFormAttr.Name : property.Name;
-            if (form.TryGetValue(formKey, out var formValue))
-            {
-                return ConvertValue(formValue.ToString(), property.PropertyType);
-            }
+            await BindFromFormAsync(httpContext, request, property, fromFormAttr?.Name);
+            return;
         }
 
-        // Check for FromBody attribute
-        var fromBodyAttr = property.GetCustomAttribute<FromBodyAttribute>();
+        // If FromBody attribute is present, bind from request body
         if (fromBodyAttr != null)
         {
-            var body = await new StreamReader(httpContext.Request.Body).ReadToEndAsync(cancellationToken);
-            if (!string.IsNullOrEmpty(body))
-            {
-                try
-                {
-                    var jsonDoc = JsonDocument.Parse(body);
-                    var propertyName = !string.IsNullOrEmpty(fromBodyAttr.Name) ? fromBodyAttr.Name : property.Name;
-                    
-                    if (jsonDoc.RootElement.TryGetProperty(propertyName, out var jsonElement))
-                    {
-                        return ConvertJsonElement(jsonElement, property.PropertyType);
-                    }
-                    
-                    // If no specific property name found, try to deserialize the entire body to the property type
-                    if (string.IsNullOrEmpty(fromBodyAttr.Name))
-                    {
-                        return JsonSerializer.Deserialize(body, property.PropertyType);
-                    }
-                }
-                catch (JsonException)
-                {
-                    // If JSON parsing fails, return null
-                    return null;
-                }
-            }
+            await BindFromBodyAsync(httpContext, request, property, cancellationToken);
+            return;
         }
 
-        // Check for FromServices attribute
-        var fromServicesAttr = property.GetCustomAttribute<FromServicesAttribute>();
-        if (fromServicesAttr != null)
-        {
-            return httpContext.RequestServices.GetService(property.PropertyType);
-        }
-
-        // Default binding logic (fallback)
-        return await GetDefaultPropertyValueAsync(httpContext, property, cancellationToken);
+        // Default binding logic
+        await DefaultBindingAsync(httpContext, request, property, cancellationToken);
     }
 
-    private static async Task<object?> GetDefaultPropertyValueAsync(
+    private static bool IsFormFileProperty(PropertyInfo property)
+    {
+        return property.PropertyType == typeof(IFormFile)
+            || property.PropertyType == typeof(IFormFile[])
+            || (
+                property.PropertyType.IsGenericType
+                && property.PropertyType.GetGenericTypeDefinition() == typeof(List<>)
+                && property.PropertyType.GetGenericArguments()[0] == typeof(IFormFile)
+            );
+    }
+
+    private static void BindFromRoute<T>(
         HttpContext httpContext,
+        T request,
+        PropertyInfo property,
+        string? name
+    )
+        where T : class
+    {
+        var routeName = name ?? property.Name.ToLower();
+        if (httpContext.Request.RouteValues.TryGetValue(routeName, out var routeValue))
+        {
+            SetPropertyValue(property, request, routeValue);
+        }
+    }
+
+    private static void BindFromQuery<T>(
+        HttpContext httpContext,
+        T request,
+        PropertyInfo property,
+        string? name
+    )
+        where T : class
+    {
+        var queryName = name ?? property.Name;
+        var value = httpContext.Request.Query[queryName];
+        if (!string.IsNullOrEmpty(value))
+        {
+            SetPropertyValue(property, request, value);
+        }
+    }
+
+    private static void BindFromHeader<T>(
+        HttpContext httpContext,
+        T request,
+        PropertyInfo property,
+        string? name
+    )
+        where T : class
+    {
+        var headerName = name ?? property.Name;
+        var value = httpContext.Request.Headers[headerName];
+        if (!string.IsNullOrEmpty(value))
+        {
+            SetPropertyValue(property, request, value);
+        }
+    }
+
+    private static async Task BindFromFormAsync<T>(
+        HttpContext httpContext,
+        T request,
+        PropertyInfo property,
+        string? name
+    )
+        where T : class
+    {
+        if (!httpContext.Request.HasFormContentType)
+            return;
+
+        var form = await httpContext.Request.ReadFormAsync();
+        var formName = name ?? property.Name;
+
+        // Handle IFormFile types
+        if (property.PropertyType == typeof(IFormFile))
+        {
+            var file = form.Files.GetFile(formName);
+            if (file != null)
+            {
+                property.SetValue(request, file);
+            }
+        }
+        else if (property.PropertyType == typeof(IFormFile[]))
+        {
+            var files = form.Files.GetFiles(formName);
+            if (files.Count > 0)
+            {
+                property.SetValue(request, files.ToArray());
+            }
+        }
+        else if (
+            property.PropertyType.IsGenericType
+            && property.PropertyType.GetGenericTypeDefinition() == typeof(List<>)
+            && property.PropertyType.GetGenericArguments()[0] == typeof(IFormFile)
+        )
+        {
+            var files = form.Files.GetFiles(formName);
+            if (files.Count > 0)
+            {
+                property.SetValue(request, files.ToList());
+            }
+        }
+        else if (form.TryGetValue(formName, out var value))
+        {
+            SetPropertyValue(property, request, value);
+        }
+    }
+
+    private static async Task BindFromBodyAsync<T>(
+        HttpContext httpContext,
+        T request,
         PropertyInfo property,
         CancellationToken cancellationToken
     )
+        where T : class
     {
-        var propertyName = property.Name;
+        if (
+            httpContext.Request.ContentLength > 0
+            && httpContext.Request.ContentType?.Contains("application/json") == true
+        )
+        {
+            try
+            {
+                httpContext.Request.Body.Position = 0;
+                var bodyDoc = await JsonDocument.ParseAsync(
+                    httpContext.Request.Body,
+                    default,
+                    cancellationToken
+                );
 
+                if (
+                    bodyDoc.RootElement.TryGetProperty(property.Name, out var element)
+                    || bodyDoc.RootElement.TryGetProperty(property.Name.ToLower(), out element)
+                    || bodyDoc.RootElement.TryGetProperty(
+                        char.ToLower(property.Name[0]) + property.Name.Substring(1),
+                        out element
+                    )
+                )
+                {
+                    SetPropertyFromJsonElement(property, request, element);
+                }
+            }
+            catch (JsonException)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to bind property '{property.Name}' of type '{property.PropertyType}' from JSON body"
+                );
+            }
+        }
+    }
+
+    private static async Task DefaultBindingAsync<T>(
+        HttpContext httpContext,
+        T request,
+        PropertyInfo property,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
         // Try route values first
-        if (httpContext.Request.RouteValues.TryGetValue(propertyName, out var routeValue))
+        if (
+            httpContext.Request.RouteValues.TryGetValue(property.Name.ToLower(), out var routeValue)
+        )
         {
-            return ConvertValue(routeValue?.ToString(), property.PropertyType);
+            SetPropertyValue(property, request, routeValue);
+            return;
         }
 
-        // Try query parameters
-        if (httpContext.Request.Query.TryGetValue(propertyName, out var queryValue))
+        // Try query string
+        var queryValue = httpContext.Request.Query[property.Name];
+        if (!string.IsNullOrEmpty(queryValue))
         {
-            return ConvertValue(queryValue.ToString(), property.PropertyType);
+            SetPropertyValue(property, request, queryValue);
+            return;
         }
 
-        // Try headers
-        if (httpContext.Request.Headers.TryGetValue(propertyName, out var headerValue))
-        {
-            return ConvertValue(headerValue.ToString(), property.PropertyType);
-        }
-
-        // Try form data if available
+        // Try form data for form content type
         if (httpContext.Request.HasFormContentType)
         {
-            var form = await httpContext.Request.ReadFormAsync(cancellationToken);
-            if (form.TryGetValue(propertyName, out var formValue))
-            {
-                return ConvertValue(formValue.ToString(), property.PropertyType);
-            }
+            await BindFromFormAsync(httpContext, request, property, null);
+            return;
         }
 
-        // Try JSON body for complex types
-        if (httpContext.Request.ContentType?.Contains("application/json") == true)
+        // Try body for JSON content
+        if (
+            httpContext.Request.ContentLength > 0
+            && httpContext.Request.ContentType?.Contains("application/json") == true
+        )
         {
-            httpContext.Request.Body.Position = 0; // Reset stream position
-            var body = await new StreamReader(httpContext.Request.Body).ReadToEndAsync(cancellationToken);
-            if (!string.IsNullOrEmpty(body))
-            {
-                try
-                {
-                    var jsonDoc = JsonDocument.Parse(body);
-                    
-                    if (jsonDoc.RootElement.TryGetProperty(propertyName, out var jsonElement))
-                    {
-                        return ConvertJsonElement(jsonElement, property.PropertyType);
-                    }
-                }
-                catch (JsonException)
-                {
-                    // If JSON parsing fails, continue to other binding methods
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static object? ConvertValue(string? value, Type targetType)
-    {
-        if (string.IsNullOrEmpty(value))
-            return null;
-
-        var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-
-        if (underlyingType == typeof(string))
-            return value;
-
-        if (underlyingType == typeof(int) && int.TryParse(value, out var intValue))
-            return intValue;
-
-        if (underlyingType == typeof(long) && long.TryParse(value, out var longValue))
-            return longValue;
-
-        if (underlyingType == typeof(double) && double.TryParse(value, out var doubleValue))
-            return doubleValue;
-
-        if (underlyingType == typeof(decimal) && decimal.TryParse(value, out var decimalValue))
-            return decimalValue;
-
-        if (underlyingType == typeof(bool) && bool.TryParse(value, out var boolValue))
-            return boolValue;
-
-        if (underlyingType == typeof(DateTime) && DateTime.TryParse(value, out var dateTimeValue))
-            return dateTimeValue;
-
-        if (underlyingType == typeof(DateTimeOffset) && DateTimeOffset.TryParse(value, out var dateTimeOffsetValue))
-            return dateTimeOffsetValue;
-
-        if (underlyingType == typeof(Guid) && Guid.TryParse(value, out var guidValue))
-            return guidValue;
-
-        if (underlyingType.IsEnum && Enum.TryParse(underlyingType, value, true, out var enumValue))
-            return enumValue;
-
-        // Try to use JsonSerializer for complex types
-        try
-        {
-            return JsonSerializer.Deserialize($"\"{value}\"", targetType);
-        }
-        catch
-        {
-            return null;
+            await BindFromBodyAsync(httpContext, request, property, cancellationToken);
         }
     }
 
-    private static object? ConvertJsonElement(JsonElement jsonElement, Type targetType)
+    private static void SetPropertyValue<T>(PropertyInfo property, T target, object? value)
+        where T : class
+    {
+        if (value == null)
+            return;
+
+        try
+        {
+            var propertyType =
+                Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+            var stringValue = value.ToString();
+
+            if (string.IsNullOrEmpty(stringValue) && propertyType != typeof(string))
+                return;
+
+            object? convertedValue = propertyType switch
+            {
+                var t when t == typeof(int)
+                    => int.TryParse(stringValue, out var intValue) ? intValue : null,
+                var t when t == typeof(long)
+                    => long.TryParse(stringValue, out var longValue) ? longValue : null,
+                var t when t == typeof(double)
+                    => double.TryParse(stringValue, out var doubleValue) ? doubleValue : null,
+                var t when t == typeof(decimal)
+                    => decimal.TryParse(stringValue, out var decimalValue) ? decimalValue : null,
+                var t when t == typeof(bool)
+                    => bool.TryParse(stringValue, out var boolValue)
+                        ? boolValue
+                        : stringValue == "1" || stringValue.ToLower() == "on"
+                            ? true
+                            : stringValue == "0" || stringValue.ToLower() == "off"
+                                ? false
+                                : null,
+                var t when t == typeof(DateTime)
+                    => DateTime.TryParse(stringValue, out var dateValue) ? dateValue : null,
+                var t when t == typeof(DateTimeOffset)
+                    => DateTimeOffset.TryParse(stringValue, out var dateOffsetValue)
+                        ? dateOffsetValue
+                        : null,
+                var t when t == typeof(Guid)
+                    => Guid.TryParse(stringValue, out var guidValue) ? guidValue : null,
+                var t when t.IsEnum
+                    => Enum.TryParse(propertyType, stringValue, true, out var enumValue)
+                        ? enumValue
+                        : null,
+                var t when t == typeof(string) => stringValue,
+                _ => null
+            };
+
+            if (convertedValue != null || Nullable.GetUnderlyingType(property.PropertyType) != null)
+            {
+                property.SetValue(target, convertedValue);
+            }
+        }
+        catch (Exception)
+        {
+            throw new InvalidOperationException(
+                $"Failed to bind property '{property.Name}' of type '{property.PropertyType}' with value '{value}'"
+            );
+        }
+    }
+
+    private static void SetPropertyFromJsonElement<T>(
+        PropertyInfo property,
+        T target,
+        JsonElement element
+    )
+        where T : class
     {
         try
         {
-            return JsonSerializer.Deserialize(jsonElement.GetRawText(), targetType);
+            var propertyType =
+                Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+
+            object? value = propertyType switch
+            {
+                var t when t == typeof(int) && element.ValueKind == JsonValueKind.Number
+                    => element.GetInt32(),
+                var t when t == typeof(long) && element.ValueKind == JsonValueKind.Number
+                    => element.GetInt64(),
+                var t when t == typeof(double) && element.ValueKind == JsonValueKind.Number
+                    => element.GetDouble(),
+                var t when t == typeof(decimal) && element.ValueKind == JsonValueKind.Number
+                    => element.GetDecimal(),
+                var t
+                    when t == typeof(bool)
+                        && (
+                            element.ValueKind == JsonValueKind.True
+                            || element.ValueKind == JsonValueKind.False
+                        )
+                    => element.GetBoolean(),
+                var t when t == typeof(DateTime) && element.ValueKind == JsonValueKind.String
+                    => element.TryGetDateTime(out var dateValue) ? dateValue : null,
+                var t when t == typeof(DateTimeOffset) && element.ValueKind == JsonValueKind.String
+                    => element.TryGetDateTimeOffset(out var dateOffsetValue)
+                        ? dateOffsetValue
+                        : null,
+                var t when t == typeof(Guid) && element.ValueKind == JsonValueKind.String
+                    => element.TryGetGuid(out var guidValue) ? guidValue : null,
+                var t when t.IsEnum && element.ValueKind == JsonValueKind.String
+                    => Enum.TryParse(propertyType, element.GetString(), true, out var enumValue)
+                        ? enumValue
+                        : null,
+                var t when t == typeof(string) => element.GetString(),
+                _ => null
+            };
+
+            if (value != null || Nullable.GetUnderlyingType(property.PropertyType) != null)
+            {
+                property.SetValue(target, value);
+            }
         }
-        catch (JsonException)
+        catch (Exception)
         {
-            return null;
+            throw new InvalidOperationException(
+                $"Failed to bind property '{property.Name}' of type '{property.PropertyType}'"
+            );
         }
     }
 }

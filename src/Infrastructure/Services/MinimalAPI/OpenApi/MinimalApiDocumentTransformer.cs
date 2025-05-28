@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
@@ -314,9 +315,7 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
         }
 
         // Check if it's a route parameter (contains parameter name in curly braces)
-        if (
-            parameterName.Equals("id", StringComparison.OrdinalIgnoreCase)
-        )
+        if (parameterName.Equals("id", StringComparison.OrdinalIgnoreCase))
         {
             return Attributes.ParameterLocation.Path;
         }
@@ -378,6 +377,26 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
 
         // Handle nullable types
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+
+        // Handle IFormFile types first
+        if (underlyingType == typeof(IFormFile))
+        {
+            schema.Type = "string";
+            schema.Format = "binary";
+            return schema;
+        }
+        else if (underlyingType == typeof(IFormFile[]) || 
+                 (underlyingType.IsGenericType && underlyingType.GetGenericTypeDefinition() == typeof(List<>) && 
+                  underlyingType.GetGenericArguments()[0] == typeof(IFormFile)))
+        {
+            schema.Type = "array";
+            schema.Items = new OpenApiSchema
+            {
+                Type = "string",
+                Format = "binary"
+            };
+            return schema;
+        }
 
         if (underlyingType == typeof(string))
         {
@@ -460,35 +479,67 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
         return schema;
     }
 
-#pragma warning disable IDE0060 // Remove unused parameter
     private static void GenerateRequestBodySchema(OpenApiOperation operation, Type requestType, List<OpenApiParameterAttribute> parameterAttrs)
-#pragma warning restore IDE0060 // Remove unused parameter
     {
         var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
         var bodyProperties = new Dictionary<string, OpenApiSchema>();
         var requiredProperties = new HashSet<string>();
 
+        // Check if this is a form data request
+        var hasFormData = properties.Any(p => 
+            p.PropertyType == typeof(IFormFile) || 
+            p.PropertyType == typeof(IFormFile[]) ||
+            (p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(List<>) && 
+             p.PropertyType.GetGenericArguments()[0] == typeof(IFormFile)) ||
+            p.GetCustomAttribute<FromFormAttribute>() != null);
+
+        var contentType = hasFormData ? "multipart/form-data" : "application/json";
+
         foreach (var property in properties)
         {
-            // Skip properties that are not body parameters
+            // Skip properties that are explicitly bound to other locations
             if (property.GetCustomAttribute<FromServicesAttribute>() != null ||
                 property.GetCustomAttribute<FromRouteAttribute>() != null ||
                 property.GetCustomAttribute<FromQueryAttribute>() != null ||
                 property.GetCustomAttribute<FromHeaderAttribute>() != null)
                 continue;
 
-            // Check if there's an explicit FromBody attribute or if it's a command (default to body)
+            // Check if there's an explicit FromBody/FromForm attribute or if it's a command (default to body/form)
             var fromBodyAttr = property.GetCustomAttribute<FromBodyAttribute>();
-            if (fromBodyAttr != null || !HasExplicitBindingAttribute(property))
+            var fromFormAttr = property.GetCustomAttribute<FromFormAttribute>();
+            var isFileProperty = property.PropertyType == typeof(IFormFile) || 
+                                property.PropertyType == typeof(IFormFile[]) ||
+                                (property.PropertyType.IsGenericType && 
+                                 property.PropertyType.GetGenericTypeDefinition() == typeof(List<>) && 
+                                 property.PropertyType.GetGenericArguments()[0] == typeof(IFormFile));
+
+            // Include property if it has form/body attributes, is a file property, or has no explicit binding
+            if (fromBodyAttr != null || fromFormAttr != null || isFileProperty || !HasExplicitBindingAttribute(property))
             {
                 var propertySchema = CreateSchemaForType(property.PropertyType);
-
-                // Add description from XML comments if available
-                propertySchema.Description = $"The {property.Name} property";
+                
+                // Add description based on property type
+                if (isFileProperty)
+                {
+                    if (property.PropertyType == typeof(IFormFile))
+                    {
+                        propertySchema.Description = $"File upload for {property.Name}";
+                    }
+                    else
+                    {
+                        propertySchema.Description = $"Multiple file uploads for {property.Name}";
+                    }
+                }
+                else
+                {
+                    propertySchema.Description = $"The {property.Name} property";
+                }
 
                 bodyProperties[property.Name] = propertySchema;
 
-                if (!IsNullableType(property.PropertyType))
+                // Check if property is required (non-nullable value types or properties with Required attribute)
+                if (!IsNullableType(property.PropertyType) || 
+                    property.GetCustomAttribute<System.ComponentModel.DataAnnotations.RequiredAttribute>() != null)
                 {
                     requiredProperties.Add(property.Name);
                 }
@@ -510,7 +561,7 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
                 Required = requiredProperties.Count > 0,
                 Content = new Dictionary<string, OpenApiMediaType>
                 {
-                    ["application/json"] = new OpenApiMediaType
+                    [contentType] = new OpenApiMediaType
                     {
                         Schema = requestBodySchema
                     }
@@ -519,11 +570,13 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
         }
     }
 
-    private static bool HasExplicitBindingAttribute(PropertyInfo property) => property.GetCustomAttribute<FromRouteAttribute>() != null ||
-               property.GetCustomAttribute<FromQueryAttribute>() != null ||
-               property.GetCustomAttribute<FromHeaderAttribute>() != null ||
-               property.GetCustomAttribute<FromFormAttribute>() != null ||
-               property.GetCustomAttribute<FromServicesAttribute>() != null;
+    private static bool HasExplicitBindingAttribute(PropertyInfo property) => 
+        property.GetCustomAttribute<FromRouteAttribute>() != null ||
+        property.GetCustomAttribute<FromQueryAttribute>() != null ||
+        property.GetCustomAttribute<FromHeaderAttribute>() != null ||
+        property.GetCustomAttribute<FromFormAttribute>() != null ||
+        property.GetCustomAttribute<FromServicesAttribute>() != null ||
+        property.GetCustomAttribute<FromBodyAttribute>() != null;
 
     private static void GenerateParametersFromRequestType(
         OpenApiOperation operation,
@@ -533,6 +586,14 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
     )
     {
         var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        // Check if this is a form data request
+        var hasFormData = properties.Any(p => 
+            p.PropertyType == typeof(IFormFile) || 
+            p.PropertyType == typeof(IFormFile[]) ||
+            (p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(List<>) && 
+             p.PropertyType.GetGenericArguments()[0] == typeof(IFormFile)) ||
+            p.GetCustomAttribute<FromFormAttribute>() != null);
 
         foreach (var property in properties)
         {
@@ -556,22 +617,39 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
                 location = Attributes.ParameterLocation.Body;
             else if (property.GetCustomAttribute<FromHeaderAttribute>() != null)
                 location = Attributes.ParameterLocation.Header;
+            else if (property.GetCustomAttribute<FromFormAttribute>() != null)
+                location = Attributes.ParameterLocation.Form;
 
-            // Skip body parameters for commands as they're handled in request body
-            if (location == Attributes.ParameterLocation.Body && isCommandRequest)
+            // Handle IFormFile types - these should always be form parameters
+            if (property.PropertyType == typeof(IFormFile) || 
+                property.PropertyType == typeof(IFormFile[]) ||
+                (property.PropertyType.IsGenericType && 
+                 property.PropertyType.GetGenericTypeDefinition() == typeof(List<>) && 
+                 property.PropertyType.GetGenericArguments()[0] == typeof(IFormFile)))
+            {
+                location = Attributes.ParameterLocation.Form;
+            }
+
+            // Skip body and form parameters for commands as they're handled in request body
+            if ((location == Attributes.ParameterLocation.Body || location == Attributes.ParameterLocation.Form) && isCommandRequest)
                 continue;
 
             var parameter = new OpenApiParameter
             {
                 Name = property.Name,
-                Required = !IsNullableType(property.PropertyType),
+                Required = !IsNullableType(property.PropertyType) || 
+                          property.GetCustomAttribute<System.ComponentModel.DataAnnotations.RequiredAttribute>() != null,
                 Description = $"{property.Name} parameter",
                 In = MapParameterLocation(location),
                 Schema = CreateSchemaForType(property.PropertyType)
             };
 
-            operation.Parameters ??= [];
-            operation.Parameters.Add(parameter);
+            // Only add if it's not a form/body parameter
+            if (parameter.In != null)
+            {
+                operation.Parameters ??= [];
+                operation.Parameters.Add(parameter);
+            }
         }
     }
 
@@ -590,6 +668,7 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
         Attributes.ParameterLocation.Cookie
             => Microsoft.OpenApi.Models.ParameterLocation.Cookie,
         Attributes.ParameterLocation.Body => null, // Body parameters are handled differently in OpenAPI
+        Attributes.ParameterLocation.Form => null, // Form parameters are handled in request body
         _ => Microsoft.OpenApi.Models.ParameterLocation.Query
     };
 

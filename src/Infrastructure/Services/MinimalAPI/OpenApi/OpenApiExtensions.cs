@@ -94,14 +94,16 @@ public static class OpenApiExtensions
         string? swaggerRoutePrefix = null,
         bool enableTryItOut = true,
         bool enableDeepLinking = true,
-        bool enableFilter = true
+        bool enableFilter = true,
+        bool enableValidator = false
     )
     {
         app.UseMinimalApiSwaggerUI(
                routePrefix: swaggerRoutePrefix,
                enableTryItOut: enableTryItOut,
                enableDeepLinking: enableDeepLinking,
-               enableFilter: enableFilter
+               enableFilter: enableFilter,
+               enableValidator: enableValidator
            );
 
         return app;

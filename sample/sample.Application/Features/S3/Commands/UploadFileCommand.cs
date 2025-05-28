@@ -1,13 +1,19 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using Shared.Responses;
+using MinimalAPI.Attributes;
+using MinimalAPI.Handlers.Command;
+using System.ComponentModel.DataAnnotations;
 
 namespace sample.Application.Features.S3.Commands;
 
-public record UploadFileCommand : IRequest<Response<UploadFileResponse>>
+public class UploadFileCommand : ICommand<UploadFileResponse>
 {
+    [FromForm]
+    [Required]
     public IFormFile File { get; set; } = null!;
-    public string? Folder { get; set; } = null!;
+    
+    [FromQuery]
+    public string? Folder { get; set; }
 }
 
 public record UploadFileResponse(

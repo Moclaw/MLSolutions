@@ -12,6 +12,8 @@ namespace sample.Application
             IConfiguration configuration
         )
         {
+            // Register AWS S3 services with default configuration section "AWS:S3"
+            services.AddS3Services(configuration);
             return services;
         }
     }
