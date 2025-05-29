@@ -9,7 +9,7 @@ namespace sample.API.Endpoints.S3.Commands;
 public class DeleteFileEndpoint(IMediator mediator)
     : SingleEndpointBase<DeleteFileCommand, DeleteFileResponse>(mediator)
 {
-    [HttpDelete("api/s3/{key}")]
+    [HttpDelete("s3/{key}")]
     public override async Task<Response<DeleteFileResponse>> HandleAsync(
         DeleteFileCommand req,
         CancellationToken ct

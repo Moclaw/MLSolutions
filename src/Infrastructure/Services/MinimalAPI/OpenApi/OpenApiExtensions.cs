@@ -20,6 +20,7 @@ public static class OpenApiExtensions
         string title = "API",
         string version = "v1",
         string? description = null,
+        DefaultVersioningOptions versioningOptions = null,
         params Assembly[] endpointAssemblies
     )
     {
@@ -52,7 +53,8 @@ public static class OpenApiExtensions
         string? contactUrl = null,
         string? licenseName = null,
         string? licenseUrl = null,
-        params Assembly[] endpointAssemblies
+        DefaultVersioningOptions? versioningOptions = null,
+        params Assembly[] assemblies
     )
     {
         // Add SwaggerUI (which includes Swagger generation)
@@ -60,7 +62,7 @@ public static class OpenApiExtensions
             title, version, description,
             contactName, contactEmail, contactUrl,
             licenseName, licenseUrl,
-            endpointAssemblies);
+            assemblies);
 
         // Also add OpenAPI options for compatibility
         services.AddSingleton(new OpenApiOptions
@@ -68,7 +70,7 @@ public static class OpenApiExtensions
             Title = title,
             Version = version,
             Description = description,
-            EndpointAssemblies = endpointAssemblies
+            EndpointAssemblies = assemblies
         });
 
         return services;

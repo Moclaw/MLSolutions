@@ -23,10 +23,10 @@ public static class SwaggerUIExtensions
         string? contactUrl = null,
         string? licenseName = null,
         string? licenseUrl = null,
-        params Assembly[] endpointAssemblies
+        params Assembly[] assemblies
     )
     {
-        services.AddMinimalApi(endpointAssemblies);
+        services.AddMinimalApi(assemblies);
 
         services.AddSwaggerGen(options =>
         {
@@ -49,7 +49,7 @@ public static class SwaggerUIExtensions
             });
 
             // Add XML comments if available
-            foreach (var assembly in endpointAssemblies)
+            foreach (var assembly in assemblies)
             {
                 var xmlFile = $"{assembly.GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -81,7 +81,7 @@ public static class SwaggerUIExtensions
             Title = title,
             Version = version,
             Description = description,
-            EndpointAssemblies = endpointAssemblies,
+            EndpointAssemblies = assemblies,
             ContactName = contactName,
             ContactEmail = contactEmail,
             ContactUrl = contactUrl,

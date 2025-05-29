@@ -60,6 +60,7 @@ public static partial class Register
         string title = "API",
         string version = "v1",
         string? description = null,
+        DefaultVersioningOptions versioningOptions = null,
         params Assembly[] assemblies
     )
     {
@@ -67,7 +68,7 @@ public static partial class Register
         services.AddMinimalApi(assemblies);
 
         // Add enhanced OpenAPI documentation
-        services.AddOpenAPIDocument(title, version, description, assemblies);
+        services.AddOpenAPIDocument(title, version, description, versioningOptions, assemblies);
 
         return services;
     }
@@ -80,6 +81,7 @@ public static partial class Register
     /// <returns>The WebApplication</returns>
     public static WebApplication MapMinimalEndpoints(
         this WebApplication app,
+        DefaultVersioningOptions versioningOptions = null!,
         params Assembly[] assemblies
     )
     {

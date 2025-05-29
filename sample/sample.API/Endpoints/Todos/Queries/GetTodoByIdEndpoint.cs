@@ -12,7 +12,7 @@ namespace sample.API.Endpoints.Todos.Queries;
 public class GetTodoByIdEndpoint(IMediator mediator)
     : SingleEndpointBase<GetByIdRequest, GetByIdResponse>(mediator)
 {
-    [HttpGet("api/todos/{id}")]
+    [HttpGet("todos/{id}")]
     public override async Task<Response<GetByIdResponse>> HandleAsync(
         GetByIdRequest req,
         CancellationToken ct

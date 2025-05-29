@@ -12,7 +12,7 @@ namespace sample.API.Endpoints.Todos.Commands;
 public class CreateTodoEndpoint(IMediator mediator)
     : SingleEndpointBase<CreateRequest, CreateResponse>(mediator)
 {
-    [HttpPost("api/todos")]
+    [HttpPost("todos")]
     public override async Task<Response<CreateResponse>> HandleAsync(
         CreateRequest req,
         CancellationToken ct

@@ -13,10 +13,11 @@ namespace sample.API.Endpoints.Todos.Commands;
 [OpenApiResponse(200, ResponseType = typeof(Response<UpdateResponse>), Description = "Todo updated successfully")]
 [OpenApiResponse(404, Description = "Todo item not found")]
 [OpenApiResponse(400, Description = "Invalid update data")]
+
 public class UpdateTodoEndpoint(IMediator mediator)
     : SingleEndpointBase<UpdateRequest, UpdateResponse>(mediator)
 {
-    [HttpPut("api/todos/{id}")]
+    [HttpPut("todos/{id}")]
     public override async Task<Response<UpdateResponse>> HandleAsync(
         UpdateRequest req,
         CancellationToken ct
