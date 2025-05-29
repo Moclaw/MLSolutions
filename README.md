@@ -121,6 +121,7 @@ dotnet add package Moclawr.Services.External
 ```
 
 ## 🚀 Quick Start Guide
+You can reach out to [Clean Architecture .NET Solution Generator](https://github.com/Moclaw/ScriptKids/tree/main/src/CleanArchitecture)
 
 ### 1. Create a New Project
 ```bash
