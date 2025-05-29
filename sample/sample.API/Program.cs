@@ -27,7 +27,12 @@ var versioningOptions = new DefaultVersioningOptions
     ReadingStrategy = VersionReadingStrategy.UrlSegment | VersionReadingStrategy.QueryString,
     AssumeDefaultVersionWhenUnspecified = true,
     QueryParameterName = "version",
-    VersionHeaderName = "X-API-Version"
+    VersionHeaderName = "X-API-Version",
+    
+    // Enhanced SwaggerUI settings
+    GenerateSwaggerDocs = true,
+    SwaggerDocTitle = "Todo API",
+    SwaggerDocDescription = "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR and CQRS pattern"
 };
 
 // Register other services
@@ -37,6 +42,11 @@ builder.Services
         title: "Todo API",
         version: "v1",
         description: "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR and CQRS pattern",
+        contactName: "MLSolutions Development Team",
+        contactEmail: "dev@mlsolutions.com",
+        contactUrl: "https://mlsolutions.com/support",
+        licenseName: "MIT License",
+        licenseUrl: "https://opensource.org/licenses/MIT",
         versioningOptions: versioningOptions,
         assemblies: [
             typeof(Program).Assembly,
@@ -66,7 +76,6 @@ if (app.Environment.IsDevelopment())
         enableTryItOut: true,
         enableDeepLinking: true,
         enableFilter: true
-        //versioningOptions: versioningOptions
     );
 }
 

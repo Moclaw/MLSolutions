@@ -26,30 +26,39 @@ public static class SwaggerUIExtensions
         string? contactUrl = null,
         string? licenseName = null,
         string? licenseUrl = null,
+        VersioningOptions? versioningOptions = null,
         params Assembly[] assemblies
     )
     {
         services.AddMinimalApi(assemblies);
 
+        var versioning = versioningOptions ?? new DefaultVersioningOptions();
+
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc(version, new OpenApiInfo
+            // Generate separate documents for each supported version
+            foreach (var supportedVersion in versioning.SupportedVersions)
             {
-                Title = title,
-                Version = version,
-                Description = description,
-                Contact = !string.IsNullOrEmpty(contactName) ? new OpenApiContact
+                var (docName, docTitle, docDescription) = versioning.GetSwaggerDocInfo(supportedVersion);
+                
+                options.SwaggerDoc(docName, new OpenApiInfo
                 {
-                    Name = contactName,
-                    Email = contactEmail,
-                    Url = !string.IsNullOrEmpty(contactUrl) ? new Uri(contactUrl) : null
-                } : null,
-                License = !string.IsNullOrEmpty(licenseName) ? new OpenApiLicense
-                {
-                    Name = licenseName,
-                    Url = !string.IsNullOrEmpty(licenseUrl) ? new Uri(licenseUrl) : null
-                } : null
-            });
+                    Title = $"{title}",
+                    Version = docName,
+                    Description = $"{description ?? docDescription}",
+                    Contact = !string.IsNullOrEmpty(contactName) ? new OpenApiContact
+                    {
+                        Name = contactName,
+                        Email = contactEmail,
+                        Url = !string.IsNullOrEmpty(contactUrl) ? new Uri(contactUrl) : null
+                    } : null,
+                    License = !string.IsNullOrEmpty(licenseName) ? new OpenApiLicense
+                    {
+                        Name = licenseName,
+                        Url = !string.IsNullOrEmpty(licenseUrl) ? new Uri(licenseUrl) : null
+                    } : null
+                });
+            }
 
             // Add XML comments if available
             foreach (var assembly in assemblies)
@@ -72,11 +81,32 @@ public static class SwaggerUIExtensions
                 Scheme = "Bearer"
             });
 
-            // Add custom document filter for MinimalAPI
-            options.DocumentFilter<MinimalApiDocumentFilter>();
+            // Add document filter for version-specific filtering
+            options.DocumentFilter<VersionedMinimalApiDocumentFilter>();
             
             // Add operation filter for better parameter handling
             options.OperationFilter<MinimalApiOperationFilter>();
+
+            // Configure API explorer to include version in group names
+            options.DocInclusionPredicate((docName, apiDesc) =>
+            {
+                if (apiDesc.ActionDescriptor.RouteValues.TryGetValue("version", out var routeVersion))
+                {
+                    return docName.Equals($"v{routeVersion}", StringComparison.OrdinalIgnoreCase);
+                }
+
+                // Extract version from route template
+                var route = apiDesc.RelativePath ?? "";
+                var extractedVersion = versioning.ExtractVersionFromRoute(route);
+                
+                if (extractedVersion.HasValue)
+                {
+                    return docName.Equals($"v{extractedVersion.Value}", StringComparison.OrdinalIgnoreCase);
+                }
+
+                // Default to v1 if no version found
+                return docName.Equals("v1", StringComparison.OrdinalIgnoreCase);
+            });
         });
 
         services.AddSingleton(new SwaggerUIOptions
@@ -89,7 +119,8 @@ public static class SwaggerUIExtensions
             ContactEmail = contactEmail,
             ContactUrl = contactUrl,
             LicenseName = licenseName,
-            LicenseUrl = licenseUrl
+            LicenseUrl = licenseUrl,
+            VersioningOptions = versioning
         });
 
         return services;
@@ -101,44 +132,53 @@ public static class SwaggerUIExtensions
     public static WebApplication UseMinimalApiSwaggerUI(
         this WebApplication app,
         string? routePrefix = null,
-#pragma warning disable IDE0060 // Remove unused parameter
         bool enableTryItOut = true,
-#pragma warning restore IDE0060 // Remove unused parameter
-#pragma warning disable IDE0060 // Remove unused parameter
         bool enableDeepLinking = true,
-#pragma warning restore IDE0060 // Remove unused parameter
-#pragma warning disable IDE0060 // Remove unused parameter
         bool enableFilter = true,
-#pragma warning restore IDE0060 // Remove unused parameter
-#pragma warning disable IDE0060 // Remove unused parameter
         bool enableValidator = false,
-#pragma warning restore IDE0060 // Remove unused parameter
-#pragma warning disable IDE0060 // Remove unused parameter
         DocExpansion docExpansion = DocExpansion.List,
-#pragma warning restore IDE0060 // Remove unused parameter
-#pragma warning disable IDE0060 // Remove unused parameter
         ModelRendering defaultModelRendering = ModelRendering.Example,
-#pragma warning restore IDE0060 // Remove unused parameter
-#pragma warning disable IDE0060 // Remove unused parameter
         bool persistAuthorization = true
-#pragma warning restore IDE0060 // Remove unused parameter
     )
     {
         if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
         {
             var swaggerOptions = app.Services.GetService<SwaggerUIOptions>();
-            var version = swaggerOptions?.Version ?? "v1";
+            var versioning = swaggerOptions?.VersioningOptions ?? new DefaultVersioningOptions();
 
             app.UseSwagger();
             app.UseSwaggerUI(options =>
             {
-                options.SwaggerEndpoint($"/swagger/{version}/swagger.json", 
-                    $"{swaggerOptions?.Title ?? "API"} {version}");
+                // Configure multiple swagger endpoints for each version with proper tab names
+                foreach (var version in versioning.SupportedVersions)
+                {
+                    var versionName = versioning.GetSwaggerDocName(version);
+                    var displayName = $"{swaggerOptions?.Title ?? "API"} {versionName.ToUpperInvariant()}";
+                    
+                    options.SwaggerEndpoint($"/swagger/{versionName}/swagger.json", displayName);
+                }
                 
                 if (!string.IsNullOrEmpty(routePrefix))
                 {
                     options.RoutePrefix = routePrefix;
                 }
+
+                // Enhanced UI configuration
+                options.DocExpansion(docExpansion);
+                options.DefaultModelRendering(defaultModelRendering);
+                options.DefaultModelExpandDepth(2);
+                options.DefaultModelsExpandDepth(1);
+                options.DisplayOperationId();
+                options.DisplayRequestDuration();
+                
+                if (persistAuthorization)
+                {
+                    options.EnablePersistAuthorization();
+                }
+
+                // Custom CSS and JavaScript for enhanced UI
+                options.InjectStylesheet("/swagger-ui/custom.css");
+                options.InjectJavascript("/swagger-ui/custom.js");
             });
         }
 
@@ -161,22 +201,20 @@ public static class SwaggerUIExtensions
         VersioningOptions? versioningOptions = null)
     {
         var options = app.ApplicationServices.GetService<SwaggerUIOptions>();
-        var versioning = versioningOptions ?? new DefaultVersioningOptions();
+        var versioning = versioningOptions ?? options?.VersioningOptions ?? new DefaultVersioningOptions();
 
         app.UseSwaggerUI(c =>
         {
-            // Configure multiple swagger endpoints for each version
+            // Configure multiple swagger endpoints for each version with enhanced tab names
             foreach (var version in versioning.SupportedVersions)
             {
-                var versionName = $"{versioning.Prefix}{version}";
-                c.SwaggerEndpoint($"/swagger/{versionName}/swagger.json", $"{options?.Title ?? "API"} {versionName}");
+                var versionName = versioning.GetSwaggerDocName(version);
+                var displayName = $"{options?.Title ?? "API"} {versionName.ToUpperInvariant()}";
+                
+                c.SwaggerEndpoint($"/swagger/{versionName}/swagger.json", displayName);
             }
 
             c.RoutePrefix = routePrefix;
-            //c.EnableTryItOutByDefault(enableTryItOut);
-            //c.EnableDeepLinking(enableDeepLinking);
-            //c.EnableFilter(enableFilter);
-            //c.EnableValidator(enableValidator);
             c.DocExpansion(docExpansion);
             c.DefaultModelRendering(defaultModelRendering);
             c.DefaultModelExpandDepth(2);
@@ -249,4 +287,5 @@ public class SwaggerUIOptions
     public string? ContactUrl { get; set; }
     public string? LicenseName { get; set; }
     public string? LicenseUrl { get; set; }
+    public VersioningOptions? VersioningOptions { get; set; }
 }

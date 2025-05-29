@@ -81,7 +81,7 @@ public static class OpenApiExtensions
         services.AddMinimalApiSwaggerUI(
             title, version, description,
             contactName, contactEmail, contactUrl,
-            licenseName, licenseUrl,
+            licenseName, licenseUrl, versioningOptions,
             assemblies);
 
         // Also add OpenAPI options for compatibility
@@ -90,7 +90,13 @@ public static class OpenApiExtensions
             Title = title,
             Version = version,
             Description = description,
-            EndpointAssemblies = assemblies
+            EndpointAssemblies = assemblies,
+            VersioningOptions = versioningOptions,
+            ContactEmail = contactEmail,
+            ContactName = contactName,
+            ContactUrl = contactUrl,
+            LicenseName = licenseName,
+            LicenseUrl = licenseUrl
         });
 
         return services;

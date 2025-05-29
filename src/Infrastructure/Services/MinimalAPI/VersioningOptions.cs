@@ -119,8 +119,36 @@ public class VersioningOptions
     {
         var name = GetSwaggerDocName(version);
         var title = $"{SwaggerDocTitle} {Prefix.ToUpper()}{version}";
-        var description = $"{SwaggerDocDescription} - Version {version}";
+        var description = GetVersionDescription(version);
         return (name, title, description);
+    }
+
+    /// <summary>
+    /// Get version-specific description
+    /// </summary>
+    public string GetVersionDescription(int version)
+    {
+        return version switch
+        {
+            1 => $"{SwaggerDocDescription} - Initial version with core functionality",
+            2 => $"{SwaggerDocDescription} - Enhanced version with additional features",
+            3 => $"{SwaggerDocDescription} - Advanced version with extended capabilities",
+            _ => $"{SwaggerDocDescription} - Version {version}"
+        };
+    }
+
+    /// <summary>
+    /// Get all supported version tabs for SwaggerUI
+    /// </summary>
+    public IEnumerable<(string DocumentName, string DisplayName, string Description)> GetSwaggerTabs()
+    {
+        return SupportedVersions.Select(version =>
+        {
+            var docName = GetSwaggerDocName(version);
+            var displayName = $"{SwaggerDocTitle} {Prefix.ToUpper()}{version}";
+            var description = GetVersionDescription(version);
+            return (docName, displayName, description);
+        });
     }
 }
 
