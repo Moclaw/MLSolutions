@@ -9,23 +9,23 @@ using Shared.Utils;
 
 namespace sample.Application.Features.Todo.Queries.GetAllTags;
 
-public class Handler(
+public class GetAllTagsHandler(
     [FromKeyedServices(ServiceKeys.QueryRepository)]
     IQueryRepository<Tag, int> queryRepository
-) : IQueryCollectionHandler<Request, Response>
+) : IQueryCollectionHandler<GetAllTagsRequest, GetAllTagsResponse>
 {
-    public async Task<ResponseCollection<Response>> Handle(
-        Request request,
+    public async Task<ResponseCollection<GetAllTagsResponse>> Handle(
+        GetAllTagsRequest request,
         CancellationToken cancellationToken
     )
     {
-        var tags = await queryRepository.GetAllAsync<Response>(
+        var tags = await queryRepository.GetAllAsync<GetAllTagsResponse>(
             predicate: t =>
                 string.IsNullOrEmpty(request.Search)
                 || t.Name.Contains(request.Search)
                 || (t.Color != null && t.Color.Contains(request.Search)),
             projector: query =>
-                query.Select(item => new Response
+                query.Select(item => new GetAllTagsResponse
                 {
                     Id = item.Id,
                     Name = item.Name,
@@ -36,7 +36,7 @@ public class Handler(
             cancellationToken: cancellationToken
         );
 
-        return new ResponseCollection<Response>(
+        return new ResponseCollection<GetAllTagsResponse>(
             IsSuccess: true,
             Message: "Tags retrieved successfully.",
             Data: tags.Entities,

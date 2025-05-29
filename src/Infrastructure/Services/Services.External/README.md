@@ -32,100 +32,133 @@ dotnet add package Moclawr.Services.External
 
 ## Usage
 
-### Configuration
+### Registering Services
 
-Add the following configuration in your `appsettings.json`:
-
-```json
-{
-  "SmtpConfiguration": {
-    "Server": "smtp.example.com",
-    "Port": 587,
-    "Username": "your-username",
-    "Password": "your-password",
-    "EnableSsl": true,
-    "SenderEmail": "sender@example.com",
-    "SenderName": "Your Sender Name"
-  },
-  "SmsConfiguration": {
-    "ApiKey": "your-api-key",
-    "ApiSecret": "your-api-secret",
-    "SenderName": "YourCompany"
-  }
-}
-```
-
-### Service Registration
-
-Register the services in your `Program.cs` or `Startup.cs`:
+In your `Program.cs` or `Startup.cs`:
 
 ```csharp
 using Services.External;
 
-// Add SMTP services
-services.AddSmtpService(Configuration);
-
-// Add SMS services
-services.AddSmsService(Configuration);
+// Register external services
+builder.Services.AddExternalServices(builder.Configuration);
 ```
 
-### Sending Emails
+### Email Service Configuration
+
+Configure SMTP settings in `appsettings.json`:
+
+```json
+{
+  "SmtpSettings": {
+    "Host": "smtp.gmail.com",
+    "Port": 587,
+    "EnableSsl": true,
+    "Username": "your-email@gmail.com",
+    "Password": "your-app-password",
+    "FromEmail": "your-email@gmail.com",
+    "FromName": "Your Application"
+  }
+}
+```
+
+### Using Email Service
 
 ```csharp
-using Services.External.SmtpService;
+using Services.External.Email;
 
 public class NotificationService
 {
-    private readonly ISmtpServices _smtpServices;
+    private readonly IEmailService _emailService;
 
-    public NotificationService(ISmtpServices smtpServices)
+    public NotificationService(IEmailService emailService)
     {
-        _smtpServices = smtpServices;
+        _emailService = emailService;
     }
 
-    public void SendWelcomeEmail(string userEmail, string userName)
+    public async Task SendWelcomeEmailAsync(string userEmail, string userName)
     {
-        string subject = "Welcome to our platform!";
-        string body = $"<h1>Hello {userName}!</h1><p>Welcome to our platform.</p>";
-        
-        _smtpServices.SendEmail(userEmail, subject, body, isHtml: true);
+        var emailRequest = new EmailRequest
+        {
+            To = [userEmail],
+            Subject = "Welcome to Our Platform!",
+            Body = $"<h1>Welcome {userName}!</h1><p>Thank you for joining our platform.</p>",
+            IsHtml = true
+        };
+
+        await _emailService.SendEmailAsync(emailRequest);
     }
-    
-    public void SendReportEmail(string userEmail, string reportPath)
+
+    public async Task SendEmailWithAttachmentAsync(string userEmail, byte[] pdfData)
     {
-        string subject = "Your report is ready";
-        string body = "Please find your report attached.";
-        var attachments = new List<string> { reportPath };
-        
-        _smtpServices.SendEmail(userEmail, subject, body, 
-            new List<string>(), new List<string>(), attachments);
+        var emailRequest = new EmailRequest
+        {
+            To = [userEmail],
+            Subject = "Your Report",
+            Body = "Please find your report attached.",
+            Attachments = [
+                new EmailAttachment
+                {
+                    FileName = "report.pdf",
+                    Content = pdfData,
+                    ContentType = "application/pdf"
+                }
+            ]
+        };
+
+        await _emailService.SendEmailAsync(emailRequest);
     }
 }
 ```
 
-### Sending SMS Messages
+### SMS Service Configuration
+
+Configure SMS settings in `appsettings.json`:
+
+```json
+{
+  "SmsSettings": {
+    "Provider": "Twilio",
+    "AccountSid": "your-account-sid",
+    "AuthToken": "your-auth-token",
+    "FromNumber": "+1234567890"
+  }
+}
+```
+
+### Using SMS Service
 
 ```csharp
-using Services.External.SmsService;
+using Services.External.Sms;
 
-public class AlertService
+public class SmsNotificationService
 {
-    private readonly ISmsServices _smsServices;
+    private readonly ISmsService _smsService;
 
-    public AlertService(ISmsServices smsServices)
+    public SmsNotificationService(ISmsService smsService)
     {
-        _smsServices = smsServices;
+        _smsService = smsService;
     }
 
-    public void SendVerificationCode(string phoneNumber, string code)
+    public async Task SendVerificationCodeAsync(string phoneNumber, string code)
     {
-        string message = $"Your verification code is: {code}";
-        _smsServices.SendSms(phoneNumber, message);
+        var smsRequest = new SmsRequest
+        {
+            ToNumber = phoneNumber,
+            Message = $"Your verification code is: {code}. Valid for 10 minutes."
+        };
+
+        await _smsService.SendSmsAsync(smsRequest);
     }
-    
-    public void SendBulkNotification(List<string> phoneNumbers, string message)
+
+    public async Task SendBulkNotificationAsync(List<string> phoneNumbers, string message)
     {
-        _smsServices.SendSms(phoneNumbers, message);
+        var bulkSmsRequest = new BulkSmsRequest
+        {
+            ToNumbers = phoneNumbers,
+            Message = message
+        };
+
+        await _smsService.SendBulkSmsAsync(bulkSmsRequest);
     }
 }
 ```
@@ -134,17 +167,18 @@ public class AlertService
 
 This package works seamlessly with other packages in the Moclawr ecosystem:
 
-- **Moclawr.Core**: Leverages configuration models and utility extensions
-- **Moclawr.Shared**: Uses standardized response models for consistent error handling
-- **Moclawr.Host**: Perfect companion for building complete API solutions with global exception handling
-- **Moclawr.Services.Caching**: Cache external service responses to improve performance and reduce costs
-- **Moclawr.MinimalAPI**: Integrates with endpoint handlers for email/SMS functionality in APIs
-- **Moclawr.DotNetCore.CAP**: Use with event-driven messaging for asynchronous notifications
+- **Moclawr.Core**: Uses configuration extensions and utilities for enhanced functionality
+- **Moclawr.Shared**: Integrates with response models and exception handling
+- **Moclawr.Host**: Perfect for dependency injection and service registration
+- **Moclawr.MinimalAPI**: Use with endpoint handlers for sending notifications
+- **Moclawr.Services.Caching**: Cache notification templates and settings
+- **Moclawr.DotNetCore.CAP**: Trigger notifications through event-driven messaging
 
 ## Requirements
 
 - .NET 9.0 or higher
-- Microsoft.AspNetCore.App framework reference
+- MailKit 4.8.0 or higher (for SMTP services)
+- Twilio 7.6.0 or higher (for SMS services, optional)
 
 ## License
 

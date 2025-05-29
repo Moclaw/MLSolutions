@@ -4,520 +4,465 @@
 
 ## Overview
 
-Moclawr.MinimalAPI is a powerful library for building clean, structured, and maintainable ASP.NET Core Minimal APIs for .NET 9. It provides a class-based approach to endpoint definition with built-in MediatR integration for implementing the CQRS pattern, making it easy to create scalable API applications with clear separation of concerns.
+Moclawr.MinimalAPI provides a class-based approach to ASP.NET Core Minimal APIs with automatic endpoint discovery, MediatR integration, and enhanced OpenAPI documentation. It bridges the gap between minimal APIs and traditional controller-based APIs by offering a structured, object-oriented approach while maintaining the performance benefits of minimal APIs.
 
-Key Features:
-- Strong typing for requests and responses
-- **Smart automatic parameter binding with intelligent defaults**
-- **Enhanced OpenAPI documentation with automatic parameter detection**
-- **Rich SwaggerUI integration with custom styling and functionality**
-- Standardized response handling
-- Support for versioning and authorization
-- **Command/Query pattern support with automatic binding defaults**
+## Features
 
-## Getting Started
+- **Class-Based Endpoints**: Object-oriented endpoint design with base classes
+- **Automatic Discovery**: Auto-registration of endpoint classes from assemblies
+- **MediatR Integration**: Built-in CQRS pattern support with command/query separation
+- **Advanced API Versioning**: Multiple versioning strategies (URL segment, query string, headers, media type)
+- **Enhanced OpenAPI Documentation**: Rich SwaggerUI with automatic schema generation
+- **Intelligent Request Binding**: Automatic parameter binding from route, query, body, form, and headers
+- **Type-Safe Endpoints**: Strongly-typed request and response handling
+- **Flexible Response Types**: Support for single items, collections, and custom response wrappers
+- **Attribute-Based Configuration**: Declarative endpoint configuration with attributes
+- **Custom Authentication**: Built-in authorization and authentication support
 
-1. Add a reference to the MinimalAPI project in your application.
-2. Register the MinimalAPI services in your `Program.cs` file.
-3. Create endpoint classes that inherit from `EndpointBase`.
-4. Map all endpoints in your `Program.cs` file.
+## Installation
 
-## Real-World Use Cases
+Install the package via NuGet Package Manager:
 
-### Use Case 1: E-Commerce Product Catalog API
-
-Perfect for building scalable product management APIs with rich filtering and search capabilities:
-
-```csharp
-// Product search with advanced filtering
-public class SearchProductsRequest : IQueryCollectionRequest<ProductDto>
-{
-    public string? SearchTerm { get; set; }
-    public decimal? MinPrice { get; set; }
-    public decimal? MaxPrice { get; set; }
-    public List<int>? CategoryIds { get; set; }
-    public List<string>? Tags { get; set; }
-    public bool InStock { get; set; } = true;
-    public int PageIndex { get; set; } = 0;
-    public int PageSize { get; set; } = 20;
-    public ProductSortBy SortBy { get; set; } = ProductSortBy.Name;
-}
-
-[OpenApiSummary("Search products with advanced filtering")]
-[OpenApiParameter("searchTerm", typeof(string), Description = "Search in product name and description")]
-[OpenApiParameter("minPrice", typeof(decimal), Description = "Minimum price filter", Example = 10.00)]
-[OpenApiParameter("maxPrice", typeof(decimal), Description = "Maximum price filter", Example = 100.00)]
-public class SearchProductsEndpoint(IMediator mediator) 
-    : CollectionEndpointBase<SearchProductsRequest, ProductDto>(mediator)
-{
-    [HttpGet("api/products/search")]
-    public override async Task<ResponseCollection<ProductDto>> HandleAsync(
-        SearchProductsRequest req, CancellationToken ct)
-        => await _mediator.Send(req, ct);
-}
+```shell
+dotnet add package Moclawr.MinimalAPI
 ```
 
-### Use Case 2: User Management System
+## Quick Start
 
-Ideal for authentication and user profile management with robust validation:
+### 1. Register Services
 
-```csharp
-// User registration with validation
-public class RegisterUserRequest : ICommand<RegisterUserResponse>
-{
-    [EmailAddress, Required]
-    public string Email { get; set; } = string.Empty;
-    
-    [MinLength(8), Required]
-    public string Password { get; set; } = string.Empty;
-    
-    [Required, MaxLength(100)]
-    public string FullName { get; set; } = string.Empty;
-    
-    public string? PhoneNumber { get; set; }
-    public DateTime? DateOfBirth { get; set; }
-    public List<string> Preferences { get; set; } = new();
-}
-
-[OpenApiSummary("Register a new user account")]
-[OpenApiResponse(201, typeof(Response<RegisterUserResponse>), "User registered successfully")]
-[OpenApiResponse(409, Description = "Email already exists")]
-[OpenApiResponse(400, Description = "Validation failed")]
-public class RegisterUserEndpoint(IMediator mediator)
-    : SingleEndpointBase<RegisterUserRequest, RegisterUserResponse>(mediator)
-{
-    [HttpPost("api/auth/register")]
-    public override async Task<Response<RegisterUserResponse>> HandleAsync(
-        RegisterUserRequest req, CancellationToken ct)
-        => await _mediator.Send(req, ct);
-}
-```
-
-### Use Case 3: Real-Time Dashboard API
-
-Great for building analytics and monitoring dashboards with real-time data:
+In your `Program.cs`:
 
 ```csharp
-// Dashboard metrics with date range filtering
-public class GetDashboardMetricsRequest : IQueryRequest<DashboardMetricsDto>
-{
-    public DateTime? StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
-    public string TimeZone { get; set; } = "UTC";
-    public List<string>? MetricTypes { get; set; }
-    public DashboardView View { get; set; } = DashboardView.Summary;
-    
-    [FromHeader("X-Organization-Id")]
-    public string? OrganizationId { get; set; }
-}
+using MinimalAPI;
 
-[OpenApiSummary("Get dashboard metrics and analytics")]
-[OpenApiParameter("startDate", typeof(DateTime), Description = "Start date for metrics (ISO 8601)")]
-[OpenApiParameter("view", typeof(DashboardView), Description = "Dashboard view type", Example = DashboardView.Detailed)]
-[Authorize(Policy = "DashboardAccess")]
-public class GetDashboardMetricsEndpoint(IMediator mediator)
-    : SingleEndpointBase<GetDashboardMetricsRequest, DashboardMetricsDto>(mediator)
-{
-    [HttpGet("api/dashboard/metrics")]
-    public override async Task<Response<DashboardMetricsDto>> HandleAsync(
-        GetDashboardMetricsRequest req, CancellationToken ct)
-        => await _mediator.Send(req, ct);
-}
-```
-
-## Complete Setup Example
-
-### Step 1: Register Services in Program.cs
-
-```csharp
 var builder = WebApplication.CreateBuilder(args);
 
-// Register Minimal API services with enhanced SwaggerUI
+// Add MinimalAPI with enhanced documentation
 builder.Services.AddMinimalApiWithSwaggerUI(
-    title: "MLSolutions API",
-    version: "v2.1.0",
-    description: "Enterprise-grade API built with Moclawr.MinimalAPI framework featuring CQRS, MediatR integration, and comprehensive OpenAPI documentation",
-    contactName: "MLSolutions Development Team",
-    contactEmail: "dev@mlsolutions.com",
-    contactUrl: "https://mlsolutions.com/support",
-    licenseName: "MIT License",
-    licenseUrl: "https://opensource.org/licenses/MIT",
-    assemblies: [
-        typeof(Program).Assembly,
-        typeof(Application.Register).Assembly,
-        typeof(Infrastructure.Register).Assembly,
-        typeof(Domain.Register).Assembly
-    ]
+    title: "My API",
+    version: "v1",
+    description: "Comprehensive API built with MinimalAPI framework"
 );
-
-// Add authentication and authorization
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options => { /* JWT config */ });
-builder.Services.AddAuthorization();
-
-// Register MediatR and other services
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
-    typeof(Application.Register).Assembly));
 
 var app = builder.Build();
 
-// Configure middleware pipeline
-app.UseAuthentication();
-app.UseAuthorization();
+// Auto-discover and map all endpoints
+app.MapMinimalEndpoints(typeof(Program).Assembly);
 
-// Enable Swagger documentation in development
+// Enable documentation
 if (app.Environment.IsDevelopment())
 {
-    app.UseMinimalApiDocs(
-        swaggerRoutePrefix: "api-docs",
-        enableTryItOut: true,
-        enableDeepLinking: true,
-        enableFilter: true,
-        enableValidator: true
-    );
+    app.UseMinimalApiDocs();
 }
-
-// Map all minimal API endpoints
-app.MapMinimalEndpoints(
-    typeof(Program).Assembly,
-    typeof(Application.Register).Assembly
-);
 
 app.Run();
 ```
 
-### Step 2: SwaggerUI-Specific Features
-
-#### Enhanced UI Configuration
+### 2. Create Your First Endpoint
 
 ```csharp
-// Advanced SwaggerUI configuration
-app.UseMinimalApiSwaggerUI(
-    routePrefix: "api-docs",           // Custom route prefix
-    enableTryItOut: true,              // Enable "Try it out" by default
-    enableDeepLinking: true,           // Enable deep linking
-    enableFilter: true,                // Enable endpoint filtering
-    enableValidator: false,            // Disable validator
-    docExpansion: DocExpansion.List,   // Expand operations list
-    defaultModelRendering: ModelRendering.Example, // Show examples
-    persistAuthorization: true        // Remember auth tokens
+using MinimalAPI.Endpoints;
+using MinimalAPI.Attributes;
+using MediatR;
+
+[OpenApiSummary("Get user by ID", "Retrieves a specific user by their unique identifier")]
+[ApiVersion(1)]
+public class GetUserEndpoint(IMediator mediator) 
+    : ItemEndpointBase<GetUserQuery, UserDto>(mediator)
+{
+    [HttpGet("/api/users/{id}")]
+    public override async Task<Response<UserDto>> HandleAsync(
+        GetUserQuery request, CancellationToken ct)
+    {
+        return await _mediator.Send(request, ct);
+    }
+}
+```
+
+### 3. Define Request Models
+
+```csharp
+using MediatR;
+using MinimalAPI.Attributes;
+
+public record GetUserQuery : IRequest<Response<UserDto>>
+{
+    [FromRoute]
+    public int Id { get; init; }
+}
+
+public record CreateUserRequest : IRequest<Response<UserDto>>
+{
+    [FromBody]
+    public string Name { get; init; } = string.Empty;
+    
+    [FromBody]
+    public string Email { get; init; } = string.Empty;
+}
+```
+
+## Core Concepts
+
+### Endpoint Base Classes
+
+The framework provides several base classes for different endpoint patterns:
+
+#### SingleEndpointBase<TRequest, TResponse>
+For endpoints returning a single item:
+
+```csharp
+public class CreateUserEndpoint(IMediator mediator) 
+    : SingleEndpointBase<CreateUserCommand, UserDto>(mediator)
+{
+    [HttpPost("/api/users")]
+    public override async Task<Response<UserDto>> HandleAsync(
+        CreateUserCommand request, CancellationToken ct)
+    {
+        return await _mediator.Send(request, ct);
+    }
+}
+```
+
+#### CollectionEndpointBase<TRequest, TResponse>
+For endpoints returning collections:
+
+```csharp
+public class GetUsersEndpoint(IMediator mediator) 
+    : CollectionEndpointBase<GetUsersQuery, UserDto>(mediator)
+{
+    [HttpGet("/api/users")]
+    public override async Task<ResponseCollection<UserDto>> HandleAsync(
+        GetUsersQuery request, CancellationToken ct)
+    {
+        return await _mediator.Send(request, ct);
+    }
+}
+```
+
+#### EndpointBase<TRequest, TResponse, TResponseWrapper>
+For custom response types:
+
+```csharp
+public class CustomEndpoint(IMediator mediator) 
+    : EndpointBase<CustomRequest, CustomData, CustomResponse>(mediator)
+{
+    [HttpPost("/api/custom")]
+    public override async Task<CustomResponse> HandleAsync(
+        CustomRequest request, CancellationToken ct)
+    {
+        return await _mediator.Send(request, ct);
+    }
+}
+```
+
+### Request Binding
+
+The framework automatically binds request data from various sources:
+
+#### Attribute-Based Binding
+```csharp
+public class UpdateUserCommand
+{
+    [FromRoute("id")]
+    public int UserId { get; set; }
+    
+    [FromBody]
+    public string Name { get; set; }
+    
+    [FromQuery]
+    public bool NotifyUser { get; set; }
+    
+    [FromHeader("X-Client-Version")]
+    public string? ClientVersion { get; set; }
+    
+    [FromServices]
+    public ILogger<UpdateUserCommand> Logger { get; set; }
+}
+```
+
+#### Smart Default Binding
+- **Route parameters**: Automatically bound by name
+- **Query parameters**: For GET requests and query strings
+- **Request body**: For POST/PUT/PATCH with JSON content
+- **Form data**: For multipart/form-data and form submissions
+- **Headers**: For custom header values
+
+### API Versioning
+
+Comprehensive versioning support with multiple strategies:
+
+#### Configuration
+```csharp
+var versioningOptions = new DefaultVersioningOptions
+{
+    Prefix = "v",
+    DefaultVersion = 1,
+    SupportedVersions = [1, 2, 3],
+    
+    // Multiple reading strategies
+    ReadingStrategy = VersionReadingStrategy.UrlSegment | 
+                     VersionReadingStrategy.QueryString |
+                     VersionReadingStrategy.Header,
+    
+    QueryParameterName = "version",
+    VersionHeaderName = "X-API-Version",
+    AssumeDefaultVersionWhenUnspecified = true
+};
+
+builder.Services.AddMinimalApiWithSwaggerUI(
+    versioningOptions: versioningOptions
 );
 ```
 
-#### Custom Styling and Assets
-
-The SwaggerUI comes with enhanced styling and custom functionality:
-
-**Features:**
-- **Custom CSS**: Modern gradient header, enhanced colors, better readability
-- **Copy Buttons**: Automatic copy buttons for code blocks
-- **Enhanced Buttons**: Styled "Try it out" and "Execute" buttons
-- **Responsive Design**: Better mobile and tablet experience
-- **Custom JavaScript**: Enhanced functionality and user experience
-
-### Step 3: Advanced Use Case Implementation
-
-#### File Upload with Progress Tracking
-
+#### Version-Specific Endpoints
 ```csharp
-public class UploadFileRequest : ICommand<UploadFileResponse>
+[ApiVersion(1)]
+public class GetUsersV1Endpoint : CollectionEndpointBase<GetUsersQuery, UserDto>
 {
-    [FromForm]
-    public IFormFile File { get; set; } = null!;
-    
-    [FromForm]
-    public string? Description { get; set; }
-    
-    [FromForm]
-    public List<string> Tags { get; set; } = new();
-    
-    [FromRoute]
-    public int ProjectId { get; set; }
+    [HttpGet("/api/users")]
+    public override async Task<ResponseCollection<UserDto>> HandleAsync(...)
+    {
+        // Version 1 implementation
+    }
 }
 
-[OpenApiSummary("Upload file with metadata")]
-[OpenApiResponse(201, typeof(Response<UploadFileResponse>), "File uploaded successfully")]
-[OpenApiResponse(413, Description = "File too large")]
-[OpenApiResponse(415, Description = "Unsupported file type")]
-[Authorize]
-public class UploadFileEndpoint(IMediator mediator)
-    : SingleEndpointBase<UploadFileRequest, UploadFileResponse>(mediator)
+[ApiVersion(2)]
+public class GetUsersV2Endpoint : CollectionEndpointBase<GetUsersQueryV2, UserDtoV2>
 {
-    [HttpPost("api/projects/{projectId}/files")]
-    [RequestSizeLimit(50_000_000)] // 50MB limit
-    public override async Task<Response<UploadFileResponse>> HandleAsync(
-        UploadFileRequest req, CancellationToken ct)
-        => await _mediator.Send(req, ct);
+    [HttpGet("/api/users")]
+    public override async Task<ResponseCollection<UserDtoV2>> HandleAsync(...)
+    {
+        // Version 2 implementation with enhanced features
+    }
+}
+```
+
+#### Accessing Versions
+```bash
+# URL Segment
+GET /api/v1/users
+GET /api/v2/users
+
+# Query Parameter
+GET /api/users?version=1
+GET /api/users?version=2
+
+# Header
+GET /api/users
+X-API-Version: 1
+
+# Media Type
+GET /api/users
+Accept: application/json;version=1
+```
+
+### Enhanced OpenAPI Documentation
+
+#### Rich Documentation Attributes
+```csharp
+[OpenApiSummary("Create a new user", "Creates a new user account with the provided information")]
+[OpenApiParameter("name", "User's full name", required: true, example: "John Doe")]
+[OpenApiParameter("email", "User's email address", required: true, example: "john@example.com")]
+[OpenApiResponse(201, "User created successfully", typeof(UserDto))]
+[OpenApiResponse(400, "Invalid user data provided")]
+[OpenApiResponse(409, "User with this email already exists")]
+public class CreateUserEndpoint : SingleEndpointBase<CreateUserCommand, UserDto>
+{
+    [HttpPost("/api/users")]
+    public override async Task<Response<UserDto>> HandleAsync(...)
+    {
+        return await _mediator.Send(request, ct);
+    }
+}
+```
+
+#### Automatic Schema Generation
+The framework automatically generates OpenAPI schemas for:
+- Request/response types
+- Enum values with descriptions
+- File upload parameters
+- Pagination metadata
+- Error response formats
+
+#### Feature-Based Tagging
+Endpoints are automatically tagged based on namespace structure:
+
+```
+Namespace: MyApp.Features.Users.Commands
+Generated Tags: ["Users", "Users Commands"]
+
+Namespace: MyApp.Features.Orders.Queries  
+Generated Tags: ["Orders", "Orders Queries"]
+```
+
+### File Upload Support
+
+#### Single File Upload
+```csharp
+public class UploadFileCommand
+{
+    [FromForm]
+    public IFormFile File { get; set; }
+    
+    [FromForm]
+    public string Description { get; set; }
+}
+
+public class UploadFileEndpoint(IMediator mediator)
+    : SingleEndpointBase<UploadFileCommand, FileDto>(mediator)
+{
+    [HttpPost("/api/files")]
+    public override async Task<Response<FileDto>> HandleAsync(...)
+    {
+        return await _mediator.Send(request, ct);
+    }
 }
 ```
 
 #### Multiple File Upload
-
 ```csharp
-public class UploadMultipleFilesRequest : ICommand<UploadMultipleFilesResponse>
+public class UploadFilesCommand
 {
     [FromForm]
-    public List<IFormFile> Files { get; set; } = new();
+    public List<IFormFile> Files { get; set; }
     
     [FromForm]
-    public string Category { get; set; } = string.Empty;
-    
-    [FromForm]
-    public bool GenerateThumbnails { get; set; } = true;
-    
-    [FromRoute]
-    public int FolderId { get; set; }
-}
-
-[OpenApiSummary("Upload multiple files with batch processing")]
-[OpenApiResponse(201, typeof(Response<UploadMultipleFilesResponse>), "Files uploaded successfully")]
-[OpenApiResponse(400, Description = "Invalid file types or empty file list")]
-public class UploadMultipleFilesEndpoint(IMediator mediator)
-    : SingleEndpointBase<UploadMultipleFilesRequest, UploadMultipleFilesResponse>(mediator)
-{
-    [HttpPost("api/folders/{folderId}/files/batch")]
-    public override async Task<Response<UploadMultipleFilesResponse>> HandleAsync(
-        UploadMultipleFilesRequest req, CancellationToken ct)
-        => await _mediator.Send(req, ct);
+    public string Folder { get; set; }
 }
 ```
 
-#### Mixed Form Data with File Upload
+### Authentication and Authorization
 
+#### Endpoint-Level Security
 ```csharp
-public class CreateProductWithImageRequest : ICommand<CreateProductResponse>
+[Authorize("AdminPolicy")]
+public class DeleteUserEndpoint : SingleEndpointBase<DeleteUserCommand, Response>
 {
-    [FromForm]
-    public string Name { get; set; } = string.Empty;
-    
-    [FromForm]
-    public decimal Price { get; set; }
-    
-    [FromForm]
-    public string Description { get; set; } = string.Empty;
-    
-    [FromForm]
-    public IFormFile? MainImage { get; set; }
-    
-    [FromForm]
-    public List<IFormFile> GalleryImages { get; set; } = new();
-    
-    [FromForm]
-    public List<string> Tags { get; set; } = new();
-    
-    [FromRoute]
-    public int CategoryId { get; set; }
-}
-
-[OpenApiSummary("Create product with images")]
-[OpenApiResponse(201, typeof(Response<CreateProductResponse>), "Product created with images")]
-[OpenApiResponse(400, Description = "Validation failed or invalid image formats")]
-public class CreateProductWithImageEndpoint(IMediator mediator)
-    : SingleEndpointBase<CreateProductWithImageRequest, CreateProductResponse>(mediator)
-{
-    [HttpPost("api/categories/{categoryId}/products")]
-    public override async Task<Response<CreateProductResponse>> HandleAsync(
-        CreateProductWithImageRequest req, CancellationToken ct)
-        => await _mediator.Send(req, ct);
-}
-```
-
-## Smart Parameter Binding Features
-
-### Automatic Request Body Detection
-
-The framework automatically detects the appropriate request body format:
-
-- **JSON Body**: For commands without form data or file uploads
-- **Form Data**: For commands with `IFormFile` properties or `[FromForm]` attributes
-- **Mixed Binding**: Route parameters, query parameters, headers, and body/form data in the same request
-
-### Enhanced SwaggerUI Features
-
-**File Upload Support:**
-- **Drag & Drop Interface**: Modern file upload UI in SwaggerUI
-- **Multiple File Selection**: Support for array/list of files
-- **File Type Validation**: Automatic MIME type detection and validation
-- **Progress Indicators**: Real-time upload progress display
-
-**Form Data Documentation:**
-- **Rich Schema Generation**: Automatic form field documentation
-- **File Upload Examples**: Sample file upload requests
-- **Mixed Content Support**: JSON + file uploads in the same request
-
-## Production-Ready Features
-
-### Error Handling and Validation
-
-The framework provides comprehensive error handling out of the box:
-
-```csharp
-// Automatic validation error responses
-public class CreateOrderRequest : ICommand<CreateOrderResponse>
-{
-    [Required, Range(1, int.MaxValue)]
-    public int CustomerId { get; set; }
-    
-    [Required, MinLength(1)]
-    public List<OrderItemDto> Items { get; set; } = new();
-    
-    [Required, RegularExpression(@"^[A-Z]{3}$")]
-    public string CurrencyCode { get; set; } = "USD";
-    
-    [EmailAddress]
-    public string? NotificationEmail { get; set; }
-}
-
-// Framework automatically returns 400 with detailed validation errors
-// No additional validation code needed in the endpoint
-```
-
-### Performance Optimization with Caching
-
-```csharp
-public class GetPopularProductsRequest : IQueryCollectionRequest<ProductDto>
-{
-    public int CategoryId { get; set; }
-    public int Count { get; set; } = 10;
-    public TimeSpan CacheDuration { get; set; } = TimeSpan.FromHours(1);
-}
-
-[OpenApiSummary("Get popular products with intelligent caching")]
-[ResponseCache(Duration = 3600, VaryByQueryKeys = new[] { "categoryId", "count" })]
-public class GetPopularProductsEndpoint(IMediator mediator)
-    : CollectionEndpointBase<GetPopularProductsRequest, ProductDto>(mediator)
-{
-    [HttpGet("api/categories/{categoryId}/products/popular")]
-    public override async Task<ResponseCollection<ProductDto>> HandleAsync(
-        GetPopularProductsRequest req, CancellationToken ct)
-        => await _mediator.Send(req, ct);
-}
-```
-
-### Security and Rate Limiting
-
-```csharp
-[OpenApiSummary("Send password reset email")]
-[OpenApiResponse(200, Description = "Reset email sent if account exists")]
-[EnableRateLimiting("auth-policy")]  // Custom rate limiting
-public class SendPasswordResetEndpoint(IMediator mediator)
-    : SingleEndpointBase<SendPasswordResetRequest, SendPasswordResetResponse>(mediator)
-{
-    [HttpPost("api/auth/reset-password")]
-    public override async Task<Response<SendPasswordResetResponse>> HandleAsync(
-        SendPasswordResetRequest req, CancellationToken ct)
-        => await _mediator.Send(req, ct);
-}
-```
-
-### Step 4: Create Endpoint Classes with Enhanced Documentation
-
-#### Command Endpoints with Rich SwaggerUI Documentation
-
-```csharp
-[OpenApiSummary("Create a new todo", 
-    Description = "Creates a new todo item with the provided details. Supports categorization and tagging.",
-    Tags = new[] { "Todo Management", "CRUD Operations" })]
-[OpenApiResponse(201, ResponseType = typeof(Response<CreateTodoResponse>), 
-    Description = "Todo created successfully with generated ID")]
-[OpenApiResponse(400, Description = "Invalid request data - validation failed")]
-[OpenApiResponse(409, Description = "Todo with similar title already exists")]
-public class CreateTodoEndpoint(IMediator mediator)
-    : SingleEndpointBase<CreateTodoRequest, CreateTodoResponse>(mediator)
-{
-    [HttpPost("api/todos")]
-    public override async Task<Response<CreateTodoResponse>> HandleAsync(
-        CreateTodoRequest req,
-        CancellationToken ct
-    )
+    [HttpDelete("/api/users/{id}")]
+    public override async Task<Response> HandleAsync(...)
     {
-        return await _mediator.Send(req, ct);
+        return await _mediator.Send(request, ct);
     }
 }
 ```
 
-The enhanced SwaggerUI will automatically show:
-- **Rich Documentation**: Detailed descriptions, examples, and response codes
-- **Interactive Examples**: "Try it out" functionality with sample data
-- **Request Body Schema**: Automatically generated from `CreateTodoRequest`
-- **Response Examples**: Sample responses for different status codes
-- **Parameter Validation**: Required/optional field indicators
+#### Custom Authorization
+```csharp
+[RequireRole("Admin", "Manager")]
+[RequireClaim("permission", "users:delete")]
+public class DeleteUserEndpoint : SingleEndpointBase<DeleteUserCommand, Response>
+{
+    // Implementation
+}
+```
 
-#### Query Endpoints with Advanced Filtering UI
+## Advanced Features
+
+### Custom Endpoint Filters
 
 ```csharp
-[OpenApiSummary("Get all todos with filtering", 
-    Description = "Retrieves a paginated list of todos with advanced filtering, sorting, and search capabilities")]
-[OpenApiParameter("search", typeof(string), Description = "Search term for filtering todos by title or description", Example = "grocery")]
-[OpenApiParameter("pageSize", typeof(int), Description = "Number of items per page (max 100)", Example = 10)]
-[OpenApiParameter("categoryIds", typeof(List<int>), Description = "Filter by specific category IDs", Example = new[] { 1, 2, 3 })]
-[OpenApiResponse(200, ResponseType = typeof(ResponseCollection<TodoItemDto>), 
-    Description = "Successfully retrieved todos with pagination metadata")]
-[OpenApiResponse(400, Description = "Invalid pagination or filter parameters")]
-public class GetAllTodosEndpoint(IMediator mediator)
-    : CollectionEndpointBase<GetAllTodosRequest, TodoItemDto>(mediator)
+public class LoggingEndpointFilter : IEndpointFilter
 {
-    [HttpGet("api/todos")]
-    public override async Task<ResponseCollection<TodoItemDto>> HandleAsync(
-        GetAllTodosRequest req,
-        CancellationToken ct
-    )
+    public async ValueTask<object?> InvokeAsync(
+        EndpointFilterInvocationContext context, 
+        EndpointFilterDelegate next)
     {
-        return await mediator.Send(req, ct);
+        var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<LoggingEndpointFilter>>();
+        
+        logger.LogInformation("Executing endpoint: {Endpoint}", 
+            context.HttpContext.Request.Path);
+        
+        var result = await next(context);
+        
+        logger.LogInformation("Completed endpoint: {Endpoint}", 
+            context.HttpContext.Request.Path);
+        
+        return result;
     }
 }
 ```
 
-## SwaggerUI Advanced Features
-
-### Custom Theming and Branding
-
-The SwaggerUI comes with a professional, modern theme:
-
-```css
-/* Automatic features included */
-- Gradient header with company branding
-- Enhanced operation blocks with status-specific colors
-- Modern button styling with hover effects
-- Improved typography and spacing
-- Mobile-responsive design
-- Dark mode friendly colors
-```
-
-### Enhanced Functionality
-
-**Automatic Features:**
-- **Copy to Clipboard**: All code blocks get copy buttons
-- **Request Duration Display**: Shows API response times
-- **Persistent Authorization**: Remembers auth tokens across sessions
-- **Deep Linking**: Direct links to specific operations
-- **Advanced Filtering**: Search through endpoints
-- **Example Generation**: Automatic request/response examples
-
-### Security Integration
+### Response Caching
 
 ```csharp
-// SwaggerUI automatically detects and displays security requirements
-[Authorize] // Automatically adds security icon and requirements
-public class SecureEndpoint : SingleEndpointBase<SecureRequest, SecureResponse>
+[ResponseCache(Duration = 300)] // Cache for 5 minutes
+public class GetUserEndpoint : SingleEndpointBase<GetUserQuery, UserDto>
 {
-    // Security requirements automatically documented
+    [HttpGet("/api/users/{id}")]
+    public override async Task<Response<UserDto>> HandleAsync(...)
+    {
+        return await _mediator.Send(request, ct);
+    }
 }
 ```
 
-### Custom Examples and Documentation
+### Rate Limiting
 
 ```csharp
-[OpenApiParameter("userId", typeof(int), 
-    Description = "Unique identifier for the user", 
-    Example = 12345,
-    Required = true)]
-[OpenApiResponse(200, 
-    ResponseType = typeof(UserProfileResponse),
-    Description = "User profile retrieved successfully")]
-public class GetUserProfileEndpoint : SingleEndpointBase<GetUserRequest, UserProfileResponse>
+[RateLimit("UserEndpoints", Window = "1m", Limit = 60)]
+public class CreateUserEndpoint : SingleEndpointBase<CreateUserCommand, UserDto>
 {
-    // Rich documentation with examples automatically displayed in SwaggerUI
+    [HttpPost("/api/users")]
+    public override async Task<Response<UserDto>> HandleAsync(...)
+    {
+        return await _mediator.Send(request, ct);
+    }
+}
+```
+
+## Integration Examples
+
+### With Entity Framework Core
+```csharp
+public class GetUsersHandler(IQueryRepository<User, int> repository)
+    : IRequestHandler<GetUsersQuery, ResponseCollection<UserDto>>
+{
+    public async Task<ResponseCollection<UserDto>> Handle(
+        GetUsersQuery request, CancellationToken cancellationToken)
+    {
+        var users = await repository.GetPagedListAsync<UserDto>(
+            request.Page,
+            request.PageSize,
+            filter: u => u.IsActive,
+            orderBy: q => q.OrderBy(u => u.Name),
+            cancellationToken: cancellationToken
+        );
+
+        return ResponseHelper.CreateSuccessCollection(users);
+    }
+}
+```
+
+### With Caching
+```csharp
+public class GetUserHandler(
+    IQueryRepository<User, int> repository,
+    ICacheService cache)
+    : IRequestHandler<GetUserQuery, Response<UserDto>>
+{
+    public async Task<Response<UserDto>> Handle(
+        GetUserQuery request, CancellationToken cancellationToken)
+    {
+        var cacheKey = $"user:{request.Id}";
+        
+        var cachedUser = await cache.GetAsync<UserDto>(cacheKey);
+        if (cachedUser != null)
+        {
+            return ResponseHelper.CreateSuccess(cachedUser);
+        }
+
+        var user = await repository.GetByIdAsync<UserDto>(
+            request.Id, cancellationToken: cancellationToken);
+        
+        if (user != null)
+        {
+            await cache.SetAsync(cacheKey, user, TimeSpan.FromMinutes(15));
+        }
+
+        return ResponseHelper.CreateSuccess(user);
+    }
 }
 ```
 
@@ -525,21 +470,20 @@ public class GetUserProfileEndpoint : SingleEndpointBase<GetUserRequest, UserPro
 
 This package works seamlessly with other packages in the Moclawr ecosystem:
 
-- **Moclawr.Core**: Leverages extension methods and utilities for enhanced functionality
-- **Moclawr.Shared**: Uses standardized response models and entity interfaces  
-- **Moclawr.Host**: Perfect companion for complete API solutions with global exception handling
-- **Moclawr.Services.Autofac**: Compatible with Autofac dependency injection container
-- **Moclawr.EfCore**: Works with EF Core repositories in CQRS handlers
-- **Moclawr.MongoDb**: Supports MongoDB repositories in command/query handlers
-- **Moclawr.Services.Caching**: Integrates with caching strategies in endpoint handlers
+- **Moclawr.Core**: Uses extension methods and utilities for enhanced functionality
+- **Moclawr.Shared**: Integrates with response models and entity interfaces
+- **Moclawr.Host**: Perfect companion for global exception handling and infrastructure
+- **Moclawr.EfCore** and **Moclawr.MongoDb**: Works with repository patterns for data access
+- **Moclawr.Services.Caching**: Enables response caching for API endpoints
+- **Moclawr.Services.External**: Integrates external services in endpoint handlers
+- **Moclawr.Services.Autofac**: Enhanced dependency injection for endpoint registration
 
 ## Requirements
 
 - .NET 9.0 or higher
-- MediatR 12.2.0 or higher  
-- Microsoft.AspNetCore.OpenApi 9.0.0 or higher
-- Swashbuckle.AspNetCore.SwaggerGen 8.1.2 or higher
-- Swashbuckle.AspNetCore.SwaggerUI 8.1.2 or higher
+- MediatR 12.4.1 or higher
+- Microsoft.AspNetCore.OpenApi 9.0.5 or higher
+- Swashbuckle.AspNetCore 7.2.0 or higher
 
 ## License
 

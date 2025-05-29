@@ -9,7 +9,7 @@ namespace sample.API.Endpoints.S3.Commands;
 public class UploadFileEndpoint(IMediator mediator)
     : SingleEndpointBase<UploadFileCommand, UploadFileResponse>(mediator)
 {
-    [HttpPost("api/s3/upload")]
+    [HttpPost("s3/upload")]
     public override async Task<Response<UploadFileResponse>> HandleAsync(
         UploadFileCommand req,
         CancellationToken ct

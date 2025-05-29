@@ -11,10 +11,11 @@ namespace sample.API.Endpoints.Tags.Commands;
     Tags = ["Tag Management", "Commands"])]
 [OpenApiResponse(201, ResponseType = typeof(Response), Description = "Tag created successfully")]
 [OpenApiResponse(400, Description = "Invalid tag data")]
+[ApiVersion("1.0")]
 public class CreateTagEndpoint(IMediator mediator)
     : SingleEndpointBase<Request, Response>(mediator)
 {
-    [HttpPost("api/tags")]
+    [HttpPost("tags")]
     public override async Task<Response<Response>> HandleAsync(
         Request req,
         CancellationToken ct

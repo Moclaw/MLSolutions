@@ -17,7 +17,7 @@ This directory contains the core source code for the MLSolutions project, organi
   - **Constants**: Cache types and key search operators.
   - **Redis**: Redis cache abstraction and implementation, supporting advanced cache operations and key management.
 
-## 3. Shard
+## 3. Shared
 - **Entities**: Base interfaces for entity modeling.
 - **Exceptions**: Custom exception types for business logic, entity conflicts, and not-found scenarios.
 - **Responses**: Standardized response interfaces and records for API/service responses.
@@ -36,7 +36,7 @@ This directory contains the core source code for the MLSolutions project, organi
 - Implement domain entities by inheriting from `BaseEntity` or `TrackEntity`.
 - Use the repository interfaces in `Infrastructure/ORM` for data access abstraction.
 - Configure caching and module settings via `Services/Configurations`.
-- Handle errors and responses using types in `Shard/Exceptions` and `Shard/Responses`.
+- Handle errors and responses using types in `Shared/Exceptions` and `Shared/Responses`.
 
 ---
 This structure enables scalable, maintainable, and testable application development for .NET projects with support for both relational and NoSQL databases, advanced caching, and robust domain modeling.

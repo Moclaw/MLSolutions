@@ -1,6 +1,6 @@
-# Services.AWS.S3
+# Moclawr.Services.AWS.S3
 
-AWS S3 service integration for MLSolutions projects with LocalStack support for local development.
+[![NuGet](https://img.shields.io/nuget/v/Moclawr.Services.AWS.S3.svg)](https://www.nuget.org/packages/Moclawr.Services.AWS.S3/)
 
 ## Overview
 
@@ -23,34 +23,25 @@ This package provides a simple and consistent way to interact with AWS S3 storag
 The package is available as a NuGet package. Add it to your project using:
 
 ```shell
-dotnet add package Services.AWS.S3
+dotnet add package Moclawr.Services.AWS.S3
 ```
 
 ## Configuration
 
-### Production Configuration
+### Registering Services
 
-Add the following configuration in your `appsettings.json`:
+In your `Program.cs`:
 
-```json
-{
-  "AWS": {
-    "S3": {
-      "AccessKey": "your-access-key",
-      "SecretKey": "your-secret-key",
-      "BucketName": "your-bucket-name",
-      "Region": "us-east-1",
-      "UseCredentialsFile": false,
-      "CredentialsFilePath": "",
-      "UseLocalStack": false
-    }
-  }
-}
+```csharp
+using Services.AWS.S3;
+
+// Register S3 services
+builder.Services.AddAwsS3Services(builder.Configuration);
 ```
 
-### LocalStack Configuration (Development)
+### Development Configuration (LocalStack)
 
-For local development with LocalStack, use this configuration in your `appsettings.Development.json`:
+Configure LocalStack settings in `appsettings.Development.json`:
 
 ```json
 {
@@ -58,7 +49,7 @@ For local development with LocalStack, use this configuration in your `appsettin
     "S3": {
       "AccessKey": "test",
       "SecretKey": "test",
-      "BucketName": "test-bucket",
+      "BucketName": "my-dev-bucket",
       "Region": "us-east-1",
       "UseLocalStack": true,
       "LocalStackServiceUrl": "http://localhost:4566",
@@ -68,127 +59,85 @@ For local development with LocalStack, use this configuration in your `appsettin
 }
 ```
 
-## LocalStack Setup
+### Production Configuration
 
-### Quick Start (No Docker)
-
-For development without Docker, you can disable S3 features or use a mock implementation:
+Configure AWS S3 settings in `appsettings.json`:
 
 ```json
 {
   "AWS": {
     "S3": {
-      "AccessKey": "",
-      "SecretKey": "",
-      "BucketName": "",
-      "Region": "us-east-1",
-      "UseLocalStack": false,
-      "Disabled": true
+      "AccessKey": "YOUR_ACCESS_KEY",
+      "SecretKey": "YOUR_SECRET_KEY",
+      "BucketName": "your-production-bucket",
+      "Region": "us-west-2",
+      "UseLocalStack": false
     }
   }
 }
 ```
 
-### Using Docker Compose
+### Using AWS Profile (Alternative)
 
-1. Start LocalStack using the provided Docker Compose file:
+You can also use AWS profiles instead of access keys:
 
-```bash
-docker-compose -f docker-compose.localstack.yml up -d
-```
-
-2. The LocalStack S3 service will be available at `http://localhost:4566`
-
-### Standalone Docker Commands
-
-#### Basic Setup
-```bash
-docker run --rm -d \
-  --name localstack-s3 \
-  -p 4566:4566 \
-  -e SERVICES=s3 \
-  localstack/localstack:latest
-```
-
-#### Advanced Setup with Persistence
-```bash
-docker run --rm -d \
-  --name localstack-s3 \
-  -p 4566:4566 \
-  -e SERVICES=s3 \
-  -e DEBUG=1 \
-  -e AWS_DEFAULT_REGION=us-east-1 \
-  -e AWS_ACCESS_KEY_ID=test \
-  -e AWS_SECRET_ACCESS_KEY=test \
-  -v localstack-data:/tmp/localstack \
-  localstack/localstack:latest
-```
-
-#### Stop LocalStack
-```bash
-docker stop localstack-s3
-```
-
-#### View LocalStack Logs
-```bash
-docker logs localstack-s3
-```
-
-### Standalone LocalStack Setup
-
-If you prefer to run LocalStack separately:
-
-1. Install LocalStack CLI:
-```bash
-pip install localstack
-```
-
-2. Start LocalStack:
-```bash
-localstack start -d
-```
-
-3. Create S3 bucket manually (optional):
-```bash
-aws --endpoint-url=http://localhost:4566 s3 mb s3://test-bucket
+```json
+{
+  "AWS": {
+    "S3": {
+      "ProfileName": "default",
+      "BucketName": "your-bucket",
+      "Region": "us-west-2",
+      "UseLocalStack": false
+    }
+  }
+}
 ```
 
 ## Usage
 
-### Service Registration
-
-Register the S3 service in your `Program.cs` or `Startup.cs`:
+### File Upload
 
 ```csharp
 using Services.AWS.S3;
 
-// Simple registration with default configuration section "AWS:S3"
-services.AddS3Services(Configuration);
-
-// Or with custom configuration section
-services.AddS3Services(Configuration, "MyCustom:S3Section");
-
-// Or with inline configuration
-services.AddS3Services(options =>
+public class DocumentService
 {
-    options.AccessKey = "test";
-    options.SecretKey = "test";
-    options.BucketName = "my-bucket";
-    options.Region = "us-east-1";
-    options.UseLocalStack = true;
-});
+    private readonly IS3Service _s3Service;
+
+    public DocumentService(IS3Service s3Service)
+    {
+        _s3Service = s3Service;
+    }
+
+    public async Task<string> UploadDocumentAsync(IFormFile file, string folder = "documents")
+    {
+        using var stream = file.OpenReadStream();
+        var key = $"{folder}/{Guid.NewGuid()}-{file.FileName}";
+        
+        var result = await _s3Service.UploadFileAsync(key, stream, file.ContentType);
+        
+        if (result.Success)
+        {
+            return result.Key;
+        }
+        
+        throw new InvalidOperationException($"Failed to upload file: {result.ErrorMessage}");
+    }
+
+    public async Task<string> UploadFromBytesAsync(byte[] data, string fileName, string contentType = "application/octet-stream")
+    {
+        var key = $"uploads/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid()}-{fileName}";
+        
+        using var stream = new MemoryStream(data);
+        var result = await _s3Service.UploadFileAsync(key, stream, contentType);
+        
+        return result.Success ? result.Key : throw new InvalidOperationException(result.ErrorMessage);
+    }
+}
 ```
 
-### Legacy Registration (Still Supported)
-
-```csharp
-using Services.AWS.S3.Extensions;
-
-// Legacy method
-services.AddS3Service(Configuration);
-```
-
-### Basic Usage
+### File Download
 
 ```csharp
 public class FileService
@@ -200,71 +149,220 @@ public class FileService
         _s3Service = s3Service;
     }
 
-    // Ensure bucket exists (useful for LocalStack)
-    public async Task InitializeAsync()
+    public async Task<byte[]> DownloadFileAsync(string key)
     {
-        await _s3Service.EnsureBucketExistsAsync();
+        var result = await _s3Service.DownloadFileAsync(key);
+        
+        if (result.Success && result.Data != null)
+        {
+            using var memoryStream = new MemoryStream();
+            await result.Data.CopyToAsync(memoryStream);
+            return memoryStream.ToArray();
+        }
+        
+        throw new FileNotFoundException($"File not found: {key}");
     }
 
-    public async Task UploadFileAsync(string key, Stream content, string contentType)
+    public async Task<Stream> DownloadFileStreamAsync(string key)
     {
-        await _s3Service.UploadFileAsync(key, content, contentType);
-    }
-
-    public async Task<Stream> DownloadFileAsync(string key)
-    {
-        var response = await _s3Service.DownloadFileAsync(key);
-        return response.ResponseStream;
-    }
-
-    public async Task<string> GetFileUrlAsync(string key)
-    {
-        return await _s3Service.GetPreSignedUrlAsync(key, expiryMinutes: 60);
+        var result = await _s3Service.DownloadFileAsync(key);
+        
+        if (result.Success && result.Data != null)
+        {
+            return result.Data;
+        }
+        
+        throw new FileNotFoundException($"File not found: {key}");
     }
 }
 ```
 
-### Advanced Usage Examples
+### Pre-signed URLs
 
 ```csharp
-// List all objects in a directory
-var objects = await _s3Service.ListObjectsAsync("documents/", recursive: true);
+public class ShareService
+{
+    private readonly IS3Service _s3Service;
 
-// Copy object to another location
-await _s3Service.CopyObjectAsync("source/file.pdf", "backup/file.pdf");
+    public ShareService(IS3Service s3Service)
+    {
+        _s3Service = s3Service;
+    }
 
-// Check if file exists
-bool exists = await _s3Service.FileExistsAsync("documents/important.pdf");
+    public async Task<string> GetDownloadUrlAsync(string key, int expiryMinutes = 60)
+    {
+        var result = await _s3Service.GeneratePresignedUrlAsync(key, TimeSpan.FromMinutes(expiryMinutes));
+        
+        if (result.Success)
+        {
+            return result.Url;
+        }
+        
+        throw new InvalidOperationException($"Failed to generate URL: {result.ErrorMessage}");
+    }
 
-// Delete file
-await _s3Service.DeleteFileAsync("old/file.pdf");
+    public async Task<string> GetUploadUrlAsync(string key, int expiryMinutes = 15)
+    {
+        var result = await _s3Service.GeneratePresignedUploadUrlAsync(key, TimeSpan.FromMinutes(expiryMinutes));
+        
+        return result.Success ? result.Url : throw new InvalidOperationException(result.ErrorMessage);
+    }
+}
 ```
 
-## Development Workflow
+### File Management
 
-1. **Start LocalStack**: Run `docker-compose -f docker-compose.localstack.yml up -d`
-2. **Configure Development Settings**: Use LocalStack configuration in `appsettings.Development.json`
-3. **Initialize Bucket**: Call `EnsureBucketExistsAsync()` to create the bucket in LocalStack
-4. **Develop and Test**: Your S3 operations will work against LocalStack
-5. **Deploy**: Switch to production configuration for deployment
+```csharp
+public class FileManagerService
+{
+    private readonly IS3Service _s3Service;
 
-## Integration with Other MLSolutions Packages
+    public FileManagerService(IS3Service s3Service)
+    {
+        _s3Service = s3Service;
+    }
 
-This package works seamlessly with other packages in the MLSolutions ecosystem:
+    public async Task<bool> FileExistsAsync(string key)
+    {
+        return await _s3Service.FileExistsAsync(key);
+    }
 
-- **Moclawr.Core**: Leverages configuration models and utility extensions
-- **Moclawr.Shared**: Uses standardized response models for consistent error handling
-- **Moclawr.Host**: Perfect companion for building complete API solutions with cloud storage capabilities
-- **Moclawr.MinimalAPI**: Integrates with endpoint handlers for file upload/download operations
-- **Moclawr.Services.Caching**: Cache S3 metadata and file information for improved performance
-- **Moclawr.Services.External**: Use together for comprehensive cloud service integrations
+    public async Task DeleteFileAsync(string key)
+    {
+        var result = await _s3Service.DeleteFileAsync(key);
+        
+        if (!result.Success)
+        {
+            throw new InvalidOperationException($"Failed to delete file: {result.ErrorMessage}");
+        }
+    }
+
+    public async Task<List<string>> ListFilesAsync(string prefix = "", bool recursive = true)
+    {
+        var result = await _s3Service.ListObjectsAsync(prefix, recursive);
+        
+        if (result.Success)
+        {
+            return result.Objects.Select(obj => obj.Key).ToList();
+        }
+        
+        return new List<string>();
+    }
+
+    public async Task CopyFileAsync(string sourceKey, string destinationKey)
+    {
+        var result = await _s3Service.CopyObjectAsync(sourceKey, destinationKey);
+        
+        if (!result.Success)
+        {
+            throw new InvalidOperationException($"Failed to copy file: {result.ErrorMessage}");
+        }
+    }
+}
+```
+
+### LocalStack Development Setup
+
+#### Using Docker Compose
+
+Create a `docker-compose.localstack.yml` file:
+
+```yaml
+version: '3.8'
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack-s3
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - "./localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+```
+
+Start LocalStack:
+
+```bash
+docker-compose -f docker-compose.localstack.yml up -d
+```
+
+#### Standalone Docker
+
+```bash
+docker run --rm -d \
+  --name localstack-s3 \
+  -p 4566:4566 \
+  -e SERVICES=s3 \
+  -e DEBUG=1 \
+  -e AWS_DEFAULT_REGION=us-east-1 \
+  -e AWS_ACCESS_KEY_ID=test \
+  -e AWS_SECRET_ACCESS_KEY=test \
+  localstack/localstack:latest
+```
+
+## Integration with MinimalAPI
+
+```csharp
+using MinimalAPI.Endpoints;
+using Services.AWS.S3;
+
+[ApiVersion(1)]
+public class UploadFileEndpoint(IS3Service s3Service) : EndpointBase
+{
+    [HttpPost("/api/files/upload")]
+    public async Task<IResult> HandleAsync(IFormFile file, string? folder = null)
+    {
+        if (file.Length == 0)
+        {
+            return Results.BadRequest("No file provided");
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream();
+            var key = $"{folder ?? "uploads"}/{Guid.NewGuid()}-{file.FileName}";
+            
+            var result = await s3Service.UploadFileAsync(key, stream, file.ContentType);
+            
+            if (result.Success)
+            {
+                return Results.Ok(new { key = result.Key, url = await s3Service.GeneratePresignedUrlAsync(result.Key, TimeSpan.FromHours(1)) });
+            }
+            
+            return Results.Problem(result.ErrorMessage);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"Upload failed: {ex.Message}");
+        }
+    }
+}
+```
+
+## Integration with Other Moclawr Packages
+
+This package works seamlessly with other packages in the Moclawr ecosystem:
+
+- **Moclawr.Core**: Uses configuration extensions and utilities
+- **Moclawr.Shared**: Integrates with response models and exception handling
+- **Moclawr.Host**: Perfect for dependency injection and health checks
+- **Moclawr.MinimalAPI**: Use with file upload/download endpoints
+- **Moclawr.Services.Caching**: Cache file metadata and pre-signed URLs
+- **Moclawr.Services.External**: Store email attachments and SMS media
 
 ## Requirements
 
 - .NET 9.0 or higher
-- AWSSDK.S3 4.0.0 or higher
+- AWSSDK.S3 3.7.402.8 or higher
+- Microsoft.Extensions.Configuration 9.0.5 or higher
 - Docker (for LocalStack development)
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This package is licensed under the MIT License.

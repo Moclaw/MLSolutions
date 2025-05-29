@@ -22,6 +22,11 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
 
         var isCommandRequest = IsCommandRequest(requestType);
         var isQueryRequest = IsQueryRequest(requestType);
+        
+        if (isQueryRequest && isCommandRequest)
+        {
+            return; // Cannot be both command and query
+        }
 
         // Generate tags based on endpoint
         GenerateOperationTags(operation, endpointType);
@@ -128,10 +133,10 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             }
         }
 
-        if (tags.Count != 0)
-        {
-            operation.Tags = [.. tags.Select(tag => new OpenApiTag { Name = tag })];
-        }
+        // if (tags.Count != 0)
+        // {
+        //     operation.Tags = [.. tags.Select(tag => new OpenApiTag { Name = tag })];
+        // }
     }
 
     private static void ProcessRequestParameters(OpenApiOperation operation, Type requestType, bool isCommandRequest, bool isQueryRequest)
@@ -212,13 +217,6 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             property.PropertyType == typeof(List<IFormFile>))
         {
             return Attributes.ParameterLocation.Form;
-        }
-
-        // Auto-detection for common route parameters
-        var propertyName = property.Name.ToLower();
-        if (propertyName == "id" || propertyName.EndsWith("id"))
-        {
-            return Attributes.ParameterLocation.Path;
         }
 
         // Smart defaults based on request type
