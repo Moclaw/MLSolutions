@@ -14,7 +14,7 @@ namespace sample.API.Endpoints.Tags.Commands;
 public class CreateTagEndpoint(IMediator mediator)
     : SingleEndpointBase<Request, Response>(mediator)
 {
-    [HttpPost("api/tags")]
+    [HttpPost("tags")]
     public override async Task<Response<Response>> HandleAsync(
         Request req,
         CancellationToken ct

@@ -3,7 +3,7 @@ using sample.Domain.Entities;
 
 namespace sample.Application.Features.Todo.Queries.GetById;
 
-public class Response
+public class GetByIdResponse
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -15,7 +15,7 @@ public class Response
     public string? CategoryName { get; set; }
     public ICollection<TagDto> Tags { get; set; } = [];
 
-    public static Response FromEntity(TodoItem entity) => new Response
+    public static GetByIdResponse FromEntity(TodoItem entity) => new GetByIdResponse
     {
         Id = entity.Id,
         Title = entity.Title,

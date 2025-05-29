@@ -1,7 +1,7 @@
 using MinimalAPI.Handlers;
 
 namespace sample.Application.Features.Todo.Queries.GetAllTags;
-public class Request : IQueryCollectionRequest<Response>
+public class GetAllTagsRequest : IQueryCollectionRequest<GetAllTagsResponse>
 {
     public string? Search { get; set; }
     public int PageIndex { get; set; } = 0;

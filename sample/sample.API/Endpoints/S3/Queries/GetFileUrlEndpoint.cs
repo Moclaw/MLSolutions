@@ -9,7 +9,7 @@ namespace sample.API.Endpoints.S3.Queries;
 public class GetFileUrlEndpoint(IMediator mediator)
     : SingleEndpointBase<GetFileUrlQuery, GetFileUrlResponse>(mediator)
 {
-    [HttpGet("api/s3/url/{key}")]
+    [HttpGet("s3/url/{key}")]
     public override async Task<Response<GetFileUrlResponse>> HandleAsync(
         GetFileUrlQuery req,
         CancellationToken ct

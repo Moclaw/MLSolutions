@@ -1,7 +1,7 @@
 using MediatR;
 using MinimalAPI.Attributes;
 using sample.Application.Features.Todo.Queries.GetById;
-using Response = sample.Application.Features.Todo.Queries.GetById.Response;
+using GetByIdResponse = sample.Application.Features.Todo.Queries.GetById.GetByIdResponse;
 
 namespace sample.API.Endpoints.Todos.Queries;
 
@@ -9,14 +9,12 @@ namespace sample.API.Endpoints.Todos.Queries;
     Description = "Retrieves a specific todo item by its unique identifier",
     Tags = ["Todo Management", "Queries"])]
 [OpenApiParameter("id", typeof(int), Description = "The unique identifier of the todo item", Required = true, Location = ParameterLocation.Path)]
-[OpenApiResponse(200, ResponseType = typeof(Response<Response>), Description = "Todo item retrieved successfully")]
-[OpenApiResponse(404, Description = "Todo item not found")]
 public class GetTodoByIdEndpoint(IMediator mediator)
-    : SingleEndpointBase<Request, Response>(mediator)
+    : SingleEndpointBase<GetByIdRequest, GetByIdResponse>(mediator)
 {
     [HttpGet("api/todos/{id}")]
-    public override async Task<Response<Response>> HandleAsync(
-        Request req,
+    public override async Task<Response<GetByIdResponse>> HandleAsync(
+        GetByIdRequest req,
         CancellationToken ct
     ) => await _mediator.Send(req, ct);
 }

@@ -8,11 +8,11 @@ using Shared.Utils;
 
 namespace sample.Application.Features.Todo.Queries.GetById;
 
-public class Handler([FromKeyedServices(ServiceKeys.QueryRepository)] IQueryRepository<TodoItem, int> queryRepository)
-    : IQueryHandler<Request, Response>
+public class GetByIdHandler([FromKeyedServices(ServiceKeys.QueryRepository)] IQueryRepository<TodoItem, int> queryRepository)
+    : IQueryHandler<GetByIdRequest, GetByIdResponse>
 {
-    public async Task<Response<Response>> Handle(
-        Request request,
+    public async Task<Response<GetByIdResponse>> Handle(
+        GetByIdRequest request,
         CancellationToken cancellationToken
     )
     {
@@ -26,11 +26,11 @@ public class Handler([FromKeyedServices(ServiceKeys.QueryRepository)] IQueryRepo
 
         if (todoItem == null)
         {
-            return ResponseUtils.Error<Response>(203, $"Todo item with ID {request.Id} not found");
+            return ResponseUtils.Error<GetByIdResponse>(203, $"Todo item with ID {request.Id} not found");
         }
 
         return ResponseUtils.Success(
-            Response.FromEntity(todoItem),
+            GetByIdResponse.FromEntity(todoItem),
             "Todo item retrieved successfully"
         );
     }
