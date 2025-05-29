@@ -9,6 +9,7 @@ namespace sample.API.Endpoints.Todos.Queries;
     Tags = ["Todo Management", "Queries"])]
 [OpenApiResponse(200, ResponseType = typeof(ResponseCollection<GetallResponse>), Description = "Successfully retrieved todos")]
 [OpenApiResponse(400, Description = "Invalid request parameters")]
+[ApiVersion("1.0")]
 
 public class GetAllTodosEndpoint(IMediator mediator)
     : CollectionEndpointBase<GetAllRequest, GetallResponse>(mediator)

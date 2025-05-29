@@ -16,11 +16,18 @@ var configuration = builder.Configuration;
 // Configure Serilog
 builder.AddSerilog(configuration, appName);
 
-// Configure versioning options
+// Configure versioning options with enhanced settings
 var versioningOptions = new DefaultVersioningOptions
 {
     Prefix = "v",
     DefaultVersion = 1,
+    SupportedVersions = [1, 2],
+    IncludeVersionInRoute = true,
+    BaseRouteTemplate = "/api",
+    ReadingStrategy = VersionReadingStrategy.UrlSegment | VersionReadingStrategy.QueryString,
+    AssumeDefaultVersionWhenUnspecified = true,
+    QueryParameterName = "version",
+    VersionHeaderName = "X-API-Version"
 };
 
 // Register other services
@@ -30,11 +37,6 @@ builder.Services
         title: "Todo API",
         version: "v1",
         description: "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR and CQRS pattern",
-        contactName: "Todo API Development Team",
-        contactEmail: "dev@todoapi.com",
-        contactUrl: "https://github.com/Moclaw/MLSolutions",
-        licenseName: "MIT",
-        licenseUrl: "https://opensource.org/licenses/MIT",
         versioningOptions: versioningOptions,
         assemblies: [
             typeof(Program).Assembly,
@@ -50,13 +52,13 @@ builder.Services
 
 var app = builder.Build();
 
-// Map all endpoints from the assembly with versioning BEFORE Swagger configuration
+// Map all endpoints with versioning support
 app.MapMinimalEndpoints(versioningOptions, typeof(Program).Assembly);
 
-// Enable enhanced documentation with SwaggerUI
+// Enable enhanced documentation with SwaggerUI and versioning
 if (app.Environment.IsDevelopment())
 {
-    // OpenAPI documentation for MinimalAPI endpoints: openapi/v1.json
+    // OpenAPI documentation for MinimalAPI endpoints with versioning
     app.UseMinimalApiOpenApi();
 
     app.UseMinimalApiDocs(
@@ -64,6 +66,7 @@ if (app.Environment.IsDevelopment())
         enableTryItOut: true,
         enableDeepLinking: true,
         enableFilter: true
+        //versioningOptions: versioningOptions
     );
 }
 

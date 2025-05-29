@@ -8,6 +8,7 @@ namespace sample.API.Endpoints.Tags.Queries;
 [OpenApiSummary("Get all tags", 
     Description = "Retrieves a paginated list of all available tags",
     Tags = ["Tag Management", "Queries"])]
+[ApiVersion("1.0")]
 public class GetAllTagsEndpoint(IMediator mediator)
     : CollectionEndpointBase<GetAllTagsRequest, GetAllTagsResponse>(mediator)
 {

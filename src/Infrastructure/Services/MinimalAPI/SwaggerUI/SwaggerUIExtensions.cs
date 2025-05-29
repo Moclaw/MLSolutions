@@ -8,6 +8,9 @@ using System.Reflection;
 
 namespace MinimalAPI.SwaggerUI;
 
+/// <summary>
+/// Extension methods for configuring SwaggerUI with versioning support
+/// </summary>
 public static class SwaggerUIExtensions
 {
     /// <summary>
@@ -142,6 +145,97 @@ public static class SwaggerUIExtensions
         return app;
     }
 
+    /// <summary>
+    /// Configure SwaggerUI with versioned endpoint support
+    /// </summary>
+    public static IApplicationBuilder UseMinimalApiSwaggerUI(
+        this IApplicationBuilder app,
+        string routePrefix = "swagger",
+        bool enableTryItOut = true,
+        bool enableDeepLinking = true,
+        bool enableFilter = true,
+        bool enableValidator = false,
+        DocExpansion docExpansion = DocExpansion.List,
+        ModelRendering defaultModelRendering = ModelRendering.Example,
+        bool persistAuthorization = true,
+        VersioningOptions? versioningOptions = null)
+    {
+        var options = app.ApplicationServices.GetService<SwaggerUIOptions>();
+        var versioning = versioningOptions ?? new DefaultVersioningOptions();
+
+        app.UseSwaggerUI(c =>
+        {
+            // Configure multiple swagger endpoints for each version
+            foreach (var version in versioning.SupportedVersions)
+            {
+                var versionName = $"{versioning.Prefix}{version}";
+                c.SwaggerEndpoint($"/swagger/{versionName}/swagger.json", $"{options?.Title ?? "API"} {versionName}");
+            }
+
+            c.RoutePrefix = routePrefix;
+            //c.EnableTryItOutByDefault(enableTryItOut);
+            //c.EnableDeepLinking(enableDeepLinking);
+            //c.EnableFilter(enableFilter);
+            //c.EnableValidator(enableValidator);
+            c.DocExpansion(docExpansion);
+            c.DefaultModelRendering(defaultModelRendering);
+            c.DefaultModelExpandDepth(2);
+            c.DefaultModelsExpandDepth(1);
+            c.DisplayOperationId();
+            c.DisplayRequestDuration();
+            
+            if (persistAuthorization)
+            {
+                c.EnablePersistAuthorization();
+            }
+
+            // Custom CSS and JavaScript for enhanced UI
+            c.InjectStylesheet("/swagger-ui/custom.css");
+            c.InjectJavascript("/swagger-ui/custom.js");
+        });
+
+        return app;
+    }
+
+    /// <summary>
+    /// Add enhanced documentation with versioning
+    /// </summary>
+    public static IApplicationBuilder UseMinimalApiDocs(
+        this IApplicationBuilder app,
+        string swaggerRoutePrefix = "docs",
+        bool enableTryItOut = true,
+        bool enableDeepLinking = true,
+        bool enableFilter = true,
+        bool enableValidator = false,
+        VersioningOptions? versioningOptions = null)
+    {
+        var versioning = versioningOptions ?? new DefaultVersioningOptions();
+
+        // Enable Swagger JSON endpoints for each version
+        app.UseSwagger(c =>
+        {
+            c.RouteTemplate = "swagger/{documentName}/swagger.json";
+            c.PreSerializeFilters.Add((swagger, httpReq) =>
+            {
+                swagger.Servers = new List<Microsoft.OpenApi.Models.OpenApiServer>
+                {
+                    new() { Url = $"{httpReq.Scheme}://{httpReq.Host.Value}" }
+                };
+            });
+        });
+
+        // Configure SwaggerUI with versioning
+        app.UseMinimalApiSwaggerUI(
+            routePrefix: swaggerRoutePrefix,
+            enableTryItOut: enableTryItOut,
+            enableDeepLinking: enableDeepLinking,
+            enableFilter: enableFilter,
+            enableValidator: enableValidator,
+            versioningOptions: versioning
+        );
+
+        return app;
+    }
 }
 
 public class SwaggerUIOptions
