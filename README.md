@@ -1,155 +1,134 @@
-# Moclaw Overview
+# MLSolutions Framework
 
-This directory contains the core source code for the Moclaw project, organized into several main modules:
+A comprehensive .NET framework for building scalable, maintainable enterprise applications using Clean Architecture principles and Domain-Driven Design (DDD) patterns.
 
-## NuGet Packages & Installation
+## 🚀 Key Features
 
-### Available NuGet Packages
+- **Clean Architecture**: Proper separation of concerns with clear layer boundaries
+- **CQRS & MediatR**: Command Query Responsibility Segregation with MediatR integration
+- **MinimalAPI Framework**: Class-based Minimal APIs with automatic endpoint discovery
+- **Advanced Repository Pattern**: Unified interfaces for EF Core and MongoDB
+- **Event-Driven Architecture**: Built-in messaging with CAP framework
+- **Comprehensive Documentation**: Enhanced OpenAPI/SwaggerUI with versioning support
+- **Global Exception Handling**: Centralized error management with structured logging
+- **Flexible Caching**: Redis and in-memory caching with intelligent invalidation
+- **Cloud Integration**: AWS S3 and external service connectors
+- **Health Monitoring**: Advanced health checks for databases and services
 
-#### Core Libraries
-- **Moclawr.Core** (v2.1.0) - Essential utility extensions and base functionality
-- **Moclawr.Shared** (v2.0.1) - Fundamental interfaces, response models, and utilities
-- **Moclawr.Domain** (v2.1.0) - Domain modeling components and base entity types
-- **Moclawr.Host** (v2.1.0) - Infrastructure for robust ASP.NET Core applications
+## 📦 NuGet Packages
 
-#### Data Access (ORM)
-- **Moclawr.EfCore** (v2.0.1) - Entity Framework Core utilities and patterns
-- **Moclawr.MongoDb** (v2.1.0) - MongoDB integration and repository patterns
+### Core Libraries
+| Package | Version | Description |
+|---------|---------|-------------|
+| **Moclawr.Core** | v2.1.0 | Essential utilities, extensions, and base functionality |
+| **Moclawr.Shared** | v2.0.1 | Common interfaces, response models, and utilities |
+| **Moclawr.Domain** | v2.1.0 | Domain modeling, base entities, and builder patterns |
+| **Moclawr.Host** | v2.1.0 | Application infrastructure, logging, and middleware |
 
-#### Services
-- **Moclawr.MinimalAPI** (v2.1.0) - Class-based Minimal API with MediatR and SwaggerUI
-- **Moclawr.Services.Caching** (v2.1.0) - Flexible caching with Redis and in-memory support
-- **Moclawr.Services.External** (v2.1.0) - External service integrations (Email, SMS)
-- **Moclawr.Services.Autofac** (v2.1.0) - Autofac dependency injection integration
-- **Moclawr.DotNetCore.CAP** (v2.1.0) - Event-driven messaging with CAP framework
-- **Moclawr.Services.AWS.S3** (v1.0.0) - AWS S3 service integration
+### Data Access (ORM)
+| Package | Version | Description |
+|---------|---------|-------------|
+| **Moclawr.EfCore** | v2.0.1 | Entity Framework Core with repository patterns and advanced querying |
+| **Moclawr.MongoDb** | v2.1.0 | MongoDB integration with EF Core-like API and repository patterns |
 
-### How to Install
+### Services & Infrastructure
+| Package | Version | Description |
+|---------|---------|-------------|
+| **Moclawr.MinimalAPI** | v2.1.0 | Class-based Minimal API with MediatR, versioning, and enhanced SwaggerUI |
+| **Moclawr.Services.Caching** | v2.1.0 | Redis and in-memory caching with flexible invalidation strategies |
+| **Moclawr.Services.External** | v2.1.0 | External service integrations (Email, SMS, notifications) |
+| **Moclawr.Services.Autofac** | v2.1.0 | Autofac dependency injection container integration |
+| **Moclawr.DotNetCore.CAP** | v2.1.0 | Event-driven messaging and distributed transactions |
+| **Moclawr.Services.AWS.S3** | v1.0.0 | AWS S3 cloud storage integration with LocalStack support |
 
-You can install the required NuGet packages using the .NET CLI:
+## 🛠 Installation
 
-```sh
-```sh
-# Install Core Libraries
+### Quick Start - All Packages
+```bash
+# Install all core packages
 dotnet add package Moclawr.Core
 dotnet add package Moclawr.Shared
 dotnet add package Moclawr.Domain
 dotnet add package Moclawr.Host
 
-# Install Data Access Libraries  
+# Install data access
 dotnet add package Moclawr.EfCore
+# OR
 dotnet add package Moclawr.MongoDb
 
-# Install Service Libraries
+# Install API framework
 dotnet add package Moclawr.MinimalAPI
+
+# Install services (optional)
 dotnet add package Moclawr.Services.Caching
 dotnet add package Moclawr.Services.External
 dotnet add package Moclawr.Services.Autofac
 dotnet add package Moclawr.DotNetCore.CAP
 dotnet add package Moclawr.Services.AWS.S3
-
-# Install common Microsoft packages (if needed)
-dotnet add package Microsoft.AspNetCore.OpenApi
-dotnet add package Microsoft.Extensions.Configuration.Abstractions
-dotnet add package Microsoft.Extensions.DependencyInjection.Abstractions
-dotnet add package Serilog.AspNetCore
-```
 ```
 
-Or, restore all packages for the solution:
+### Targeted Installation
+```bash
+# For API projects
+dotnet add package Moclawr.Host
+dotnet add package Moclawr.MinimalAPI
+dotnet add package Moclawr.EfCore
 
-```sh
-dotnet restore
+# For domain projects
+dotnet add package Moclawr.Core
+dotnet add package Moclawr.Domain
+
+# For infrastructure projects
+dotnet add package Moclawr.Services.Caching
+dotnet add package Moclawr.Services.External
 ```
 
----
+## 🏗 Architecture Overview
 
-## Architecture Overview
+```
+┌─────────────────────────────────────────────────┐
+│                 Presentation                    │
+│  ┌─────────────┐  ┌──────────────────────────┐  │
+│  │ MinimalAPI  │  │    SwaggerUI/OpenAPI     │  │
+│  │ Endpoints   │  │    Documentation         │  │
+│  └─────────────┘  └──────────────────────────┘  │
+└─────────────────────────────────────────────────┘
+                         │
+┌─────────────────────────────────────────────────┐
+│                 Application                     │
+│  ┌─────────────┐  ┌──────────────────────────┐  │
+│  │   MediatR   │  │      CQRS Handlers       │  │
+│  │   Queries   │  │      Commands/Queries    │  │
+│  └─────────────┘  └──────────────────────────┘  │
+└─────────────────────────────────────────────────┘
+                         │
+┌─────────────────────────────────────────────────┐
+│                   Domain                        │
+│  ┌─────────────┐  ┌──────────────────────────┐  │
+│  │  Entities   │  │    Business Logic        │  │
+│  │ Aggregates  │  │    Domain Services       │  │
+│  └─────────────┘  └──────────────────────────┘  │
+└─────────────────────────────────────────────────┘
+                         │
+┌─────────────────────────────────────────────────┐
+│                Infrastructure                   │
+│  ┌─────────────┐  ┌──────────────────────────┐  │
+│  │ Repositories│  │    External Services     │  │
+│  │   EF Core   │  │   Caching, Messaging     │  │
+│  │   MongoDB   │  │     AWS S3, Email        │  │
+│  └─────────────┘  └──────────────────────────┘  │
+└─────────────────────────────────────────────────┘
+```
 
-The MLSolutions framework follows Clean Architecture principles and Domain-Driven Design (DDD) patterns:
-
-### Core Layer
-- **Moclawr.Core**: Foundation utilities and extension methods
-- **Moclawr.Shared**: Common interfaces, exceptions, and response models
-- **Moclawr.Domain**: Domain entities, specifications, and business logic primitives
-
-### Infrastructure Layer
-- **Data Access**: EfCore for relational databases, MongoDb for document storage
-- **Caching**: Redis distributed cache and in-memory caching strategies
-- **Messaging**: CAP framework for event-driven architecture
-- **External Services**: Email, SMS, and cloud storage integrations
-
-### Application Layer  
-- **Moclawr.Host**: Application infrastructure, logging, health checks, and middleware
-- **Moclawr.MinimalAPI**: Endpoint definitions with MediatR CQRS pattern
-
-### Service Layer
-- **Dependency Injection**: Autofac container integration
-- **Documentation**: Enhanced OpenAPI and SwaggerUI with rich documentation
-
----
-
-## Setup 
-- This is a Bash/PowerShell script that automatically sets up a Clean Architecture project structure for .NET applications, following Domain-Driven Design (DDD) and optional Test-Driven Development (TDD) standards [Script Setup](https://github.com/Moclaw/ScriptKids/tree/main/src/CleanArchitecture). 
-
-## 1. Core
-- **Extensions**: Provides utility extension methods for enums, objects, queryables, reflection, and strings. These extensions simplify common operations such as enum metadata retrieval, object serialization, dynamic query ordering, and string normalization.
-
-## 2. Infrastructure
-- **Domain**: Defines base entity types and builder interfaces for entity construction and query building. Includes:
-  - `BaseEntity` and `TrackEntity` for entity modeling and audit tracking.
-  - Fluent builder interfaces for constructing queries and setting entity properties.
-- **ORM**: Contains data access logic for both Entity Framework Core (EfCore) and MongoDB:
-  - **EfCore**: Base context, repositories, and builders for relational data access, supporting advanced query building, Dapper integration, and transaction management.
-  - **MongoDb**: Context and repositories for MongoDB, supporting similar repository patterns as EfCore.
-- **Services**: Provides service-level utilities and configurations:
-  - **MinimalAPI**: Class-based Minimal API framework with MediatR integration and enhanced SwaggerUI
-  - **Caching**: Redis and in-memory cache abstraction with flexible key management and removal strategies
-  - **External**: External service integrations for email and SMS functionality
-  - **Autofac**: Autofac dependency injection container integration for ASP.NET Core
-  - **CAP**: Event-driven messaging and distributed transactions using CAP framework
-  - **AWS.S3**: Amazon S3 cloud storage service integration
-
-## 3. Shared
-
-- **Entities**: Base interfaces for entity modeling with typed IDs
-- **Exceptions**: Custom exception types for business logic, entity conflicts, and not-found scenarios  
-- **Responses**: Standardized response interfaces and records for API/service responses
-- **Settings**: Default JSON serialization settings for consistent data handling
-- **Utils**: Utility classes for object manipulation, paging, password hashing, and response creation
-
-## Key Features
-
-- **Extensible Query Building**: Fluent interfaces and builders for constructing complex queries with support for navigation properties, ordering, and filtering
-- **Repository Pattern**: Unified repository interfaces for both relational (EfCore) and NoSQL (MongoDB) data sources
-- **Advanced Caching**: Redis and in-memory cache support with flexible key management and removal strategies  
-- **Minimal API Framework**: Class-based approach to Minimal APIs with MediatR integration and enhanced SwaggerUI
-- **Global Exception Handling**: Centralized error handling with custom exception handlers and structured logging
-- **Health Checks**: Database and service health monitoring with configurable endpoints
-- **Event-Driven Architecture**: Message publishing and subscription using CAP framework
-- **Cloud Integration**: AWS S3 support for file storage and external service integrations
-- **Standardized Responses**: Consistent response types for success, error, and collection results
-- **Robust Utilities**: Helpers for serialization, password security, paging, and configuration management
-
-## Usage
-
-- Use the extension methods in `Core/Extensions` to simplify common .NET operations
-- Implement domain entities by inheriting from `BaseEntity` or `TrackEntity`  
-- Use the repository interfaces in `Infrastructure/ORM` for data access abstraction
-- Configure caching and module settings via `Services/Configurations`
-- Handle errors and responses using types in `Shared/Exceptions` and `Shared/Responses`
-
----
-
-## Quick Start Guide
+## 🚀 Quick Start Guide
 
 ### 1. Create a New Project
-```powershell
-# Create a new API project
+```bash
+# Create API project
 dotnet new webapi -n MyApp
 cd MyApp
 
-# Add Moclawr packages
+# Add essential packages
 dotnet add package Moclawr.Host
 dotnet add package Moclawr.MinimalAPI
 dotnet add package Moclawr.EfCore
@@ -159,19 +138,37 @@ dotnet add package Moclawr.EfCore
 ```csharp
 using Host;
 using MinimalAPI;
+using EfCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Moclawr services
-builder.Services.AddMinimalApiWithSwaggerUI("My API", "v1");
-builder.Services.AddGlobalExceptionHandling("MyApp");
+// Configure application infrastructure
 builder.AddSerilog(builder.Configuration, "MyApp");
+builder.Services.AddGlobalExceptionHandling("MyApp");
+
+// Add MinimalAPI with comprehensive documentation
+builder.Services.AddMinimalApiWithSwaggerUI(
+    title: "My API",
+    version: "v1",
+    description: "Comprehensive API built with MLSolutions framework"
+);
+
+// Add data access
+builder.Services.AddDbContext<MyDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
 // Configure pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseMinimalApiDocs();
+}
+
 app.UseGlobalExceptionHandling();
-app.UseMinimalApiDocs();
+app.UseHttpsRedirection();
+
+// Auto-discover and map all endpoints
 app.MapMinimalEndpoints(typeof(Program).Assembly);
 
 app.Run();
@@ -179,40 +176,208 @@ app.Run();
 
 ### 3. Create Your First Endpoint
 ```csharp
-[OpenApiSummary("Get all items")]
-public class GetItemsEndpoint(IMediator mediator) 
-    : CollectionEndpointBase<GetItemsQuery, ItemDto>(mediator)
+using MinimalAPI.Endpoints;
+using MinimalAPI.Attributes;
+using MediatR;
+
+[OpenApiSummary("Get all users", "Retrieves a paginated list of users")]
+[ApiVersion(1)]
+public class GetUsersEndpoint(IMediator mediator) 
+    : CollectionEndpointBase<GetUsersQuery, UserDto>(mediator)
 {
-    [HttpGet("/api/items")]
-    public override async Task<ResponseCollection<ItemDto>> HandleAsync(
-        GetItemsQuery request, CancellationToken ct)
+    [HttpGet("/api/users")]
+    public override async Task<ResponseCollection<UserDto>> HandleAsync(
+        GetUsersQuery request, CancellationToken ct)
     {
         return await _mediator.Send(request, ct);
     }
 }
 ```
 
+### 4. Implement CQRS Handler
+```csharp
+using MediatR;
+using EfCore.Repositories;
+
+public record GetUsersQuery(
+    int Page = 1, 
+    int PageSize = 10, 
+    string? SearchTerm = null
+) : IRequest<ResponseCollection<UserDto>>;
+
+public class GetUsersHandler(IQueryRepository<User, int> queryRepository) 
+    : IRequestHandler<GetUsersQuery, ResponseCollection<UserDto>>
+{
+    public async Task<ResponseCollection<UserDto>> Handle(
+        GetUsersQuery request, CancellationToken cancellationToken)
+    {
+        var users = await queryRepository.GetPagedListAsync<UserDto>(
+            request.Page,
+            request.PageSize,
+            filter: u => string.IsNullOrEmpty(request.SearchTerm) || 
+                        u.Name.Contains(request.SearchTerm),
+            orderBy: q => q.OrderBy(u => u.Name),
+            cancellationToken: cancellationToken
+        );
+
+        return ResponseHelper.CreateSuccessCollection(users);
+    }
+}
+```
+
+## 🎯 Key Framework Features
+
+### MinimalAPI Framework
+- **Class-based Endpoints**: Object-oriented approach to Minimal APIs
+- **Automatic Discovery**: Auto-registration of endpoint classes
+- **MediatR Integration**: Built-in CQRS pattern support
+- **Advanced Versioning**: Multiple versioning strategies (URL, header, query, media type)
+- **Enhanced Documentation**: Rich OpenAPI/SwaggerUI with automatic schema generation
+- **Request Binding**: Intelligent parameter binding from various sources
+
+### Repository Pattern
+- **Unified Interface**: Common repository pattern for EF Core and MongoDB
+- **CQRS Separation**: Separate command and query repositories
+- **Advanced Querying**: Fluent query builders with projections
+- **Transaction Support**: Built-in transaction management
+- **Pagination**: Seamless pagination with metadata
+
+### Global Infrastructure
+- **Exception Handling**: Centralized error management with custom handlers
+- **Structured Logging**: Serilog integration with multiple sinks
+- **Health Checks**: Comprehensive health monitoring
+- **CORS Configuration**: Flexible cross-origin resource sharing
+- **Security Headers**: Configurable security headers
+
+### Event-Driven Architecture
+- **Message Publishing**: Event publishing with CAP framework
+- **Multiple Brokers**: Support for RabbitMQ, Kafka, Redis, Azure Service Bus
+- **Distributed Transactions**: Ensuring data consistency across services
+- **Event Sourcing**: Built-in support for event sourcing patterns
+
+## 📋 Sample Implementation
+
+The framework includes a comprehensive **Todo List CRUD Application** demonstrating:
+
+### Features Demonstrated
+- **Complete CRUD Operations**: Create, read, update, delete todo items
+- **Advanced Filtering**: Search, pagination, sorting, and filtering
+- **API Versioning**: Multiple version strategies with comprehensive examples
+- **File Storage**: AWS S3 integration with LocalStack for development
+- **Rich Documentation**: Interactive SwaggerUI with detailed endpoint documentation
+- **Health Monitoring**: Database and service health checks
+- **Structured Logging**: Request/response logging with Serilog
+
+### Architecture Showcase
+- **Clean Architecture**: Proper layer separation with clear boundaries
+- **CQRS Pattern**: Command and query separation with MediatR
+- **Repository Pattern**: Both EF Core and MongoDB implementations
+- **Domain Modeling**: Rich domain entities with business logic
+- **Event-Driven**: Messaging patterns for decoupled communication
+
+### Development Setup
+```bash
+# Clone the repository
+git clone https://github.com/your-org/MLSolutions.git
+cd MLSolutions/sample
+
+# Run with Docker (recommended)
+docker-compose up -d
+
+# Or run standalone
+dotnet run --project sample.API
+```
+
+### API Examples
+```bash
+# Get all todos with versioning
+curl "https://localhost:5001/api/v1/todos?page=1&pageSize=10"
+
+# Create a new todo
+curl -X POST "https://localhost:5001/api/v1/todos" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Learn MLSolutions","description":"Study the framework"}'
+
+# Upload file to S3
+curl -X POST "https://localhost:5001/api/v1/s3/upload" \
+  -F "file=@document.pdf" \
+  -F "folder=attachments"
+```
+
+## 🧪 Testing
+
+### Unit Testing
+```csharp
+[Test]
+public async Task GetUsers_ShouldReturnPagedResults()
+{
+    // Arrange
+    var query = new GetUsersQuery(1, 10);
+    
+    // Act
+    var result = await _handler.Handle(query, CancellationToken.None);
+    
+    // Assert
+    result.Should().NotBeNull();
+    result.IsSuccess.Should().BeTrue();
+    result.Data.Should().HaveCountLessOrEqualTo(10);
+}
+```
+
+### Integration Testing
+```csharp
+[Test]
+public async Task GetUsersEndpoint_ShouldReturn200()
+{
+    // Arrange
+    var client = _factory.CreateClient();
+    
+    // Act
+    var response = await client.GetAsync("/api/v1/users");
+    
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.OK);
+}
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+### Development Setup
+```bash
+# Clone the repository
+git clone https://github.com/your-org/MLSolutions.git
+cd MLSolutions
+
+# Restore dependencies
+dotnet restore
+
+# Run tests
+dotnet test
+
+# Build all projects
+dotnet build
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- [NuGet Packages](https://www.nuget.org/profiles/Moclawr)
+- [Documentation](https://docs.mlsolutions.com)
+- [Sample Projects](./sample/)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Security Policy](SECURITY.md)
+
+## 📞 Support
+
+- **Email**: mocduonglam86@gmail.com
+- **Issues**: [GitHub Issues](https://github.com/your-org/MLSolutions/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/MLSolutions/discussions)
+
 ---
 
-## Sample Project
-
-The repository includes a comprehensive sample implementation demonstrating the framework capabilities:
-
-**Todo List CRUD Application** (`/sample/`)
-- Complete Clean Architecture implementation
-- Demonstrates MinimalAPI with MediatR CQRS pattern  
-- Entity Framework Core integration with SQLite
-- Comprehensive API documentation with SwaggerUI
-- Health checks and structured logging
-- Global exception handling
-
-### Sample Features
-- **CRUD Operations**: Create, Read, Update, Delete todo items
-- **Advanced Filtering**: Search, pagination, and sorting capabilities
-- **Rich Documentation**: Enhanced OpenAPI with interactive SwaggerUI
-- **Clean Architecture**: Proper separation of concerns across layers
-- **Testing Ready**: Includes test project structure
-
----
-
-This structure enables scalable, maintainable, and testable application development for .NET projects with support for both relational and NoSQL databases, advanced caching, and robust domain modeling.
+Built with ❤️ by the MLSolutions Team
