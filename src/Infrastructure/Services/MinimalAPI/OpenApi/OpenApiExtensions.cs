@@ -49,13 +49,15 @@ public static class OpenApiExtensions
             options.AddDocumentTransformer<MinimalApiDocumentTransformer>();
         });
 
-        services.AddSingleton(new OpenApiOptions
-        {
-            Title = title,
-            Version = version,
-            Description = description,
-            EndpointAssemblies = endpointAssemblies
-        });
+        services.AddSingleton(
+            new OpenApiOptions
+            {
+                Title = title,
+                Version = version,
+                Description = description,
+                EndpointAssemblies = endpointAssemblies
+            }
+        );
 
         return services;
     }
@@ -79,25 +81,34 @@ public static class OpenApiExtensions
     {
         // Add SwaggerUI (which includes Swagger generation)
         services.AddMinimalApiSwaggerUI(
-            title, version, description,
-            contactName, contactEmail, contactUrl,
-            licenseName, licenseUrl, versioningOptions,
-            assemblies);
+            title,
+            version,
+            description,
+            contactName,
+            contactEmail,
+            contactUrl,
+            licenseName,
+            licenseUrl,
+            versioningOptions,
+            assemblies
+        );
 
         // Also add OpenAPI options for compatibility
-        services.AddSingleton(new OpenApiOptions
-        {
-            Title = title,
-            Version = version,
-            Description = description,
-            EndpointAssemblies = assemblies,
-            VersioningOptions = versioningOptions,
-            ContactEmail = contactEmail,
-            ContactName = contactName,
-            ContactUrl = contactUrl,
-            LicenseName = licenseName,
-            LicenseUrl = licenseUrl
-        });
+        services.AddSingleton(
+            new OpenApiOptions
+            {
+                Title = title,
+                Version = version,
+                Description = description,
+                EndpointAssemblies = assemblies,
+                VersioningOptions = versioningOptions,
+                ContactEmail = contactEmail,
+                ContactName = contactName,
+                ContactUrl = contactUrl,
+                LicenseName = licenseName,
+                LicenseUrl = licenseUrl
+            }
+        );
 
         return services;
     }
@@ -106,8 +117,10 @@ public static class OpenApiExtensions
     /// Uses enhanced OpenAPI with custom documentation
     /// <paramref name="prefix"/>   is the route prefix for the OpenAPI document
     /// </summary>
-    public static WebApplication UseMinimalApiOpenApi(this WebApplication app,
-        string prefix = "openapi/v1.json")
+    public static WebApplication UseMinimalApiOpenApi(
+        this WebApplication app,
+        string prefix = "openapi/v1.json"
+    )
     {
         app.MapOpenApi(prefix);
 
@@ -127,12 +140,12 @@ public static class OpenApiExtensions
     )
     {
         app.UseMinimalApiSwaggerUI(
-               routePrefix: swaggerRoutePrefix,
-               enableTryItOut: enableTryItOut,
-               enableDeepLinking: enableDeepLinking,
-               enableFilter: enableFilter,
-               enableValidator: enableValidator
-           );
+            routePrefix: swaggerRoutePrefix,
+            enableTryItOut: enableTryItOut,
+            enableDeepLinking: enableDeepLinking,
+            enableFilter: enableFilter,
+            enableValidator: enableValidator
+        );
 
         return app;
     }

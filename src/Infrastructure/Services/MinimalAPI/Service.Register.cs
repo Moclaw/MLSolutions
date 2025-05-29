@@ -255,12 +255,8 @@ public static partial class Register
 
     private static string[] GenerateEndpointTags(Type endpointType, int version)
     {
-        var tags = new List<string>();
+        var tags = new HashSet<string>();
 
-        // Add version tag
-        tags.Add($"v{version}");
-
-        // Add feature-based tags from namespace
         var namespaceParts = endpointType.Namespace?.Split('.') ?? [];
         var featureIndex = Array.FindIndex(namespaceParts, part =>
             part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
@@ -268,7 +264,6 @@ public static partial class Register
         if (featureIndex >= 0 && featureIndex + 1 < namespaceParts.Length)
         {
             var featureName = namespaceParts[featureIndex + 1];
-            tags.Add(featureName);
 
             if (featureIndex + 2 < namespaceParts.Length)
             {
