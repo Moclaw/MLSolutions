@@ -107,24 +107,31 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
             if (extractedVersion != targetVersion)
             {
                 pathsToRemove.Add(path.Key);
+                continue;
             }
-            else
+
+            // For paths that belong to this version, ensure proper operation handling
+            foreach (var operation in path.Value.Operations.Values)
             {
-                // Update tags to include version prefix for better organization
-                foreach (var operation in path.Value.Operations.Values)
+                if (operation.Tags?.Any() == true)
                 {
-                    if (operation.Tags?.Any() == true)
-                    {
-                        var updatedTags = operation.Tags
-                            .Select(tag => new OpenApiTag 
-                            { 
-                                Name = tag.Name,
-                                Description = tag.Description
-                            })
-                            .ToList();
-                        
-                        operation.Tags = updatedTags;
-                    }
+                    var updatedTags = operation.Tags
+                        .Select(tag => new OpenApiTag 
+                        { 
+                            Name = tag.Name,
+                            Description = tag.Description
+                        })
+                        .ToList();
+                    
+                    operation.Tags = updatedTags;
+                }
+
+                // Ensure operation has proper version-specific operation ID if missing
+                if (string.IsNullOrEmpty(operation.OperationId))
+                {
+                    var pathKey = path.Key.Replace("/", "_").Replace("{", "").Replace("}", "");
+                    var httpMethod = path.Value.Operations.FirstOrDefault(kvp => kvp.Value == operation).Key.ToString().ToUpper();
+                    operation.OperationId = $"V{targetVersion}_{pathKey}_{httpMethod}";
                 }
             }
         }

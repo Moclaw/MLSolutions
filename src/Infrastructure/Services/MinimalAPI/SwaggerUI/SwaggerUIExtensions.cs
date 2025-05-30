@@ -84,28 +84,38 @@ public static class SwaggerUIExtensions
             // Add document filter for version-specific filtering
             options.DocumentFilter<VersionedMinimalApiDocumentFilter>();
             
-            // Add operation filter for better parameter handling
+            // Add operation filter for better parameter handling and unique operation IDs
             options.OperationFilter<MinimalApiOperationFilter>();
 
             // Configure API explorer to include version in group names
             options.DocInclusionPredicate((docName, apiDesc) =>
             {
-                if (apiDesc.ActionDescriptor.RouteValues.TryGetValue("version", out var routeVersion))
-                {
-                    return docName.Equals($"v{routeVersion}", StringComparison.OrdinalIgnoreCase);
-                }
-
-                // Extract version from route template
+                // Extract version from route template first
                 var route = apiDesc.RelativePath ?? "";
                 var extractedVersion = versioning.ExtractVersionFromRoute(route);
                 
                 if (extractedVersion.HasValue)
                 {
-                    return docName.Equals($"v{extractedVersion.Value}", StringComparison.OrdinalIgnoreCase);
+                    var expectedDocName = versioning.GetSwaggerDocName(extractedVersion.Value);
+                    return docName.Equals(expectedDocName, StringComparison.OrdinalIgnoreCase);
                 }
 
-                // Default to v1 if no version found
-                return docName.Equals("v1", StringComparison.OrdinalIgnoreCase);
+                // Check action descriptor route values as fallback
+                if (apiDesc.ActionDescriptor.RouteValues.TryGetValue("version", out var routeVersion))
+                {
+                    return docName.Equals($"v{routeVersion}", StringComparison.OrdinalIgnoreCase);
+                }
+
+                // For routes without explicit version, include in all version documents
+                // This ensures endpoints are available in all tabs if version detection fails
+                return true;
+            });
+
+            // Ensure unique operation IDs across all endpoints
+            options.CustomOperationIds(apiDesc =>
+            {
+                // Let the operation filter handle operation ID generation
+                return null;
             });
         });
 

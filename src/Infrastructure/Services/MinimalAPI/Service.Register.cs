@@ -54,6 +54,7 @@ public static partial class Register
     /// <param name="title">API title</param>
     /// <param name="version">API version</param>
     /// <param name="description">API description</param>
+    /// <param name="versioningOptions"></param>
     /// <param name="assemblies">Assemblies to scan for endpoint handlers</param>
     /// <returns>The service collection</returns>
     public static IServiceCollection AddMinimalApiWithOpenApi(
@@ -82,6 +83,7 @@ public static partial class Register
     /// Maps all endpoints from classes implementing IEndpointHandler found in the specified assemblies
     /// </summary>
     /// <param name="app">The WebApplication</param>
+    /// <param name="versioningOptions"></param>
     /// <param name="assemblies">Assemblies to scan for endpoint handlers</param>
     /// <returns>The WebApplication</returns>
     public static WebApplication MapMinimalEndpoints(
@@ -167,7 +169,7 @@ public static partial class Register
                 );
 
                 // Add endpoint metadata for OpenAPI documentation
-                handler.WithName($"{endpointType.Name}_{httpMethodAttr.Method}_{endpointVersion}_{Guid.NewGuid()} ")
+                handler.WithName($"{endpointType.Name}_{httpMethodAttr.Method}_{endpointVersion}")
                        .WithTags(GenerateEndpointTags(endpointType, endpointVersion))
                        .WithOpenApi();
             }

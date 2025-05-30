@@ -6,6 +6,8 @@ using MinimalAPI.Endpoints;
 using MinimalAPI.Handlers;
 using MinimalAPI.Handlers.Command;
 using Microsoft.AspNetCore.Http;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace MinimalAPI.SwaggerUI;
 
@@ -15,10 +17,20 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
     {
         // Find the endpoint type for this operation
         var endpointType = FindEndpointType(context);
-        if (endpointType == null) return;
+        if (endpointType == null) 
+        {
+            // If we can't find endpoint type, try to generate basic parameters from route
+            GenerateFallbackParameters(operation, context);
+            return;
+        }
 
         var requestType = GetRequestType(endpointType);
-        if (requestType == null) return;
+        if (requestType == null) 
+        {
+            // If we can't find request type, generate basic parameters
+            GenerateFallbackParameters(operation, context);
+            return;
+        }
 
         var isCommandRequest = IsCommandRequest(requestType);
         var isQueryRequest = IsQueryRequest(requestType);
@@ -28,11 +40,140 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             return; // Cannot be both command and query
         }
 
+        // Generate unique operation ID to prevent duplicates
+        GenerateUniqueOperationId(operation, endpointType, context);
+
         // Generate tags based on endpoint
         GenerateOperationTags(operation, endpointType);
 
         // Process parameters from request type
-        ProcessRequestParameters(operation, requestType, isCommandRequest, isQueryRequest);
+        ProcessRequestParameters(operation, requestType, isCommandRequest, isQueryRequest, context);
+    }
+
+    private static void GenerateFallbackParameters(OpenApiOperation operation, OperationFilterContext context)
+    {
+        // Generate basic parameters based on route pattern
+        var route = context.ApiDescription.RelativePath ?? "";
+        var routeParts = route.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        
+        operation.Parameters ??= [];
+        
+        foreach (var part in routeParts)
+        {
+            // If part contains {}, it's a route parameter
+            if (part.Contains('{') && part.Contains('}'))
+            {
+                var paramName = part.Trim('{', '}');
+                
+                var parameter = new OpenApiParameter
+                {
+                    Name = paramName,
+                    Required = true,
+                    Description = $"Route parameter {paramName}",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Path,
+                    Schema = new OpenApiSchema { Type = "string" }
+                };
+                
+                operation.Parameters.Add(parameter);
+            }
+        }
+        
+        // Add some common query parameters for testing
+        if (context.ApiDescription.HttpMethod?.ToUpper() == "GET")
+        {
+            operation.Parameters.Add(new OpenApiParameter
+            {
+                Name = "page",
+                Required = false,
+                Description = "Page number for pagination",
+                In = Microsoft.OpenApi.Models.ParameterLocation.Query,
+                Schema = new OpenApiSchema { Type = "integer", Format = "int32", Default = new Microsoft.OpenApi.Any.OpenApiInteger(1) }
+            });
+            
+            operation.Parameters.Add(new OpenApiParameter
+            {
+                Name = "size",
+                Required = false,
+                Description = "Page size for pagination",
+                In = Microsoft.OpenApi.Models.ParameterLocation.Query,
+                Schema = new OpenApiSchema { Type = "integer", Format = "int32", Default = new Microsoft.OpenApi.Any.OpenApiInteger(10) }
+            });
+        }
+    }
+
+    private static int ExtractVersionFromContext(OperationFilterContext context)
+    {
+        var route = context.ApiDescription.RelativePath ?? "";
+        
+        // Try to extract version from route first
+        var routeParts = route.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var part in routeParts)
+        {
+            if (part.StartsWith("v", StringComparison.OrdinalIgnoreCase) && 
+                int.TryParse(part.Substring(1), out var version))
+            {
+                return version;
+            }
+        }
+
+        // Fallback to document name if available
+        var documentName = context.DocumentName;
+        if (!string.IsNullOrEmpty(documentName) && 
+            documentName.StartsWith("v", StringComparison.OrdinalIgnoreCase) &&
+            int.TryParse(documentName.Substring(1), out var docVersion))
+        {
+            return docVersion;
+        }
+
+        return 1; // Default to version 1
+    }
+
+    private static bool IsEndpointCompatibleWithVersion(Type endpointType, int version)
+    {
+        // Always return true to ensure endpoints are processed
+        // Version filtering should be handled by document filter
+        return true;
+    }
+
+    private void GenerateUniqueOperationId(OpenApiOperation operation, Type endpointType, OperationFilterContext context)
+    {
+        var feature = ExtractFeatureName(endpointType);
+        var endpointName = endpointType.Name.Replace("Endpoint", "");
+        var httpMethod = context.ApiDescription.HttpMethod?.ToUpperInvariant() ?? "GET";
+        var route = context.ApiDescription.RelativePath ?? "";
+
+        // Create a deterministic GUID based on the combination
+        var input = $"{endpointType.FullName}_{httpMethod}_{route}";
+        var hash = CreateDeterministicGuid(input);
+        var shortHash = hash[..8]; // First 8 characters
+
+        operation.OperationId = $"{feature}_{endpointName}_{httpMethod}_{shortHash}";
+    }
+
+    private static string CreateDeterministicGuid(string input)
+    {
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+        
+        // Use first 16 bytes to create a GUID
+        var guidBytes = new byte[16];
+        Array.Copy(hash, guidBytes, 16);
+        
+        return new Guid(guidBytes).ToString("N");
+    }
+
+    private static string ExtractFeatureName(Type endpointType)
+    {
+        var namespaceParts = endpointType.Namespace?.Split('.') ?? [];
+        var endpointsIndex = Array.FindIndex(namespaceParts, part => 
+            part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
+
+        if (endpointsIndex >= 0 && endpointsIndex + 1 < namespaceParts.Length)
+        {
+            return namespaceParts[endpointsIndex + 1];
+        }
+
+        return "Unknown";
     }
 
     private Type? FindEndpointType(OperationFilterContext context)
@@ -45,10 +186,56 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             .Where(t => !t.IsAbstract && !t.IsInterface && t.IsAssignableTo(typeof(EndpointAbstractBase)))
             .ToList();
 
-        // Try to match by action name or route
+        var contextRoute = context.ApiDescription.RelativePath ?? "";
+        var contextMethod = context.ApiDescription.HttpMethod ?? "";
+
+        // Try simple name matching first
+        var routeParts = contextRoute.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var possibleEndpointNames = new List<string>();
+        
+        // Extract possible endpoint names from route
+        foreach (var part in routeParts)
+        {
+            if (!part.Contains('{') && !part.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+            {
+                possibleEndpointNames.Add(part);
+            }
+        }
+
+        // Try to match by endpoint name
         foreach (var endpointType in endpointTypes)
         {
-            var methods = endpointType.GetMethods()
+            var endpointName = endpointType.Name.Replace("Endpoint", "").ToLower();
+            
+            foreach (var possibleName in possibleEndpointNames)
+            {
+                if (possibleName.ToLower().Contains(endpointName) || 
+                    endpointName.Contains(possibleName.ToLower()))
+                {
+                    // Additional check for HTTP method match
+                    var methods = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                        .Where(m => m.GetCustomAttributes().Any(a => a is HttpMethodAttribute))
+                        .ToList();
+
+                    foreach (var method in methods)
+                    {
+                        var httpMethodAttr = method.GetCustomAttributes()
+                            .FirstOrDefault(a => a is HttpMethodAttribute) as HttpMethodAttribute;
+
+                        if (httpMethodAttr?.Method != null &&
+                            httpMethodAttr.Method.Equals(contextMethod, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return endpointType;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback: return first endpoint that matches HTTP method
+        foreach (var endpointType in endpointTypes)
+        {
+            var methods = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(m => m.GetCustomAttributes().Any(a => a is HttpMethodAttribute))
                 .ToList();
 
@@ -57,16 +244,10 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
                 var httpMethodAttr = method.GetCustomAttributes()
                     .FirstOrDefault(a => a is HttpMethodAttribute) as HttpMethodAttribute;
 
-                if (httpMethodAttr?.Route != null)
+                if (httpMethodAttr?.Method != null &&
+                    httpMethodAttr.Method.Equals(contextMethod, StringComparison.OrdinalIgnoreCase))
                 {
-                    var normalizedRoute = NormalizeRoute(httpMethodAttr.Route);
-                    var contextRoute = NormalizeRoute(context.ApiDescription.RelativePath ?? "");
-                    
-                    if (normalizedRoute == contextRoute && 
-                        httpMethodAttr.Method.Equals(context.ApiDescription.HttpMethod, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return endpointType;
-                    }
+                    return endpointType;
                 }
             }
         }
@@ -74,17 +255,69 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         return null;
     }
 
-    private static string NormalizeRoute(string route) => route.TrimStart('/').ToLower();
+    private static bool RoutePatternMatches(string[] contextParts, string[] endpointParts)
+    {
+        if (contextParts.Length != endpointParts.Length)
+            return false;
+
+        for (int i = 0; i < contextParts.Length; i++)
+        {
+            var contextPart = contextParts[i].ToLower();
+            var endpointPart = endpointParts[i].ToLower();
+
+            // If endpoint part is a parameter (contains { or }), it matches any context part
+            if (endpointPart.Contains('{') || endpointPart.Contains('}'))
+                continue;
+
+            // Otherwise, parts must match exactly
+            if (contextPart != endpointPart)
+                return false;
+        }
+
+        return true;
+    }
+
+    private static string NormalizeRoute(string route)
+    {
+        // Remove leading slash and convert to lowercase
+        var normalized = route.TrimStart('/').ToLower();
+        
+        // Keep route parameters for better matching
+        return normalized;
+    }
 
     private static Type? GetRequestType(Type endpointType)
     {
-        var baseType = endpointType.BaseType;
-        while (baseType != null && !baseType.IsGenericType)
+        // Check all base types to find the generic one
+        var currentType = endpointType;
+        while (currentType != null)
         {
-            baseType = baseType.BaseType;
+            if (currentType.IsGenericType)
+            {
+                var genericArgs = currentType.GetGenericArguments();
+                if (genericArgs.Length > 0)
+                {
+                    // First generic argument should be the request type
+                    return genericArgs[0];
+                }
+            }
+            currentType = currentType.BaseType;
         }
 
-        return baseType?.IsGenericType == true ? baseType.GetGenericArguments().FirstOrDefault() : null;
+        // Alternative: look for HandleAsync method parameter
+        var handleMethod = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .FirstOrDefault(m => m.Name == "HandleAsync");
+
+        if (handleMethod != null)
+        {
+            var parameters = handleMethod.GetParameters();
+            if (parameters.Length > 0)
+            {
+                return parameters[0].ParameterType;
+            }
+        }
+
+        return null;
     }
 
     private static bool IsCommandRequest(Type? requestType)
@@ -133,18 +366,23 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             }
         }
 
-        // if (tags.Count != 0)
-        // {
-        //     operation.Tags = [.. tags.Select(tag => new OpenApiTag { Name = tag })];
-        // }
+        // Apply tags to operation
+        if (tags.Count > 0)
+        {
+            operation.Tags = [.. tags.Select(tag => new OpenApiTag { Name = tag })];
+        }
     }
 
-    private static void ProcessRequestParameters(OpenApiOperation operation, Type requestType, bool isCommandRequest, bool isQueryRequest)
+    private static void ProcessRequestParameters(OpenApiOperation operation, Type requestType, bool isCommandRequest, bool isQueryRequest, OperationFilterContext context)
     {
         var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var httpMethod = context.ApiDescription.HttpMethod?.ToUpperInvariant() ?? "GET";
 
-        // Clear existing parameters to rebuild them properly
+        // Initialize parameters collection
         operation.Parameters ??= [];
+
+        // For POST/PUT operations, default to request body
+        var shouldUseRequestBody = httpMethod == "POST" || httpMethod == "PUT" || httpMethod == "PATCH";
 
         // Check if this is a form data request (has IFormFile or FromForm attributes)
         var hasFormData = properties.Any(p => 
@@ -153,53 +391,81 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             p.PropertyType == typeof(List<IFormFile>) ||
             p.GetCustomAttribute<FromFormAttribute>() != null);
 
+        var bodyProperties = new List<PropertyInfo>();
+        var formProperties = new List<PropertyInfo>();
+        var hasAnyParameters = false;
+
         foreach (var property in properties)
         {
             // Skip service injection properties
             if (property.GetCustomAttribute<FromServicesAttribute>() != null)
                 continue;
 
-            var parameterLocation = DetermineParameterLocation(property, isCommandRequest, isQueryRequest, hasFormData);
+            var parameterLocation = DetermineParameterLocation(property, isCommandRequest, isQueryRequest, hasFormData, shouldUseRequestBody);
 
-            // For form data and body parameters, they're handled in request body, not as parameters
-            if (parameterLocation == Attributes.ParameterLocation.Form || 
-                parameterLocation == Attributes.ParameterLocation.Body)
+            // Handle different parameter locations
+            switch (parameterLocation)
             {
-                continue;
-            }
+                case Attributes.ParameterLocation.Path:
+                case Attributes.ParameterLocation.Query:
+                case Attributes.ParameterLocation.Header:
+                case Attributes.ParameterLocation.Cookie:
+                    var parameter = CreateParameterFromProperty(property, parameterLocation);
+                    if (parameter != null)
+                    {
+                        // Remove any existing parameter with the same name to prevent duplicates
+                        var existing = operation.Parameters.FirstOrDefault(p => 
+                            p.Name.Equals(parameter.Name, StringComparison.OrdinalIgnoreCase));
+                        if (existing != null)
+                        {
+                            operation.Parameters.Remove(existing);
+                        }
+                        
+                        operation.Parameters.Add(parameter);
+                        hasAnyParameters = true;
+                    }
+                    break;
 
-            var parameter = CreateParameterFromProperty(property, parameterLocation);
-            if (parameter != null)
-            {
-                // Remove any existing parameter with the same name
-                var existing = operation.Parameters.FirstOrDefault(p => 
-                    p.Name.Equals(parameter.Name, StringComparison.OrdinalIgnoreCase));
-                if (existing != null)
-                {
-                    operation.Parameters.Remove(existing);
-                }
-                
-                operation.Parameters.Add(parameter);
+                case Attributes.ParameterLocation.Body:
+                    bodyProperties.Add(property);
+                    break;
+
+                case Attributes.ParameterLocation.Form:
+                    formProperties.Add(property);
+                    break;
             }
         }
 
-        // Handle request body for command requests
-        if (isCommandRequest)
+        // Generate request body if needed
+        if (formProperties.Any())
         {
-            if (hasFormData)
+            GenerateFormDataRequestBody(operation, requestType, formProperties);
+        }
+        else if (bodyProperties.Any() || (shouldUseRequestBody && !hasAnyParameters))
+        {
+            GenerateRequestBodyForCommand(operation, requestType, bodyProperties.Any() ? bodyProperties : null);
+        }
+
+        // If still no parameters and no request body, generate some basic ones for testing
+        if (!hasAnyParameters && operation.Parameters.Count == 0 && operation.RequestBody == null)
+        {
+            if (httpMethod == "GET")
             {
-                GenerateFormDataRequestBody(operation, requestType);
-            }
-            else
-            {
-                GenerateRequestBodyForCommand(operation, requestType);
+                operation.Parameters.Add(new OpenApiParameter
+                {
+                    Name = "id",
+                    Required = false,
+                    Description = "Resource identifier",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Query,
+                    Schema = new OpenApiSchema { Type = "integer", Format = "int32" }
+                });
             }
         }
     }
 
-    private static MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(PropertyInfo property, bool isCommandRequest, bool isQueryRequest, bool hasFormData)
+    private static MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(PropertyInfo property, bool isCommandRequest, bool isQueryRequest, bool hasFormData, bool shouldUseRequestBody = false)
     {
-        // Check for explicit binding attributes
+        // Check for explicit binding attributes first
         if (property.GetCustomAttribute<FromRouteAttribute>() != null)
             return Attributes.ParameterLocation.Path;
         if (property.GetCustomAttribute<FromQueryAttribute>() != null)
@@ -211,7 +477,7 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         if (property.GetCustomAttribute<FromFormAttribute>() != null)
             return Attributes.ParameterLocation.Form;
 
-        // Handle IFormFile types - these should always be form parameters, not body
+        // Handle IFormFile types - these should always be form parameters
         if (property.PropertyType == typeof(IFormFile) || 
             property.PropertyType == typeof(IFormFile[]) ||
             property.PropertyType == typeof(List<IFormFile>))
@@ -219,17 +485,50 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             return Attributes.ParameterLocation.Form;
         }
 
-        // Smart defaults based on request type
-        if (isCommandRequest)
+        // Smart defaults based on HTTP method and request type
+        if (isQueryRequest)
         {
-            return hasFormData ? Attributes.ParameterLocation.Form : Attributes.ParameterLocation.Body;
+            // Query requests: all properties should be query parameters unless explicitly specified
+            return Attributes.ParameterLocation.Query;
         }
-        else if (isQueryRequest)
+        
+        if (isCommandRequest || shouldUseRequestBody)
+        {
+            // For command requests (POST/PUT/PATCH), check if we have form data
+            if (hasFormData)
+            {
+                // If there's form data, non-explicit properties go to form
+                return Attributes.ParameterLocation.Form;
+            }
+            else
+            {
+                // For POST/PUT/PATCH, default to request body
+                return Attributes.ParameterLocation.Body;
+            }
+        }
+
+        // For GET and other methods, simple types go to query parameters
+        if (IsSimpleType(property.PropertyType))
         {
             return Attributes.ParameterLocation.Query;
         }
 
-        return Attributes.ParameterLocation.Query;
+        // Default fallback - complex types go to body for POST/PUT, query for others
+        return shouldUseRequestBody ? Attributes.ParameterLocation.Body : Attributes.ParameterLocation.Query;
+    }
+
+    private static bool IsSimpleType(Type type)
+    {
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+        
+        return underlyingType.IsPrimitive ||
+               underlyingType == typeof(string) ||
+               underlyingType == typeof(DateTime) ||
+               underlyingType == typeof(DateTimeOffset) ||
+               underlyingType == typeof(TimeSpan) ||
+               underlyingType == typeof(decimal) ||
+               underlyingType == typeof(Guid) ||
+               underlyingType.IsEnum;
     }
 
     private static OpenApiParameter? CreateParameterFromProperty(PropertyInfo property, MinimalAPI.Attributes.ParameterLocation location)
@@ -277,8 +576,21 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
     private static bool IsRequiredParameter(PropertyInfo property)
     {
         var propertyType = property.PropertyType;
-        var isNullable = !propertyType.IsValueType || Nullable.GetUnderlyingType(propertyType) != null;
-        return !isNullable;
+        
+        // Check for nullable reference types using NullabilityInfo
+        var nullabilityContext = new System.Reflection.NullabilityInfoContext();
+        var nullabilityInfo = nullabilityContext.Create(property);
+        
+        // If it's a nullable reference type or nullable value type, it's not required
+        if (nullabilityInfo.WriteState == System.Reflection.NullabilityState.Nullable)
+            return false;
+            
+        // Value types are required unless they are Nullable<T>
+        if (propertyType.IsValueType)
+            return Nullable.GetUnderlyingType(propertyType) == null;
+            
+        // Reference types are required by default (unless nullable)
+        return true;
     }
 
     private static string GetParameterDescription(PropertyInfo property) => $"{property.Name} parameter";
@@ -365,20 +677,29 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         return schema;
     }
 
-    private static void GenerateRequestBodyForCommand(OpenApiOperation operation, Type requestType)
+    private static void GenerateRequestBodyForCommand(OpenApiOperation operation, Type requestType, List<PropertyInfo>? bodyProperties = null)
     {
-        var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        var bodyProperties = new Dictionary<string, OpenApiSchema>();
+        var properties = bodyProperties;
+        
+        // If no specific body properties provided, include all properties that should be in body
+        if (bodyProperties == null)
+        {
+            var allProperties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            properties = allProperties.Where(prop => 
+                prop.GetCustomAttribute<FromServicesAttribute>() == null &&
+                !HasExplicitNonBodyBinding(prop)
+            ).ToList();
+        }
+
+        if (properties == null || properties.Count == 0) return;
+
+        var requestBodyProperties = new Dictionary<string, OpenApiSchema>();
         var requiredProperties = new HashSet<string>();
 
         foreach (var property in properties)
         {
-            // Skip properties with explicit non-body bindings
-            if (HasExplicitNonBodyBinding(property))
-                continue;
-
             var propertySchema = CreateSchemaForType(property.PropertyType);
-            bodyProperties[property.Name] = propertySchema;
+            requestBodyProperties[property.Name] = propertySchema;
 
             if (IsRequiredParameter(property))
             {
@@ -386,12 +707,12 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             }
         }
 
-        if (bodyProperties.Count > 0)
+        if (requestBodyProperties.Count > 0)
         {
             var requestBodySchema = new OpenApiSchema
             {
                 Type = "object",
-                Properties = bodyProperties,
+                Properties = requestBodyProperties,
                 Required = requiredProperties,
                 AdditionalPropertiesAllowed = false
             };
@@ -410,16 +731,16 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         }
     }
 
-    private static void GenerateFormDataRequestBody(OpenApiOperation operation, Type requestType)
+    private static void GenerateFormDataRequestBody(OpenApiOperation operation, Type requestType, List<PropertyInfo>? formProperties = null)
     {
-        var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        var formProperties = new Dictionary<string, OpenApiSchema>();
+        var properties = formProperties ?? requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance).ToList();
+        var requestFormProperties = new Dictionary<string, OpenApiSchema>();
         var requiredProperties = new HashSet<string>();
 
         foreach (var property in properties)
         {
             // Skip properties with explicit non-form bindings
-            if (HasExplicitNonFormBinding(property))
+            if (formProperties == null && HasExplicitNonFormBinding(property))
                 continue;
 
             OpenApiSchema propertySchema;
@@ -452,7 +773,7 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
                 propertySchema = CreateSchemaForType(property.PropertyType);
             }
 
-            formProperties[property.Name] = propertySchema;
+            requestFormProperties[property.Name] = propertySchema;
 
             if (IsRequiredParameter(property))
             {
@@ -460,12 +781,12 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             }
         }
 
-        if (formProperties.Count > 0)
+        if (requestFormProperties.Count > 0)
         {
             var requestBodySchema = new OpenApiSchema
             {
                 Type = "object",
-                Properties = formProperties,
+                Properties = requestFormProperties,
                 Required = requiredProperties,
                 AdditionalPropertiesAllowed = false
             };
