@@ -167,7 +167,7 @@ public static partial class Register
                 );
 
                 // Add endpoint metadata for OpenAPI documentation
-                handler.WithName($"{endpointType.Name}_{httpMethodAttr.Method}_{endpointVersion}")
+                handler.WithName($"{endpointType.Name}_{httpMethodAttr.Method}_{endpointVersion}_{Guid.NewGuid()} ")
                        .WithTags(GenerateEndpointTags(endpointType, endpointVersion))
                        .WithOpenApi();
             }
