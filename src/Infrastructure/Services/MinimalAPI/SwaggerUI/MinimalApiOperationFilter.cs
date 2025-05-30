@@ -47,7 +47,7 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         GenerateOperationTags(operation, endpointType);
 
         // Process parameters from request type
-        ProcessRequestParameters(operation, requestType, isCommandRequest, isQueryRequest);
+        ProcessRequestParameters(operation, requestType, isCommandRequest, isQueryRequest, context);
     }
 
     private static void GenerateFallbackParameters(OpenApiOperation operation, OperationFilterContext context)
@@ -373,15 +373,16 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         }
     }
 
-    private static void ProcessRequestParameters(OpenApiOperation operation, Type requestType, bool isCommandRequest, bool isQueryRequest)
+    private static void ProcessRequestParameters(OpenApiOperation operation, Type requestType, bool isCommandRequest, bool isQueryRequest, OperationFilterContext context)
     {
         var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var httpMethod = context.ApiDescription.HttpMethod?.ToUpperInvariant() ?? "GET";
 
         // Initialize parameters collection
         operation.Parameters ??= [];
 
-        // Always generate at least some parameters for testing
-        var hasAnyParameters = false;
+        // For POST/PUT operations, default to request body
+        var shouldUseRequestBody = httpMethod == "POST" || httpMethod == "PUT" || httpMethod == "PATCH";
 
         // Check if this is a form data request (has IFormFile or FromForm attributes)
         var hasFormData = properties.Any(p => 
@@ -392,6 +393,7 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
 
         var bodyProperties = new List<PropertyInfo>();
         var formProperties = new List<PropertyInfo>();
+        var hasAnyParameters = false;
 
         foreach (var property in properties)
         {
@@ -399,7 +401,7 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             if (property.GetCustomAttribute<FromServicesAttribute>() != null)
                 continue;
 
-            var parameterLocation = DetermineParameterLocation(property, isCommandRequest, isQueryRequest, hasFormData);
+            var parameterLocation = DetermineParameterLocation(property, isCommandRequest, isQueryRequest, hasFormData, shouldUseRequestBody);
 
             // Handle different parameter locations
             switch (parameterLocation)
@@ -439,44 +441,29 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         {
             GenerateFormDataRequestBody(operation, requestType, formProperties);
         }
-        else if (bodyProperties.Any())
+        else if (bodyProperties.Any() || (shouldUseRequestBody && !hasAnyParameters))
         {
-            GenerateRequestBodyForCommand(operation, requestType, bodyProperties);
-        }
-        else if (isCommandRequest && !hasAnyParameters)
-        {
-            // For command requests without explicit parameters, create a request body with all simple properties as query params
-            // and complex properties in body
-            var allSimpleProperties = properties.Where(p => 
-                p.GetCustomAttribute<FromServicesAttribute>() == null && 
-                IsSimpleType(p.PropertyType)).ToList();
-                
-            foreach (var prop in allSimpleProperties)
-            {
-                var param = CreateParameterFromProperty(prop, Attributes.ParameterLocation.Query);
-                if (param != null)
-                {
-                    operation.Parameters.Add(param);
-                    hasAnyParameters = true;
-                }
-            }
+            GenerateRequestBodyForCommand(operation, requestType, bodyProperties.Any() ? bodyProperties : null);
         }
 
-        // If still no parameters, generate some basic ones for testing
-        if (!hasAnyParameters && operation.Parameters.Count == 0)
+        // If still no parameters and no request body, generate some basic ones for testing
+        if (!hasAnyParameters && operation.Parameters.Count == 0 && operation.RequestBody == null)
         {
-            operation.Parameters.Add(new OpenApiParameter
+            if (httpMethod == "GET")
             {
-                Name = "id",
-                Required = false,
-                Description = "Resource identifier",
-                In = Microsoft.OpenApi.Models.ParameterLocation.Query,
-                Schema = new OpenApiSchema { Type = "integer", Format = "int32" }
-            });
+                operation.Parameters.Add(new OpenApiParameter
+                {
+                    Name = "id",
+                    Required = false,
+                    Description = "Resource identifier",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Query,
+                    Schema = new OpenApiSchema { Type = "integer", Format = "int32" }
+                });
+            }
         }
     }
 
-    private static MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(PropertyInfo property, bool isCommandRequest, bool isQueryRequest, bool hasFormData)
+    private static MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(PropertyInfo property, bool isCommandRequest, bool isQueryRequest, bool hasFormData, bool shouldUseRequestBody = false)
     {
         // Check for explicit binding attributes first
         if (property.GetCustomAttribute<FromRouteAttribute>() != null)
@@ -498,23 +485,16 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             return Attributes.ParameterLocation.Form;
         }
 
-        // For all cases, default simple properties to query parameters
-        // This ensures we always generate some parameters for testing
-        if (IsSimpleType(property.PropertyType))
-        {
-            return Attributes.ParameterLocation.Query;
-        }
-
-        // Smart defaults based on request type and property characteristics
+        // Smart defaults based on HTTP method and request type
         if (isQueryRequest)
         {
             // Query requests: all properties should be query parameters unless explicitly specified
             return Attributes.ParameterLocation.Query;
         }
         
-        if (isCommandRequest)
+        if (isCommandRequest || shouldUseRequestBody)
         {
-            // For command requests, check if we have form data
+            // For command requests (POST/PUT/PATCH), check if we have form data
             if (hasFormData)
             {
                 // If there's form data, non-explicit properties go to form
@@ -522,13 +502,19 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             }
             else
             {
-                // Complex types go to body for commands
+                // For POST/PUT/PATCH, default to request body
                 return Attributes.ParameterLocation.Body;
             }
         }
 
-        // Default fallback - always generate query parameters
-        return Attributes.ParameterLocation.Query;
+        // For GET and other methods, simple types go to query parameters
+        if (IsSimpleType(property.PropertyType))
+        {
+            return Attributes.ParameterLocation.Query;
+        }
+
+        // Default fallback - complex types go to body for POST/PUT, query for others
+        return shouldUseRequestBody ? Attributes.ParameterLocation.Body : Attributes.ParameterLocation.Query;
     }
 
     private static bool IsSimpleType(Type type)
@@ -693,23 +679,19 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
 
     private static void GenerateRequestBodyForCommand(OpenApiOperation operation, Type requestType, List<PropertyInfo>? bodyProperties = null)
     {
-        // Only generate request body if we have specific body properties or no parameters at all
-        var properties = bodyProperties ?? [];
+        var properties = bodyProperties;
         
-        // If no specific body properties provided, check if we should include all properties
+        // If no specific body properties provided, include all properties that should be in body
         if (bodyProperties == null)
         {
             var allProperties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            foreach (var prop in allProperties)
-            {
-                if (!HasExplicitNonBodyBinding(prop) && !IsSimpleType(prop.PropertyType))
-                {
-                    properties.Add(prop);
-                }
-            }
+            properties = allProperties.Where(prop => 
+                prop.GetCustomAttribute<FromServicesAttribute>() == null &&
+                !HasExplicitNonBodyBinding(prop)
+            ).ToList();
         }
 
-        if (properties.Count == 0) return;
+        if (properties == null || properties.Count == 0) return;
 
         var requestBodyProperties = new Dictionary<string, OpenApiSchema>();
         var requiredProperties = new HashSet<string>();
