@@ -40,7 +40,7 @@ public static class OpenApiExtensions
         string title = "API",
         string version = "v1",
         string? description = null,
-        DefaultVersioningOptions versioningOptions = null,
+        VersioningOptions? versioningOptions = null,
         params Assembly[] endpointAssemblies
     )
     {
@@ -55,7 +55,8 @@ public static class OpenApiExtensions
                 Title = title,
                 Version = version,
                 Description = description,
-                EndpointAssemblies = endpointAssemblies
+                EndpointAssemblies = endpointAssemblies,
+                VersioningOptions = versioningOptions
             }
         );
 
@@ -75,7 +76,7 @@ public static class OpenApiExtensions
         string? contactUrl = null,
         string? licenseName = null,
         string? licenseUrl = null,
-        DefaultVersioningOptions? versioningOptions = null,
+        VersioningOptions? versioningOptions = null,
         params Assembly[] assemblies
     )
     {
