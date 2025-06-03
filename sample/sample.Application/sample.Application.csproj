@@ -4,13 +4,13 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src\Infrastructure\ORM\EfCore\EfCore.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Services\MinimalAPI\MinimalAPI.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Services\Services.AWS.S3\Services.AWS.S3.csproj" />
     <ProjectReference Include="..\sample.Domain\sample.Domain.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Services\Services.Autofac\Services.Autofac.csproj" />
+    <ProjectReference Include="..\sample.Infrastructure\sample.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

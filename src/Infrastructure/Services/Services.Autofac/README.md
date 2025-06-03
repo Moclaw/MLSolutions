@@ -8,14 +8,14 @@ Moclawr.Services.Autofac provides seamless integration with Autofac dependency i
 
 ## Features
 
+- **Simple Registration Methods**: Easy-to-use extension methods following the same pattern as other Moclawr services
 - **Attribute-based Registration**: Register services with custom attributes for different lifetimes (Transient, Scoped, Singleton)
 - **Assembly Scanning**: Automatically register services based on conventions from specified assemblies
 - **Module-based Organization**: Group related registrations into Autofac modules
 - **Built-in Modules**:
-  - `ServiceModule`: Registers application services
-  - `RepositoryModule`: Registers repositories
-  - `ControllerModule`: Registers controllers for ASP.NET Core applications
-  - `AttributeModule`: Handles attribute-based registration
+  - `ServiceModule`: Registers application services by convention and attributes
+  - `GenericModule`: Handles open generic type registrations
+  - `ControllerModule`: Registers MVC controllers for ASP.NET Core applications
 - **ASP.NET Core Integration**: Extension methods for WebApplicationBuilder and IHostBuilder
 
 ## Installation
@@ -33,24 +33,23 @@ dotnet add package Moclawr.Services.Autofac
 In your `Program.cs`:
 
 ```csharp
-using Services.Autofac.Extensions;
+using Services.Autofac;
 
-// Configure the host to use Autofac
 var builder = WebApplication.CreateBuilder(args);
 
-// Use Autofac as the service provider
-builder.UseAutofacServiceProvider(
+// Configure Autofac as the service provider
+builder.AddAutofacServiceProvider(
     // Optional: configure container manually
-    configureContainer: builder => {
+    configureContainer: container => {
         // Add manual registrations
-        builder.RegisterType<MyService>().As<IMyService>().InstancePerLifetimeScope();
+        container.RegisterType<MyService>().As<IMyService>().InstancePerLifetimeScope();
     },
     // Assemblies to scan for services
     typeof(Program).Assembly,
     typeof(ApplicationLayer).Assembly
 );
 
-// Add services to the container
+// Add other services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -71,6 +70,28 @@ app.MapControllers();
 app.Run();
 ```
 
+### Alternative Registration Methods
+
+```csharp
+// For Generic Host applications
+var hostBuilder = Host.CreateDefaultBuilder(args);
+hostBuilder.AddAutofacServiceProvider(
+    configureContainer: container => {
+        // Configure container
+    },
+    typeof(Program).Assembly
+);
+
+// For existing service collections
+var services = new ServiceCollection();
+var serviceProvider = services.AddAutofacServices(
+    configureContainer: container => {
+        // Configure container
+    },
+    typeof(Program).Assembly
+);
+```
+
 ### Attribute-based Service Registration
 
 Use attributes to mark services with their intended lifetimes:
@@ -78,7 +99,7 @@ Use attributes to mark services with their intended lifetimes:
 ```csharp
 using Services.Autofac.Attributes;
 
-// Mark interfaces with ServiceContract attribute
+// Mark interfaces with ServiceContract attribute (optional but recommended)
 [ServiceContract]
 public interface IUserService
 {
@@ -106,38 +127,42 @@ public class ConfigurationService : IConfigurationService
 }
 ```
 
-### Custom Modules
-
-Create custom Autofac modules for specific registration logic:
+### Manual Container Configuration
 
 ```csharp
-using Autofac;
-using Services.Autofac.Modules;
+builder.AddAutofacServiceProvider(container => {
+    // Register individual services
+    container.RegisterType<MyService>().As<IMyService>().InstancePerLifetimeScope();
+    
+    // Register generic types
+    container.AddGenericServices(typeof(Program).Assembly);
+    
+    // Register controllers
+    container.AddControllers(typeof(Program).Assembly);
+    
+    // Register assemblies with specific options
+    container.AddServiceAssemblies(
+        registerByNamingConvention: true,
+        autoRegisterConcreteTypes: false,
+        typeof(Program).Assembly
+    );
+});
+```
 
-public class DatabaseModule : BaseModule
-{
-    protected override void Load(ContainerBuilder builder)
-    {
-        // Register database-related services
-        builder.RegisterType<DbContext>()
-            .AsSelf()
-            .InstancePerLifetimeScope();
-            
-        builder.RegisterGeneric(typeof(GenericRepository<>))
-            .As(typeof(IGenericRepository<>))
-            .InstancePerLifetimeScope();
-            
-        base.Load(builder);
-    }
-}
+### Convention-based Registration
 
-// Use the custom module
-builder.UseAutofacServiceProvider(
-    configureContainer: builder => {
-        builder.RegisterModule<DatabaseModule>();
-    },
-    typeof(Program).Assembly
-);
+Services ending with "Service", "Repository", or "Manager" are automatically registered:
+
+```csharp
+// These will be automatically registered
+public interface IUserRepository { }
+public class UserRepository : IUserRepository { } // Automatically registered as IUserRepository
+
+public interface IEmailService { }
+public class EmailService : IEmailService { } // Automatically registered as IEmailService
+
+public interface IDataManager { }
+public class DataManager : IDataManager { } // Automatically registered as IDataManager
 ```
 
 ## Integration with Other Moclawr Packages

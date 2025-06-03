@@ -7,6 +7,7 @@ using MinimalAPI.OpenApi;
 using sample.Application;
 using sample.Infrastructure;
 using sample.Infrastructure.Persistence.EfCore;
+using Services.Autofac.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,15 @@ var configuration = builder.Configuration;
 
 // Configure Serilog
 builder.AddSerilog(configuration, appName);
+
+// Configure Autofac as the service provider
+builder.UseAutofacServiceProvider(containerBuilder =>
+{
+    // Register application and infrastructure services with Autofac
+    containerBuilder
+        .AddApplicationServices()
+        .AddInfrastructureServices();
+});
 
 // Configure versioning options with enhanced settings
 var versioningOptions = new DefaultVersioningOptions
@@ -31,17 +41,17 @@ var versioningOptions = new DefaultVersioningOptions
     
     // Enhanced SwaggerUI settings
     GenerateSwaggerDocs = true,
-    SwaggerDocTitle = "Todo API",
-    SwaggerDocDescription = "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR and CQRS pattern"
+    SwaggerDocTitle = "Todo API with Autofac",
+    SwaggerDocDescription = "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR, CQRS pattern, and Autofac dependency injection"
 };
 
 // Register other services
 builder.Services
     .AddCorsServices(configuration)
     .AddMinimalApiWithSwaggerUI(
-        title: "Todo API",
+        title: "Todo API with Autofac",
         version: "v1",
-        description: "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR and CQRS pattern",
+        description: "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR, CQRS pattern, and Autofac dependency injection",
         contactName: "MLSolutions Development Team",
         contactEmail: "dev@mlsolutions.com",
         contactUrl: "https://mlsolutions.com/support",
@@ -56,7 +66,8 @@ builder.Services
     )
     .AddGlobalExceptionHandling(appName)
     .AddHealthCheck(configuration)
-    // Register Infrastructure and Application services
+    // Register Infrastructure and Application services with traditional DI
+    // (Autofac services are registered above)
     .AddInfrastructureServices(configuration)
     .AddApplicationServices(configuration);
 

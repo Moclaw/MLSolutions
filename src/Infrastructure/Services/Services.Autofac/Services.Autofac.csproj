@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>    <PackageId>Moclawr.Services.Autofac</PackageId>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
     <Authors>moclaw</Authors>
     <Company>moclaw</Company>
     <Description>Autofac integration for the moclaw project. Provides seamless integration with Autofac dependency injection container.</Description>
