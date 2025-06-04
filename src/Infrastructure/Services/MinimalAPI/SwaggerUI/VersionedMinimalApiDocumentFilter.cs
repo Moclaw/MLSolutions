@@ -8,11 +8,13 @@ using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 
 namespace MinimalAPI.SwaggerUI;
-
 /// <summary>
 /// Document filter for versioned API documentation
 /// </summary>
-public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironment environment, IConfiguration configuration) : IDocumentFilter
+public class VersionedMinimalApiDocumentFilter(
+    SwaggerUIOptions options,
+    IWebHostEnvironment environment,
+    IConfiguration configuration) : IDocumentFilter
 {
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
@@ -53,9 +55,6 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
         // Filter paths for current version only
         FilterPathsForVersion(swaggerDoc, currentVersion, versioning);
 
-        // Add dynamic tags for current version
-        AddVersionSpecificTags(swaggerDoc, currentVersion.ToString());
-
         // Sort paths alphabetically
         var sortedPaths = swaggerDoc.Paths
             .OrderBy(p => p.Key)
@@ -78,6 +77,7 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
                 return version;
             }
         }
+
         return versioning.DefaultVersion;
     }
 
@@ -91,8 +91,8 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
             _ => $"API version {version}"
         };
 
-        return string.IsNullOrEmpty(baseDescription) 
-            ? versionInfo 
+        return string.IsNullOrEmpty(baseDescription)
+            ? versionInfo
             : $"{baseDescription} - {versionInfo}";
     }
 
@@ -103,7 +103,7 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
         foreach (var path in swaggerDoc.Paths)
         {
             var extractedVersion = versioning.ExtractVersionFromRoute(path.Key) ?? versioning.DefaultVersion;
-            
+
             if (extractedVersion != targetVersion)
             {
                 pathsToRemove.Add(path.Key);
@@ -116,13 +116,13 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
                 if (operation.Tags?.Any() == true)
                 {
                     var updatedTags = operation.Tags
-                        .Select(tag => new OpenApiTag 
-                        { 
+                        .Select(tag => new OpenApiTag
+                        {
                             Name = tag.Name,
                             Description = tag.Description
                         })
                         .ToList();
-                    
+
                     operation.Tags = updatedTags;
                 }
 
@@ -130,7 +130,8 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
                 if (string.IsNullOrEmpty(operation.OperationId))
                 {
                     var pathKey = path.Key.Replace("/", "_").Replace("{", "").Replace("}", "");
-                    var httpMethod = path.Value.Operations.FirstOrDefault(kvp => kvp.Value == operation).Key.ToString().ToUpper();
+                    var httpMethod = path.Value.Operations.FirstOrDefault(kvp => kvp.Value == operation).Key.ToString()
+                        .ToUpper();
                     operation.OperationId = $"V{targetVersion}_{pathKey}_{httpMethod}";
                 }
             }
@@ -155,9 +156,9 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
                 var urlList = urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
                 foreach (var url in urlList)
                 {
-                    servers.Add(new OpenApiServer 
-                    { 
-                        Url = url.Trim(), 
+                    servers.Add(new OpenApiServer
+                    {
+                        Url = url.Trim(),
                         Description = $"{environment.EnvironmentName} server"
                     });
                 }
@@ -171,7 +172,7 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
                 {
                     var launchSettingsJson = File.ReadAllText(launchSettingsPath);
                     using var document = JsonDocument.Parse(launchSettingsJson);
-                    
+
                     if (document.RootElement.TryGetProperty("profiles", out var profiles))
                     {
                         foreach (var profile in profiles.EnumerateObject())
@@ -184,9 +185,9 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
                                     var urlList = urlValue.Split(';', StringSplitOptions.RemoveEmptyEntries);
                                     foreach (var url in urlList)
                                     {
-                                        servers.Add(new OpenApiServer 
-                                        { 
-                                            Url = url.Trim(), 
+                                        servers.Add(new OpenApiServer
+                                        {
+                                            Url = url.Trim(),
                                             Description = $"{profile.Name} - {environment.EnvironmentName}"
                                         });
                                     }
@@ -199,65 +200,23 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
 
             if (servers.Count == 0)
             {
-                servers.Add(new OpenApiServer 
-                { 
-                    Url = "/", 
+                servers.Add(new OpenApiServer
+                {
+                    Url = "/",
                     Description = $"Current server - {environment.EnvironmentName}"
                 });
             }
         }
         catch
         {
-            servers.Add(new OpenApiServer 
-            { 
-                Url = "/", 
+            servers.Add(new OpenApiServer
+            {
+                Url = "/",
                 Description = $"Current server - {environment.EnvironmentName}"
             });
         }
 
         return servers;
-    }
-
-    private void AddVersionSpecificTags(OpenApiDocument swaggerDoc, string currentVersion)
-    {
-        // Extract version number (e.g., "v1" -> "1")
-        string versionNumber = currentVersion.TrimStart('v');
-        
-        // Create or update tags with version information
-        if (swaggerDoc.Tags == null) swaggerDoc.Tags = new List<OpenApiTag>();
-        
-        // Define tag categories and their descriptions
-        var tagCategories = new Dictionary<string, string>
-        {
-            { "S3 Commands", "Operations that modify S3 data (Create, Update, Delete)" },
-            { "S3 Queries", "Operations that retrieve S3 data (Get, List, Search)" },
-            { "Todos Commands", "Operations that modify todos data (Create, Update, Delete)" },
-            { "Todos Queries", "Operations that retrieve todos data (Get, List, Search)" },
-            { "Tags Commands", "Operations that modify tags data (Create, Update, Delete)" },
-            { "Tags Queries", "Operations that retrieve tags data (Get, List, Search)" },
-            { "AutofacDemo Commands", "Operations that demonstrate Autofac capabilities (Commands)" }
-        };
-
-        // Add or update tags with version information
-        foreach (var category in tagCategories)
-        {
-            string tagName = category.Key;
-            string description = $"V{versionNumber} - {category.Value}";
-            
-            var existingTag = swaggerDoc.Tags.FirstOrDefault(t => t.Name == tagName);
-            if (existingTag != null)
-            {
-                existingTag.Description = description;
-            }
-            else
-            {
-                swaggerDoc.Tags.Add(new OpenApiTag
-                {
-                    Name = tagName,
-                    Description = description
-                });
-            }
-        }
     }
 
     private static List<FeatureStructure> DiscoverFeatureStructures(Assembly[] assemblies)
@@ -268,7 +227,7 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
         {
             var types = assembly.GetTypes()
                 .Where(t => !t.IsAbstract && !t.IsInterface && t.IsAssignableTo(typeof(EndpointAbstractBase)));
-            
+
             foreach (var type in types)
             {
                 var featureInfo = ExtractFeatureFromNamespace(type.Namespace);
@@ -302,8 +261,10 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
 
         var parts = namespaceName.Split('.');
         var endpointsIndex = Array.FindIndex(parts, part =>
-            (part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase) && !part.Contains("Controller", StringComparison.OrdinalIgnoreCase))
-            || (part.Contains("Controller", StringComparison.OrdinalIgnoreCase) && !part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase)));
+            (part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase) &&
+             !part.Contains("Controller", StringComparison.OrdinalIgnoreCase))
+            || (part.Contains("Controller", StringComparison.OrdinalIgnoreCase) &&
+                !part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase)));
 
         if (endpointsIndex >= 0 && endpointsIndex + 1 < parts.Length)
         {
