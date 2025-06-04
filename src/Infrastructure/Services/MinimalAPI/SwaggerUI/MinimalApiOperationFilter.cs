@@ -6,6 +6,7 @@ using MinimalAPI.Endpoints;
 using MinimalAPI.Handlers;
 using MinimalAPI.Handlers.Command;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -142,12 +143,31 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         var httpMethod = context.ApiDescription.HttpMethod?.ToUpperInvariant() ?? "GET";
         var route = context.ApiDescription.RelativePath ?? "";
 
+        // Include route segments in operation ID to make it more unique
+        var routeSegments = route.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var routeIdentifier = string.Empty;
+        
+        foreach (var segment in routeSegments)
+        {
+            if (!segment.StartsWith("v", StringComparison.OrdinalIgnoreCase) && 
+                !segment.Equals("api", StringComparison.OrdinalIgnoreCase) &&
+                !segment.Contains("{"))
+            {
+                routeIdentifier += $"{char.ToUpperInvariant(segment[0])}{segment.Substring(1)}";
+            }
+        }
+        
+        if (string.IsNullOrEmpty(routeIdentifier))
+        {
+            routeIdentifier = "Api";
+        }
+
         // Create a deterministic GUID based on the combination
         var input = $"{endpointType.FullName}_{httpMethod}_{route}";
         var hash = CreateDeterministicGuid(input);
         var shortHash = hash[..8]; // First 8 characters
 
-        operation.OperationId = $"{feature}_{endpointName}_{httpMethod}_{shortHash}";
+        operation.OperationId = $"{feature}_{endpointName}_{routeIdentifier}_{httpMethod}_{shortHash}";
     }
 
     private static string CreateDeterministicGuid(string input)
@@ -162,128 +182,187 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         return new Guid(guidBytes).ToString("N");
     }
 
+    private static string ExtractFeatureFromRoute(string route)
+    {
+        var parts = route.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        
+        // Find parts that might represent features (ignoring api, v1, etc.)
+        foreach (var part in parts)
+        {
+            // Skip common API path elements
+            if (part.Equals("api", StringComparison.OrdinalIgnoreCase) || 
+                part.StartsWith("v", StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrEmpty(part) ||
+                part.Contains("{"))
+                continue;
+                
+            return part;
+        }
+        
+        return string.Empty;
+    }
+
     private static string ExtractFeatureName(Type endpointType)
     {
+        // Try to extract from namespace first
         var namespaceParts = endpointType.Namespace?.Split('.') ?? [];
         var endpointsIndex = Array.FindIndex(namespaceParts, part => 
             part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
 
         if (endpointsIndex >= 0 && endpointsIndex + 1 < namespaceParts.Length)
         {
-            return namespaceParts[endpointsIndex + 1];
-        }
-
-        return "Unknown";
-    }
-
-    private Type? FindEndpointType(OperationFilterContext context)
-    {
-        if (options.EndpointAssemblies == null || options.EndpointAssemblies.Length == 0)
-            return null;
-
-        var endpointTypes = options.EndpointAssemblies
-            .SelectMany(a => a.GetTypes())
-            .Where(t => !t.IsAbstract && !t.IsInterface && t.IsAssignableTo(typeof(EndpointAbstractBase)))
-            .ToList();
-
-        var contextRoute = context.ApiDescription.RelativePath ?? "";
-        var contextMethod = context.ApiDescription.HttpMethod ?? "";
-
-        // Try simple name matching first
-        var routeParts = contextRoute.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        var possibleEndpointNames = new List<string>();
-        
-        // Extract possible endpoint names from route
-        foreach (var part in routeParts)
-        {
-            if (!part.Contains('{') && !part.StartsWith("v", StringComparison.OrdinalIgnoreCase))
-            {
-                possibleEndpointNames.Add(part);
-            }
-        }
-
-        // Try to match by endpoint name
-        foreach (var endpointType in endpointTypes)
-        {
-            var endpointName = endpointType.Name.Replace("Endpoint", "").ToLower();
+            var featureName = namespaceParts[endpointsIndex + 1];
             
-            foreach (var possibleName in possibleEndpointNames)
+            // Convert kebab or snake case to proper case
+            if (featureName.Contains('-'))
             {
-                if (possibleName.ToLower().Contains(endpointName) || 
-                    endpointName.Contains(possibleName.ToLower()))
-                {
-                    // Additional check for HTTP method match
-                    var methods = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                        .Where(m => m.GetCustomAttributes().Any(a => a is HttpMethodAttribute))
-                        .ToList();
-
-                    foreach (var method in methods)
-                    {
-                        var httpMethodAttr = method.GetCustomAttributes()
-                            .FirstOrDefault(a => a is HttpMethodAttribute) as HttpMethodAttribute;
-
-                        if (httpMethodAttr?.Method != null &&
-                            httpMethodAttr.Method.Equals(contextMethod, StringComparison.OrdinalIgnoreCase))
-                        {
-                            return endpointType;
-                        }
-                    }
-                }
+                // Handle kebab-case feature names
+                var parts = featureName.Split('-');
+                featureName = string.Join("", parts.Select(p => char.ToUpperInvariant(p[0]) + p.Substring(1)));
             }
+            
+            return featureName;
         }
 
-        // Fallback: return first endpoint that matches HTTP method
-        foreach (var endpointType in endpointTypes)
+        // Fallback to class name
+        var typeName = endpointType.Name;
+        if (typeName.EndsWith("Endpoint"))
         {
-            var methods = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                .Where(m => m.GetCustomAttributes().Any(a => a is HttpMethodAttribute))
-                .ToList();
-
-            foreach (var method in methods)
-            {
-                var httpMethodAttr = method.GetCustomAttributes()
-                    .FirstOrDefault(a => a is HttpMethodAttribute) as HttpMethodAttribute;
-
-                if (httpMethodAttr?.Method != null &&
-                    httpMethodAttr.Method.Equals(contextMethod, StringComparison.OrdinalIgnoreCase))
-                {
-                    return endpointType;
-                }
-            }
+            typeName = typeName.Substring(0, typeName.Length - 8);
         }
-
-        return null;
-    }
-
-    private static bool RoutePatternMatches(string[] contextParts, string[] endpointParts)
-    {
-        if (contextParts.Length != endpointParts.Length)
-            return false;
-
-        for (int i = 0; i < contextParts.Length; i++)
-        {
-            var contextPart = contextParts[i].ToLower();
-            var endpointPart = endpointParts[i].ToLower();
-
-            // If endpoint part is a parameter (contains { or }), it matches any context part
-            if (endpointPart.Contains('{') || endpointPart.Contains('}'))
-                continue;
-
-            // Otherwise, parts must match exactly
-            if (contextPart != endpointPart)
-                return false;
-        }
-
-        return true;
-    }
-
-    private static string NormalizeRoute(string route)
-    {
-        // Remove leading slash and convert to lowercase
-        var normalized = route.TrimStart('/').ToLower();
         
-        // Keep route parameters for better matching
-        return normalized;
+        // Try to extract feature name from class name
+        if (typeName.Contains("Command") || typeName.Contains("Query"))
+        {
+            // For command/query handlers, the feature is typically before Command/Query
+            var featurePart = typeName.Split(new[] { "Command", "Query" }, StringSplitOptions.None)[0];
+            return featurePart;
+        }
+        
+        return typeName;
+    }
+
+    private static bool IsCommandRequest(Type? requestType)
+    {
+        if (requestType == null) return false;
+
+        return requestType.GetInterfaces().Any(i =>
+            i == typeof(ICommand) ||
+            (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>)));
+    }
+
+    private static bool IsQueryRequest(Type? requestType)
+    {
+        if (requestType == null) return false;
+
+        return requestType.GetInterfaces().Any(i =>
+            i == typeof(IQueryRequest) ||
+            (i.IsGenericType && (
+                i.GetGenericTypeDefinition() == typeof(IQueryRequest<>) ||
+                i.GetGenericTypeDefinition() == typeof(IQueryCollectionRequest<>))));
+    }
+
+    private void GenerateOperationTags(OpenApiOperation operation, Type endpointType)
+    {
+        var tags = new List<string>();
+        
+        // Extract feature from namespace
+        var namespaceParts = endpointType.Namespace?.Split('.') ?? Array.Empty<string>();
+
+        // Find "Endpoints" part in namespace
+        var endpointsIndex = Array.FindIndex(namespaceParts, part => 
+            part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
+            
+        if (endpointsIndex >= 0 && endpointsIndex + 1 < namespaceParts.Length)
+        {
+            var featureName = namespaceParts[endpointsIndex + 1]; // e.g., "S3", "Todos", "AutofacDemo"
+            
+            // Convert kebab-case to pascal case
+            if (featureName.Contains('-'))
+            {
+                featureName = ToPascalCase(featureName);
+            }
+            
+            // Add operation type if available (Commands, Queries, etc.)
+            if (endpointsIndex + 2 < namespaceParts.Length)
+            {
+                var operationType = namespaceParts[endpointsIndex + 2]; // e.g., "Commands", "Queries"
+                tags.Add($"{featureName} {operationType}");
+            }
+            else
+            {
+                // Determine if it's a command or query from the handler type
+                bool isCommand = IsCommandEndpoint(endpointType);
+                bool isQuery = IsQueryEndpoint(endpointType);
+                
+                if (isCommand)
+                {
+                    tags.Add($"{featureName} Commands");
+                }
+                else if (isQuery)
+                {
+                    tags.Add($"{featureName} Queries");
+                }
+                else
+                {
+                    // Just use the feature name if there's no operation type
+                    tags.Add(featureName);
+                }
+            }
+        }
+        else
+        {
+            // Fallback to class name
+            string typeName = endpointType.Name;
+            if (typeName.EndsWith("Endpoint"))
+            {
+                typeName = typeName.Substring(0, typeName.Length - 8);
+            }
+            
+            tags.Add(typeName);
+        }
+        
+        operation.Tags = tags.Select(tag => new OpenApiTag { Name = tag }).ToList();
+    }
+    
+    private static bool IsCommandEndpoint(Type endpointType)
+    {
+        // Check if the endpoint name contains "Command"
+        if (endpointType.Name.Contains("Command"))
+            return true;
+            
+        // Check methods for [HttpPost], [HttpPut], [HttpDelete], etc.
+        var methods = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+        foreach (var method in methods)
+        {
+            var attrs = method.GetCustomAttributes();
+            if (attrs.Any(a => a is Attributes.HttpPostAttribute || a is Attributes.HttpPutAttribute || a is Attributes.HttpDeleteAttribute || a is Attributes.HttpPatchAttribute))
+                return true;
+        }
+        
+        // Check if the request type implements ICommand
+        var requestType = GetRequestType(endpointType);
+        return IsCommandRequest(requestType);
+    }
+    
+    private static bool IsQueryEndpoint(Type endpointType)
+    {
+        // Check if the endpoint name contains "Query"
+        if (endpointType.Name.Contains("Query"))
+            return true;
+            
+        // Check methods for [HttpGet]
+        var methods = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+        foreach (var method in methods)
+        {
+            var attrs = method.GetCustomAttributes();
+            if (attrs.Any(a => a is Attributes.HttpGetAttribute))
+                return true;
+        }
+        
+        // Check if the request type implements IQueryRequest
+        var requestType = GetRequestType(endpointType);
+        return IsQueryRequest(requestType);
     }
 
     private static Type? GetRequestType(Type endpointType)
@@ -320,59 +399,6 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         return null;
     }
 
-    private static bool IsCommandRequest(Type? requestType)
-    {
-        if (requestType == null) return false;
-
-        return requestType.GetInterfaces().Any(i =>
-            i == typeof(ICommand) ||
-            (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>)));
-    }
-
-    private static bool IsQueryRequest(Type? requestType)
-    {
-        if (requestType == null) return false;
-
-        return requestType.GetInterfaces().Any(i =>
-            i == typeof(IQueryRequest) ||
-            (i.IsGenericType && (
-                i.GetGenericTypeDefinition() == typeof(IQueryRequest<>) ||
-                i.GetGenericTypeDefinition() == typeof(IQueryCollectionRequest<>))));
-    }
-
-    private static void GenerateOperationTags(OpenApiOperation operation, Type endpointType)
-    {
-        var tags = new List<string>();
-
-        // Use endpoint namespace structure: sample.API.Endpoints.{Feature}.{OperationType}
-        var namespaceParts = endpointType.Namespace?.Split('.') ?? [];
-        var endpointsIndex = Array.FindIndex(namespaceParts, part => 
-            part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
-
-        if (endpointsIndex >= 0 && endpointsIndex + 1 < namespaceParts.Length)
-        {
-            var featureName = namespaceParts[endpointsIndex + 1]; // Todo
-            
-            if (endpointsIndex + 2 < namespaceParts.Length)
-            {
-                var operationType = namespaceParts[endpointsIndex + 2]; // Commands or Queries
-                
-                // Only add tags for Commands or Queries
-                if (operationType.Contains("Command", StringComparison.OrdinalIgnoreCase) ||
-                    operationType.Contains("Quer", StringComparison.OrdinalIgnoreCase))
-                {
-                    tags.Add($"{featureName} {operationType}");
-                }
-            }
-        }
-
-        // Apply tags to operation
-        if (tags.Count > 0)
-        {
-            operation.Tags = [.. tags.Select(tag => new OpenApiTag { Name = tag })];
-        }
-    }
-
     private static void ProcessRequestParameters(OpenApiOperation operation, Type requestType, bool isCommandRequest, bool isQueryRequest, OperationFilterContext context)
     {
         var properties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -389,7 +415,7 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
             p.PropertyType == typeof(IFormFile) || 
             p.PropertyType == typeof(IFormFile[]) ||
             p.PropertyType == typeof(List<IFormFile>) ||
-            p.GetCustomAttribute<FromFormAttribute>() != null);
+            p.GetCustomAttribute<Attributes.FromFormAttribute>() != null);
 
         var bodyProperties = new List<PropertyInfo>();
         var formProperties = new List<PropertyInfo>();
@@ -398,7 +424,7 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         foreach (var property in properties)
         {
             // Skip service injection properties
-            if (property.GetCustomAttribute<FromServicesAttribute>() != null)
+            if (property.GetCustomAttribute<Attributes.FromServicesAttribute>() != null)
                 continue;
 
             var parameterLocation = DetermineParameterLocation(property, isCommandRequest, isQueryRequest, hasFormData, shouldUseRequestBody);
@@ -466,15 +492,15 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
     private static MinimalAPI.Attributes.ParameterLocation DetermineParameterLocation(PropertyInfo property, bool isCommandRequest, bool isQueryRequest, bool hasFormData, bool shouldUseRequestBody = false)
     {
         // Check for explicit binding attributes first
-        if (property.GetCustomAttribute<FromRouteAttribute>() != null)
+        if (property.GetCustomAttribute<Attributes.FromRouteAttribute>() != null)
             return Attributes.ParameterLocation.Path;
-        if (property.GetCustomAttribute<FromQueryAttribute>() != null)
+        if (property.GetCustomAttribute<Attributes.FromQueryAttribute>() != null)
             return Attributes.ParameterLocation.Query;
-        if (property.GetCustomAttribute<FromHeaderAttribute>() != null)
+        if (property.GetCustomAttribute<Attributes.FromHeaderAttribute>() != null)
             return Attributes.ParameterLocation.Header;
-        if (property.GetCustomAttribute<FromBodyAttribute>() != null)
+        if (property.GetCustomAttribute<Attributes.FromBodyAttribute>() != null)
             return Attributes.ParameterLocation.Body;
-        if (property.GetCustomAttribute<FromFormAttribute>() != null)
+        if (property.GetCustomAttribute<Attributes.FromFormAttribute>() != null)
             return Attributes.ParameterLocation.Form;
 
         // Handle IFormFile types - these should always be form parameters
@@ -558,15 +584,15 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
     private static string GetParameterName(PropertyInfo property)
     {
         // Check for custom name in binding attributes
-        var routeAttr = property.GetCustomAttribute<FromRouteAttribute>();
+        var routeAttr = property.GetCustomAttribute<Attributes.FromRouteAttribute>();
         if (routeAttr != null && !string.IsNullOrEmpty(routeAttr.Name))
             return routeAttr.Name;
 
-        var queryAttr = property.GetCustomAttribute<FromQueryAttribute>();
+        var queryAttr = property.GetCustomAttribute<Attributes.FromQueryAttribute>();
         if (queryAttr != null && !string.IsNullOrEmpty(queryAttr.Name))
             return queryAttr.Name;
 
-        var headerAttr = property.GetCustomAttribute<FromHeaderAttribute>();
+        var headerAttr = property.GetCustomAttribute<Attributes.FromHeaderAttribute>();
         if (headerAttr != null && !string.IsNullOrEmpty(headerAttr.Name))
             return headerAttr.Name;
 
@@ -686,7 +712,7 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         {
             var allProperties = requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             properties = allProperties.Where(prop => 
-                prop.GetCustomAttribute<FromServicesAttribute>() == null &&
+                prop.GetCustomAttribute<Attributes.FromServicesAttribute>() == null &&
                 !HasExplicitNonBodyBinding(prop)
             ).ToList();
         }
@@ -805,16 +831,275 @@ public class MinimalApiOperationFilter(SwaggerUIOptions options) : IOperationFil
         }
     }
 
-    private static bool HasExplicitNonBodyBinding(PropertyInfo property) => property.GetCustomAttribute<FromRouteAttribute>() != null ||
-               property.GetCustomAttribute<FromQueryAttribute>() != null ||
-               property.GetCustomAttribute<FromHeaderAttribute>() != null ||
-               property.GetCustomAttribute<FromServicesAttribute>() != null ||
-               property.GetCustomAttribute<FromBodyAttribute>() != null;
+    private static bool HasExplicitNonBodyBinding(PropertyInfo property) => property.GetCustomAttribute<Attributes.FromRouteAttribute>() != null ||
+               property.GetCustomAttribute<Attributes.FromQueryAttribute>() != null ||
+               property.GetCustomAttribute<Attributes.FromHeaderAttribute>() != null ||
+               property.GetCustomAttribute<Attributes.FromServicesAttribute>() != null ||
+               property.GetCustomAttribute<Attributes.FromBodyAttribute>() != null;
 
     private static bool HasExplicitNonFormBinding(PropertyInfo property) => 
-        property.GetCustomAttribute<FromRouteAttribute>() != null ||
-        property.GetCustomAttribute<FromQueryAttribute>() != null ||
-        property.GetCustomAttribute<FromHeaderAttribute>() != null ||
-        property.GetCustomAttribute<FromServicesAttribute>() != null ||
-        property.GetCustomAttribute<FromBodyAttribute>() != null;
+        property.GetCustomAttribute<Attributes.FromRouteAttribute>() != null ||
+        property.GetCustomAttribute<Attributes.FromQueryAttribute>() != null ||
+        property.GetCustomAttribute<Attributes.FromHeaderAttribute>() != null ||
+        property.GetCustomAttribute<Attributes.FromServicesAttribute>() != null ||
+        property.GetCustomAttribute<Attributes.FromBodyAttribute>() != null;
+
+    private Type? FindEndpointType(OperationFilterContext context)
+    {
+        if (options.EndpointAssemblies == null || options.EndpointAssemblies.Length == 0)
+            return null;
+
+        var endpointTypes = options.EndpointAssemblies
+            .SelectMany(a => a.GetTypes())
+            .Where(t => !t.IsAbstract && !t.IsInterface && t.IsAssignableTo(typeof(EndpointAbstractBase)))
+            .ToList();
+
+        var contextRoute = context.ApiDescription.RelativePath ?? "";
+        var contextMethod = context.ApiDescription.HttpMethod ?? "";
+
+        // First, try to use the contextRoute directly to find endpoints with matching route attributes
+        var routeMatches = FindEndpointsByRoutePattern(endpointTypes, contextRoute, contextMethod);
+        if (routeMatches.Count > 0)
+        {
+            return routeMatches[0];
+        }
+
+        // Extract feature name from route (e.g., "autofac-demo" from "/api/v1/autofac-demo/...")
+        string featureFromRoute = ExtractFeatureFromRoute(contextRoute);
+        
+        if (!string.IsNullOrEmpty(featureFromRoute))
+        {
+            // Try different variations of the feature name in case of kebab-cased routes
+            var featureVariants = new List<string>
+            {
+                featureFromRoute,                             // Original: "autofac-demo"
+                featureFromRoute.Replace("-", ""),            // No hyphens: "autofacdemo"
+                ToPascalCase(featureFromRoute),              // PascalCase: "AutofacDemo"
+                featureFromRoute.Replace("-", "_")            // With underscores: "autofac_demo"
+            };
+            
+            // Try to match by namespace first - most reliable method
+            foreach (var variant in featureVariants)
+            {
+                var matchByNamespace = endpointTypes.FirstOrDefault(t => 
+                    t.Namespace?.Contains($".{variant}.", StringComparison.OrdinalIgnoreCase) == true ||
+                    t.Namespace?.EndsWith($".{variant}", StringComparison.OrdinalIgnoreCase) == true);
+                
+                if (matchByNamespace != null)
+                {
+                    // Verify HTTP method matches
+                    var methodMatches = VerifyHttpMethodMatch(matchByNamespace, contextMethod);
+                    if (methodMatches) return matchByNamespace;
+                }
+            }
+        }
+        
+        // Extract path segments for matching
+        var routeSegments = contextRoute.Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .Where(s => !s.StartsWith("v", StringComparison.OrdinalIgnoreCase) && 
+                       !s.Equals("api", StringComparison.OrdinalIgnoreCase) && 
+                       !s.Contains("{"))
+            .ToList();
+            
+        // Try to match resource name with endpoint name
+        if (routeSegments.Count > 0)
+        {
+            var resourceName = routeSegments.Last();
+            var candidateEndpoints = endpointTypes.Where(t => 
+                t.Name.Replace("Endpoint", "").Equals(resourceName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+                
+            foreach (var endpoint in candidateEndpoints)
+            {
+                if (VerifyHttpMethodMatch(endpoint, contextMethod))
+                {
+                    return endpoint;
+                }
+            }
+        }
+        
+        // Last resort: try each endpoint type and check HTTP method
+        foreach (var endpointType in endpointTypes)
+        {
+            if (VerifyHttpMethodMatch(endpointType, contextMethod))
+            {
+                return endpointType;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool VerifyHttpMethodMatch(Type endpointType, string contextMethod)
+    {
+        var methods = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Where(m => m.GetCustomAttributes().Any(a => IsHttpMethodAttribute(a)))
+            .ToList();
+
+        foreach (var method in methods)
+        {
+            var httpMethodAttr = method.GetCustomAttributes()
+                .FirstOrDefault(a => IsHttpMethodAttribute(a)) as HttpMethodAttribute;
+
+            if (httpMethodAttr?.Method != null &&
+                httpMethodAttr.Method.Equals(contextMethod, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private static bool IsHttpMethodAttribute(Attribute attribute)
+    {
+        var typeName = attribute.GetType().Name;
+        return typeName == "HttpGetAttribute" || 
+               typeName == "HttpPostAttribute" || 
+               typeName == "HttpPutAttribute" || 
+               typeName == "HttpDeleteAttribute" ||
+               typeName == "HttpPatchAttribute";
+    }
+    
+    private static List<Type> FindEndpointsByRoutePattern(List<Type> endpointTypes, string contextRoute, string contextMethod)
+    {
+        var matches = new List<Type>();
+        foreach (var endpointType in endpointTypes)
+        {
+            var methods = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(m => m.GetCustomAttributes().Any(a => IsHttpMethodAttribute(a)))
+                .ToList();
+
+            foreach (var method in methods)
+            {
+                if (method.GetCustomAttributes()
+                    .FirstOrDefault(a => IsHttpMethodAttribute(a)) is not HttpMethodAttribute httpAttr || httpAttr.Method != contextMethod)
+                    continue;
+
+                var routeTemplate = httpAttr.Route ?? "";
+                
+                // Construct the full route pattern
+                var fullRoute = GetFullRoutePattern(endpointType, routeTemplate);
+                
+                if (RouteMatchesContext(fullRoute, contextRoute))
+                {
+                    matches.Add(endpointType);
+                    break;
+                }
+            }
+        }
+        return matches;
+    }
+    
+    private static bool RouteMatchesContext(string endpointRoute, string contextRoute)
+    {
+        // Normalize routes for comparison
+        endpointRoute = NormalizeRoute(endpointRoute);
+        contextRoute = NormalizeRoute(contextRoute);
+        
+        var endpointParts = endpointRoute.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var contextParts = contextRoute.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        
+        // Skip version and api segments in matching
+        endpointParts = endpointParts
+            .Where(p => !p.StartsWith("v", StringComparison.OrdinalIgnoreCase) && 
+                      !p.Equals("api", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+            
+        contextParts = contextParts
+            .Where(p => !p.StartsWith("v", StringComparison.OrdinalIgnoreCase) && 
+                      !p.Equals("api", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        // Match route parameters (segments with {})
+        if (endpointParts.Length != contextParts.Length)
+            return false;
+            
+        for (int i = 0; i < endpointParts.Length; i++)
+        {
+            var endpointPart = endpointParts[i];
+            var contextPart = contextParts[i];
+            
+            // If part has route parameter, consider it a match
+            if (endpointPart.Contains("{") || contextPart.Contains("{"))
+                continue;
+                
+            // Otherwise parts should match (check for case insensitive equality or contained text)
+            if (!endpointPart.Equals(contextPart, StringComparison.OrdinalIgnoreCase) &&
+                !endpointPart.Contains(contextPart, StringComparison.OrdinalIgnoreCase) &&
+                !contextPart.Contains(endpointPart, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    private static string GetFullRoutePattern(Type endpointType, string methodRoute)
+    {
+        // First check for route attribute on the endpoint class
+        // Using regular RouteAttribute since it's not in MinimalAPI.Attributes
+        var routeAttrs = endpointType.GetCustomAttributes<Microsoft.AspNetCore.Mvc.RouteAttribute>(true);
+        var classRoute = "";
+        
+        foreach (var attr in routeAttrs)
+        {
+            if (!string.IsNullOrEmpty(attr.Template))
+            {
+                classRoute = attr.Template.Trim('/');
+                break;
+            }
+        }
+        
+        // Also check for MinimalAPI specific RouteAttribute if it exists
+        if (string.IsNullOrEmpty(classRoute))
+        {
+            var customRouteAttrs = endpointType.GetCustomAttributes(true)
+                .Where(a => a.GetType().Name == "RouteAttribute")
+                .ToList();
+                
+            if (customRouteAttrs.Count > 0)
+            {
+                // Use reflection to get the Pattern property
+                var patternProp = customRouteAttrs[0].GetType().GetProperty("Pattern");
+                if (patternProp != null)
+                {
+                    var pattern = patternProp.GetValue(customRouteAttrs[0]) as string;
+                    if (!string.IsNullOrEmpty(pattern))
+                    {
+                        classRoute = pattern.Trim('/');
+                    }
+                }
+            }
+        }
+        
+        // Combine class route with method route if both exist
+        if (!string.IsNullOrEmpty(classRoute) && !string.IsNullOrEmpty(methodRoute))
+        {
+            return $"{classRoute}/{methodRoute}";
+        }
+        
+        return !string.IsNullOrEmpty(methodRoute) ? methodRoute : classRoute;
+    }
+
+    private static string NormalizeRoute(string route)
+    {
+        // Remove leading slash and convert to lowercase
+        var normalized = route.TrimStart('/').ToLower();
+        
+        // Keep route parameters for better matching
+        return normalized;
+    }
+
+    private static string ToPascalCase(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+            
+        var parts = input.Split(['-', '_'], StringSplitOptions.RemoveEmptyEntries);
+        var result = string.Join("", parts.Select(p => 
+            string.IsNullOrEmpty(p) ? "" : char.ToUpperInvariant(p[0]) + p.Substring(1).ToLowerInvariant()));
+            
+        return result;
+    }
 }

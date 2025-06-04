@@ -6,10 +6,9 @@ using GetAllTagsResponse = sample.Application.Features.Todo.Queries.GetAllTags.G
 namespace sample.API.Endpoints.Tags.Queries;
 
 [OpenApiSummary("Get all tags", 
-    Description = "Retrieves a paginated list of all available tags",
-    Tags = ["Tag Management", "Queries"])]
+    Description = "Retrieves a paginated list of all available tags")]
 [ApiVersion("1.0")]
-public class GetAllTagsEndpoint(IMediator mediator)
+public class GetAllEndpoint(IMediator mediator)
     : CollectionEndpointBase<GetAllTagsRequest, GetAllTagsResponse>(mediator)
 {
     [HttpGet("tags")]

@@ -7,7 +7,6 @@ namespace sample.API.Endpoints.Todos.Queries;
 
 [OpenApiSummary("Get todo by ID", 
     Description = "Retrieves a specific todo item by its unique identifier")]
-[OpenApiParameter("id", typeof(int), Description = "The unique identifier of the todo item", Required = true, Location = ParameterLocation.Path)]
 [ApiVersion(2)]
 public class GetTodoByIdEndpoint(IMediator mediator)
     : SingleEndpointBase<GetByIdRequest, GetByIdResponse>(mediator)

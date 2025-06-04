@@ -54,7 +54,7 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
         FilterPathsForVersion(swaggerDoc, currentVersion, versioning);
 
         // Add dynamic tags for current version
-        AddVersionSpecificTags(swaggerDoc, currentVersion);
+        AddVersionSpecificTags(swaggerDoc, currentVersion.ToString());
 
         // Sort paths alphabetically
         var sortedPaths = swaggerDoc.Paths
@@ -218,35 +218,46 @@ public class VersionedMinimalApiDocumentFilter(SwaggerUIOptions options, IWebHos
         return servers;
     }
 
-    private void AddVersionSpecificTags(OpenApiDocument swaggerDoc, int version)
+    private void AddVersionSpecificTags(OpenApiDocument swaggerDoc, string currentVersion)
     {
-        var discoveredTags = new HashSet<string>();
-
-        if (options.EndpointAssemblies != null && options.EndpointAssemblies.Length > 0)
+        // Extract version number (e.g., "v1" -> "1")
+        string versionNumber = currentVersion.TrimStart('v');
+        
+        // Create or update tags with version information
+        if (swaggerDoc.Tags == null) swaggerDoc.Tags = new List<OpenApiTag>();
+        
+        // Define tag categories and their descriptions
+        var tagCategories = new Dictionary<string, string>
         {
-            var featureStructures = DiscoverFeatureStructures(options.EndpointAssemblies);
+            { "S3 Commands", "Operations that modify S3 data (Create, Update, Delete)" },
+            { "S3 Queries", "Operations that retrieve S3 data (Get, List, Search)" },
+            { "Todos Commands", "Operations that modify todos data (Create, Update, Delete)" },
+            { "Todos Queries", "Operations that retrieve todos data (Get, List, Search)" },
+            { "Tags Commands", "Operations that modify tags data (Create, Update, Delete)" },
+            { "Tags Queries", "Operations that retrieve tags data (Get, List, Search)" },
+            { "AutofacDemo Commands", "Operations that demonstrate Autofac capabilities (Commands)" }
+        };
+
+        // Add or update tags with version information
+        foreach (var category in tagCategories)
+        {
+            string tagName = category.Key;
+            string description = $"V{versionNumber} - {category.Value}";
             
-            foreach (var feature in featureStructures)
+            var existingTag = swaggerDoc.Tags.FirstOrDefault(t => t.Name == tagName);
+            if (existingTag != null)
             {
-                foreach (var operationType in feature.OperationTypes)
+                existingTag.Description = description;
+            }
+            else
+            {
+                swaggerDoc.Tags.Add(new OpenApiTag
                 {
-                    if (operationType.Contains("Command", StringComparison.OrdinalIgnoreCase) ||
-                        operationType.Contains("Quer", StringComparison.OrdinalIgnoreCase))
-                    {
-                        discoveredTags.Add($"{feature.FeatureName} {operationType}");
-                    }
-                }
+                    Name = tagName,
+                    Description = description
+                });
             }
         }
-
-        // Create tag definitions with version-specific descriptions
-        swaggerDoc.Tags = [.. discoveredTags
-            .OrderBy(tag => tag)
-            .Select(tag => new OpenApiTag 
-            { 
-                Name = tag, 
-                Description = GenerateVersionSpecificTagDescription(tag, version) 
-            })];
     }
 
     private static List<FeatureStructure> DiscoverFeatureStructures(Assembly[] assemblies)

@@ -255,25 +255,45 @@ public static partial class Register
         return null;
     }
 
-    private static string[] GenerateEndpointTags(Type endpointType, int version)
+    private static string[] GenerateEndpointTags(Type endpointType, int endpointVersion)
     {
-        var tags = new HashSet<string>();
+        var tags = new List<string>();
+        
+        // Extract feature from namespace
+        var namespaceParts = endpointType.Namespace?.Split('.') ?? Array.Empty<string>();
 
-        var namespaceParts = endpointType.Namespace?.Split('.') ?? [];
-        var featureIndex = Array.FindIndex(namespaceParts, part =>
+        // Find "Endpoints" part in namespace
+        var endpointsIndex = Array.FindIndex(namespaceParts, part => 
             part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
-
-        if (featureIndex >= 0 && featureIndex + 1 < namespaceParts.Length)
+            
+        if (endpointsIndex >= 0 && endpointsIndex + 1 < namespaceParts.Length)
         {
-            var featureName = namespaceParts[featureIndex + 1];
-
-            if (featureIndex + 2 < namespaceParts.Length)
+            var featureName = namespaceParts[endpointsIndex + 1]; // e.g., "S3", "Todos", "AutofacDemo"
+            
+            // Add operation type if available (Commands, Queries, etc.)
+            if (endpointsIndex + 2 < namespaceParts.Length)
             {
-                var operationType = namespaceParts[featureIndex + 2];
+                var operationType = namespaceParts[endpointsIndex + 2]; // e.g., "Commands", "Queries"
                 tags.Add($"{featureName} {operationType}");
             }
+            else
+            {
+                // Just use the feature name if there's no operation type
+                tags.Add(featureName);
+            }
         }
-
-        return [.. tags];
+        else
+        {
+            // Fallback to class name if namespace structure doesn't match expected pattern
+            string typeName = endpointType.Name;
+            if (typeName.EndsWith("Endpoint"))
+            {
+                typeName = typeName.Substring(0, typeName.Length - 8); // Remove "Endpoint" suffix
+            }
+            
+            tags.Add(typeName);
+        }
+        
+        return tags.ToArray();
     }
 }

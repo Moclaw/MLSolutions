@@ -7,9 +7,7 @@ using Response = sample.Application.Features.Todo.Commands.AssignTags.Response;
 namespace sample.API.Endpoints.Tags.Commands;
 
 [OpenApiSummary("Assign tags to todo", 
-    Description = "Assigns multiple tags to a specific todo item",
-    Tags = ["Todo Management", "Tag Operations", "Commands"])]
-[OpenApiParameter("todoId", typeof(int), Description = "The ID of the todo item", Required = true, Location = ParameterLocation.Path)]
+    Description = "Assigns multiple tags to a specific todo item")]
 [OpenApiResponse(200, ResponseType = typeof(Response), Description = "Tags assigned successfully")]
 [OpenApiResponse(404, Description = "Todo item or tags not found")]
 [ApiVersion("1.0")]
