@@ -139,18 +139,6 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
 
     private void AddDynamicTags(OpenApiDocument swaggerDoc)
     {
-        var tagGroups = new Dictionary<string, string>
-        {
-            // Define category descriptions for different tag prefixes
-            { "S3 Commands", "Operations that modify S3 data (Create, Update, Delete)" },
-            { "S3 Queries", "Operations that retrieve S3 data (Get, List, Search)" },
-            { "Todos Commands", "Operations that modify todos data (Create, Update, Delete)" },
-            { "Todos Queries", "Operations that retrieve todos data (Get, List, Search)" },
-            { "Tags Commands", "Operations that modify tags data (Create, Update, Delete)" },
-            { "Tags Queries", "Operations that retrieve tags data (Get, List, Search)" },
-            { "AutofacDemo Commands", "Operations that demonstrate Autofac capabilities (Commands)" }
-        };
-
         // Collect all unique tag names from operations
         var operationTags = new HashSet<string>();
         foreach (var path in swaggerDoc.Paths)
@@ -172,14 +160,10 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
             // Check if the tag already exists in document
             if (!swaggerDoc.Tags.Any(t => t.Name == tagName))
             {
-                var description = tagGroups.TryGetValue(tagName, out var desc) 
-                    ? desc 
-                    : $"Operations related to {tagName}";
-
                 swaggerDoc.Tags.Add(new OpenApiTag 
                 {
                     Name = tagName,
-                    Description = description
+                    Description = GenerateTagDescription(tagName)
                 });
             }
         }
