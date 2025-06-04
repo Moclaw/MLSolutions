@@ -341,19 +341,22 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
         // Extract feature from namespace
         var namespaceParts = endpointType.Namespace?.Split('.') ?? [];
 
-        // Look for feature patterns like "Features.Todo.Commands" or "Features.Todo.Queries"
-        var featureIndex = Array.FindIndex(namespaceParts, part =>
-            part.Equals("Features", StringComparison.OrdinalIgnoreCase));
+        // Find "Endpoints" part in namespace
+        var endpointsIndex = Array.FindIndex(namespaceParts, part =>
+            part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
 
-        if (featureIndex >= 0 && featureIndex + 1 < namespaceParts.Length)
+        // Look for structure like "Endpoints.S3.Commands" or "Endpoints.Todos.Queries"
+        if (endpointsIndex >= 0 && endpointsIndex + 1 < namespaceParts.Length)
         {
-            var featureName = namespaceParts[featureIndex + 1]; // e.g., "Todo"
+            var featureName = namespaceParts[endpointsIndex + 1]; // e.g., "S3", "Todos", "Tags", "AutofacDemo"
+            
+            // Add the feature name alone first
             tags.Add(featureName);
 
-            // Add operation type if available
-            if (featureIndex + 2 < namespaceParts.Length)
+            // Add operation type if available (Commands, Queries, etc.)
+            if (endpointsIndex + 2 < namespaceParts.Length)
             {
-                var operationType = namespaceParts[featureIndex + 2]; // e.g., "Commands", "Queries"
+                var operationType = namespaceParts[endpointsIndex + 2]; // e.g., "Commands", "Queries"
                 tags.Add($"{featureName} {operationType}");
             }
         }
@@ -366,6 +369,7 @@ public class MinimalApiDocumentTransformer(OpenApiOptions options) : IOpenApiDoc
                 className = className[..^8]; // Remove "Endpoint" suffix
             }
 
+            tags.Add(className);
         }
 
         return tags;

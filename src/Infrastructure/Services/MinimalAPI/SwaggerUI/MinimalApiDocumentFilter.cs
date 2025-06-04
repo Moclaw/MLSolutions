@@ -139,36 +139,50 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
 
     private void AddDynamicTags(OpenApiDocument swaggerDoc)
     {
-        var discoveredTags = new HashSet<string>();
-
-        if (options.EndpointAssemblies != null && options.EndpointAssemblies.Length > 0)
+        var tagGroups = new Dictionary<string, string>
         {
-            // Discover all features from namespace structure
-            var featureStructures = DiscoverFeatureStructures(options.EndpointAssemblies);
-            
-            foreach (var feature in featureStructures)
+            // Define category descriptions for different tag prefixes
+            { "S3 Commands", "Operations that modify S3 data (Create, Update, Delete)" },
+            { "S3 Queries", "Operations that retrieve S3 data (Get, List, Search)" },
+            { "Todos Commands", "Operations that modify todos data (Create, Update, Delete)" },
+            { "Todos Queries", "Operations that retrieve todos data (Get, List, Search)" },
+            { "Tags Commands", "Operations that modify tags data (Create, Update, Delete)" },
+            { "Tags Queries", "Operations that retrieve tags data (Get, List, Search)" },
+            { "AutofacDemo Commands", "Operations that demonstrate Autofac capabilities (Commands)" }
+        };
+
+        // Collect all unique tag names from operations
+        var operationTags = new HashSet<string>();
+        foreach (var path in swaggerDoc.Paths)
+        {
+            foreach (var operation in path.Value.Operations)
             {
-                // Only add operation types that contain "Command" or "Quer", skip the base feature name
-                foreach (var operationType in feature.OperationTypes)
+                foreach (var tag in operation.Value.Tags)
                 {
-                    // Match any operation type that contains "command" or "quer" (case insensitive)
-                    if (operationType.Contains("Command", StringComparison.OrdinalIgnoreCase) ||
-                        operationType.Contains("Quer", StringComparison.OrdinalIgnoreCase))
-                    {
-                        discoveredTags.Add($"{feature.FeatureName} {operationType}");
-                    }
+                    operationTags.Add(tag.Name);
                 }
             }
         }
 
-        // Create tag definitions with descriptions
-        swaggerDoc.Tags = [.. discoveredTags
-            .OrderBy(tag => tag)
-            .Select(tag => new OpenApiTag 
-            { 
-                Name = tag, 
-                Description = GenerateTagDescription(tag) 
-            })];
+        // Add tag definitions
+        if (swaggerDoc.Tags == null) swaggerDoc.Tags = new List<OpenApiTag>();
+        
+        foreach (var tagName in operationTags)
+        {
+            // Check if the tag already exists in document
+            if (!swaggerDoc.Tags.Any(t => t.Name == tagName))
+            {
+                var description = tagGroups.TryGetValue(tagName, out var desc) 
+                    ? desc 
+                    : $"Operations related to {tagName}";
+
+                swaggerDoc.Tags.Add(new OpenApiTag 
+                {
+                    Name = tagName,
+                    Description = description
+                });
+            }
+        }
     }
 
     private static List<FeatureStructure> DiscoverFeatureStructures(Assembly[] assemblies)
