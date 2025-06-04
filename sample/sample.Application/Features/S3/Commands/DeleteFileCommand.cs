@@ -1,10 +1,13 @@
 using MediatR;
+using MinimalAPI.Attributes;
+using MinimalAPI.Handlers.Command;
 using Shared.Responses;
 
 namespace sample.Application.Features.S3.Commands;
 
-public record DeleteFileCommand : IRequest<Response<DeleteFileResponse>>
+public record DeleteFileCommand : ICommand<DeleteFileResponse>
 {
+    [FromRoute]
     public string Key { get; set; }
 }
 

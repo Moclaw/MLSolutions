@@ -6,6 +6,11 @@ using Shared.Responses;
 
 namespace sample.API.Endpoints.S3.Commands;
 
+[OpenApiSummary("Delete S3 file", 
+    Description = "Deletes a file from S3 storage")]
+[OpenApiResponse(200, ResponseType = typeof(Response<DeleteFileResponse>), Description = "File deleted successfully")]
+[OpenApiResponse(404, Description = "File not found")]
+[ApiVersion("1.0")]
 public class DeleteFileEndpoint(IMediator mediator)
     : SingleEndpointBase<DeleteFileCommand, DeleteFileResponse>(mediator)
 {

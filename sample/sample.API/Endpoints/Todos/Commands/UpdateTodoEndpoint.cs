@@ -7,9 +7,7 @@ using Shared.Responses;
 namespace sample.API.Endpoints.Todos.Commands;
 
 [OpenApiSummary("Update an existing todo", 
-    Description = "Updates an existing todo item with new information",
-    Tags = ["Todo Management", "Commands"])]
-[OpenApiParameter("id", typeof(int), Description = "The unique identifier of the todo item to update", Required = true, Location = ParameterLocation.Path)]
+    Description = "Updates an existing todo item with new information")]
 [OpenApiResponse(200, ResponseType = typeof(Response<UpdateResponse>), Description = "Todo updated successfully")]
 [OpenApiResponse(404, Description = "Todo item not found")]
 [OpenApiResponse(400, Description = "Invalid update data")]

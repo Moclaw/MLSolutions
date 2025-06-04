@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>Moclawr.MinimalAPI</PackageId>
-        <Version>2.1.4</Version>
+        <Version>2.1.5</Version>
         <Authors>moclaw</Authors>
         <Company>moclaw</Company>
         <Description>Minimal API utilities with MediatR integration for .NET 9. Provides a class-based approach to endpoint definition with built-in CQRS support and SwaggerUI.</Description>

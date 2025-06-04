@@ -5,8 +5,7 @@ using sample.Application.Features.Todo.Commands.Create;
 namespace sample.API.Endpoints.Todos.Commands;
 
 [OpenApiSummary("Create a new todo", 
-    Description = "Creates a new todo item with the provided details",
-    Tags = ["Todo Management", "Commands"])]
+    Description = "Creates a new todo item with the provided details")]
 [OpenApiResponse(201, ResponseType = typeof(Response<CreateResponse>), Description = "Todo created successfully")]
 [OpenApiResponse(400, Description = "Invalid request data")]
 [ApiVersion("1.0")]

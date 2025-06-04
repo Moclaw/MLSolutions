@@ -5,8 +5,7 @@ using sample.Application.Features.AutofacDemo.Commands.CalculateDiscount;
 namespace sample.API.Endpoints.AutofacDemo.Commands;
 
 [OpenApiSummary("Calculate discount for customer using Autofac services", 
-    Description = "Shows how services can depend on other services through Autofac",
-    Tags = ["Autofac Demo", "Commands"])]
+    Description = "Shows how services can depend on other services through Autofac")]
 [OpenApiResponse(200, ResponseType = typeof(Response<CalculateDiscountResponse>), Description = "Discount calculated successfully")]
 [OpenApiResponse(400, Description = "Invalid request data")]
 [ApiVersion("1.0")]

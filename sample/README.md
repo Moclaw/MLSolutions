@@ -89,15 +89,35 @@ Default version is v1.0 when no version is specified and `AssumeDefaultVersionWh
 
 ## API Endpoints
 
-| Method | Endpoint        | Description                                  | Versions |
-|--------|-----------------|----------------------------------------------|----------|
-| GET    | /api/todos      | Get all todos with optional filtering        | v1, v2   |
-| GET    | /api/todos/{id} | Get a specific todo by ID                    | v1, v2   |
-| POST   | /api/todos      | Create a new todo                            | v1, v2   |
-| PUT    | /api/todos/{id} | Update an existing todo                      | v1, v2   |
-| DELETE | /api/todos/{id} | Delete a todo                                | v1, v2   |
+### Todo Management
+| Method | Endpoint        | Description                      | Versions |
+|--------|-----------------|----------------------------------|----------|
+| GET    | /api/todos      | Get all todos with filtering     | v1, v2   |
+| GET    | /api/todos/{id} | Get a specific todo by ID        | v1, v2   |
+| POST   | /api/todos      | Create a new todo                | v1, v2   |
+| PUT    | /api/todos/{id} | Update an existing todo          | v1, v2   |
+| DELETE | /api/todos/{id} | Delete a todo                    | v1, v2   |
 
-### Tag Management Endpoints
+### Tag Management
+| Method | Endpoint              | Description                      | Versions |
+|--------|-----------------------|----------------------------------|----------|
+| GET    | /api/tags             | Get all available tags           | v1, v2   |
+| POST   | /api/tags             | Create a new tag                 | v1, v2   |
+| POST   | /api/todos/{id}/tags  | Assign tags to a todo item       | v1, v2   |
+
+### S3 File Management  
+| Method | Endpoint              | Description                      | Versions |
+|--------|-----------------------|----------------------------------|----------|
+| GET    | /api/s3/files         | List files in S3                 | v1, v2   |
+| GET    | /api/s3/url/{key}     | Get presigned URL for file       | v1, v2   |
+| POST   | /api/s3/upload        | Upload file to S3                | v1, v2   |
+| DELETE | /api/s3/{key}         | Delete file from S3              | v1, v2   |
+
+### Common Query Parameters
+| Parameter    | Description                                       | Default    |
+|--------------|---------------------------------------------------|------------|
+| search       | Filter by title/description/name                 | null       |
+| pageIndex    | Page number (0-based)                            | 0          |
 | pageSize     | Number of items per page                          | 10         |
 | orderBy      | Property to sort by (id, title, createdat, etc.)  | "Id"       |
 | isAscending  | Sort in ascending order if true                   | true       |

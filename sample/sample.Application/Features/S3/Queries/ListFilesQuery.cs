@@ -1,11 +1,12 @@
 using MediatR;
+using MinimalAPI.Handlers.Command;
 using Shared.Responses;
 
 namespace sample.Application.Features.S3.Queries;
 
 public record ListFilesQuery(
 
-) : IRequest<Response<ListFilesResponse>>
+) : ICommand<ListFilesResponse>
 {
    public string Prefix { get; set; } = string.Empty;
     public bool Recursive { get; set; } = false;

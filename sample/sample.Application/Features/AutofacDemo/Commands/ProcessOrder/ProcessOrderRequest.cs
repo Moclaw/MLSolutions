@@ -1,11 +1,11 @@
 using MediatR;
 using MinimalAPI.Attributes;
+using MinimalAPI.Handlers.Command;
 using Shared.Responses;
 
 namespace sample.Application.Features.AutofacDemo.Commands.ProcessOrder;
 
-public class ProcessOrderRequest : IRequest<Response<ProcessOrderResponse>>
+public class ProcessOrderRequest : ICommand<ProcessOrderResponse>
 {
-    [FromBody]
     public string OrderId { get; set; } = string.Empty;
 }
