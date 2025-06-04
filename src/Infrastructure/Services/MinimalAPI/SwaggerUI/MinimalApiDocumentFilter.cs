@@ -1,15 +1,19 @@
-using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
-using MinimalAPI.Attributes;
-using MinimalAPI.Endpoints;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using System.Text.Json;
+using Microsoft.OpenApi.Models;
+using MinimalAPI.Attributes;
+using MinimalAPI.Endpoints;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MinimalAPI.SwaggerUI;
 
-public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironment environment, IConfiguration configuration) : IDocumentFilter
+public class MinimalApiDocumentFilter(
+    SwaggerUIOptions options,
+    IWebHostEnvironment environment,
+    IConfiguration configuration
+) : IDocumentFilter
 {
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
@@ -26,7 +30,7 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
                 Email = options.ContactEmail,
                 Url = !string.IsNullOrEmpty(options.ContactUrl)
                     ? new Uri(options.ContactUrl)
-                    : null
+                    : null,
             };
         }
 
@@ -37,7 +41,7 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
                 Name = options.LicenseName,
                 Url = !string.IsNullOrEmpty(options.LicenseUrl)
                     ? new Uri(options.LicenseUrl)
-                    : null
+                    : null,
             };
         }
 
@@ -48,8 +52,8 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
         AddDynamicTags(swaggerDoc);
 
         // Sort paths alphabetically
-        var sortedPaths = swaggerDoc.Paths
-            .OrderBy(p => p.Key)
+        var sortedPaths = swaggerDoc
+            .Paths.OrderBy(p => p.Key)
             .ToDictionary(p => p.Key, p => p.Value);
 
         swaggerDoc.Paths.Clear();
@@ -72,40 +76,57 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
                 var urlList = urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
                 foreach (var url in urlList)
                 {
-                    servers.Add(new OpenApiServer 
-                    { 
-                        Url = url.Trim(), 
-                        Description = $"{environment.EnvironmentName} server"
-                    });
+                    servers.Add(
+                        new OpenApiServer
+                        {
+                            Url = url.Trim(),
+                            Description = $"{environment.EnvironmentName} server",
+                        }
+                    );
                 }
             }
 
             // Try to read from launchSettings.json if no URLs in configuration
             if (servers.Count == 0)
             {
-                var launchSettingsPath = Path.Combine(environment.ContentRootPath, "Properties", "launchSettings.json");
+                var launchSettingsPath = Path.Combine(
+                    environment.ContentRootPath,
+                    "Properties",
+                    "launchSettings.json"
+                );
                 if (File.Exists(launchSettingsPath))
                 {
                     var launchSettingsJson = File.ReadAllText(launchSettingsPath);
                     using var document = JsonDocument.Parse(launchSettingsJson);
-                    
+
                     if (document.RootElement.TryGetProperty("profiles", out var profiles))
                     {
                         foreach (var profile in profiles.EnumerateObject())
                         {
-                            if (profile.Value.TryGetProperty("applicationUrl", out var applicationUrl))
+                            if (
+                                profile.Value.TryGetProperty(
+                                    "applicationUrl",
+                                    out var applicationUrl
+                                )
+                            )
                             {
                                 var urlValue = applicationUrl.GetString();
                                 if (!string.IsNullOrEmpty(urlValue))
                                 {
-                                    var urlList = urlValue.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                                    var urlList = urlValue.Split(
+                                        ';',
+                                        StringSplitOptions.RemoveEmptyEntries
+                                    );
                                     foreach (var url in urlList)
                                     {
-                                        servers.Add(new OpenApiServer 
-                                        { 
-                                            Url = url.Trim(), 
-                                            Description = $"{profile.Name} - {environment.EnvironmentName}"
-                                        });
+                                        servers.Add(
+                                            new OpenApiServer
+                                            {
+                                                Url = url.Trim(),
+                                                Description =
+                                                    $"{profile.Name} - {environment.EnvironmentName}",
+                                            }
+                                        );
                                     }
                                 }
                             }
@@ -117,21 +138,25 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
             // Fallback to default if no servers found
             if (servers.Count == 0)
             {
-                servers.Add(new OpenApiServer 
-                { 
-                    Url = "/", 
-                    Description = $"Current server - {environment.EnvironmentName}"
-                });
+                servers.Add(
+                    new OpenApiServer
+                    {
+                        Url = "/",
+                        Description = $"Current server - {environment.EnvironmentName}",
+                    }
+                );
             }
         }
         catch
         {
             // Fallback to default server on any error
-            servers.Add(new OpenApiServer 
-            { 
-                Url = "/", 
-                Description = $"Current server - {environment.EnvironmentName}"
-            });
+            servers.Add(
+                new OpenApiServer
+                {
+                    Url = "/",
+                    Description = $"Current server - {environment.EnvironmentName}",
+                }
+            );
         }
 
         return servers;
@@ -153,18 +178,17 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
         }
 
         // Add tag definitions
-        if (swaggerDoc.Tags == null) swaggerDoc.Tags = new List<OpenApiTag>();
-        
+        if (swaggerDoc.Tags == null)
+            swaggerDoc.Tags = new List<OpenApiTag>();
+
         foreach (var tagName in operationTags)
         {
             // Check if the tag already exists in document
             if (!swaggerDoc.Tags.Any(t => t.Name == tagName))
             {
-                swaggerDoc.Tags.Add(new OpenApiTag 
-                {
-                    Name = tagName,
-                    Description = GenerateTagDescription(tagName)
-                });
+                swaggerDoc.Tags.Add(
+                    new OpenApiTag { Name = tagName, Description = GenerateTagDescription(tagName) }
+                );
             }
         }
     }
@@ -175,9 +199,14 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
 
         foreach (var assembly in assemblies)
         {
-            var types = assembly.GetTypes()
-                .Where(t => !t.IsAbstract && !t.IsInterface && t.IsAssignableTo(typeof(EndpointAbstractBase)));
-            
+            var types = assembly
+                .GetTypes()
+                .Where(t =>
+                    !t.IsAbstract
+                    && !t.IsInterface
+                    && t.IsAssignableTo(typeof(EndpointAbstractBase))
+                );
+
             foreach (var type in types)
             {
                 var featureInfo = ExtractFeatureFromNamespace(type.Namespace);
@@ -188,7 +217,7 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
                         value = new FeatureStructure
                         {
                             FeatureName = featureInfo.FeatureName,
-                            OperationTypes = []
+                            OperationTypes = [],
                         };
                         features[featureInfo.FeatureName] = value;
                     }
@@ -212,34 +241,40 @@ public class MinimalApiDocumentFilter(SwaggerUIOptions options, IWebHostEnvironm
         var parts = namespaceName.Split('.');
 
         // Look for Endpoints pattern: *.Endpoints.{FeatureName}.{OperationType}
-        var endpointsIndex = Array.FindIndex(parts, part =>
-            (part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase) && !part.Contains("Controller", StringComparison.OrdinalIgnoreCase))
-            || (part.Contains("Controller", StringComparison.OrdinalIgnoreCase) && !part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase)));
-            
+        var endpointsIndex = Array.FindIndex(
+            parts,
+            part =>
+                (
+                    part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase)
+                    && !part.Contains("Controller", StringComparison.OrdinalIgnoreCase)
+                )
+                || (
+                    part.Contains("Controller", StringComparison.OrdinalIgnoreCase)
+                    && !part.Contains("Endpoint", StringComparison.OrdinalIgnoreCase)
+                )
+        );
 
         if (endpointsIndex >= 0 && endpointsIndex + 1 < parts.Length)
         {
             var featureName = parts[endpointsIndex + 1];
-            var operationType = endpointsIndex + 2 < parts.Length ? parts[endpointsIndex + 2] : null;
+            var operationType =
+                endpointsIndex + 2 < parts.Length ? parts[endpointsIndex + 2] : null;
 
-            return new FeatureInfo
-            {
-                FeatureName = featureName,
-                OperationType = operationType
-            };
+            return new FeatureInfo { FeatureName = featureName, OperationType = operationType };
         }
 
         return null;
     }
 
-    private static string GenerateTagDescription(string tagName) => tagName switch
-    {
-        var name when name.Contains("Command", StringComparison.OrdinalIgnoreCase) =>
-            $"Operations that modify {ExtractFeatureName(name).ToLower()} data (Create, Update, Delete)",
-        var name when name.Contains("Quer", StringComparison.OrdinalIgnoreCase) =>
-            $"Operations that retrieve {ExtractFeatureName(name).ToLower()} data (Get, List, Search)",
-        _ => $"{tagName} related operations"
-    };
+    private static string GenerateTagDescription(string tagName) =>
+        tagName switch
+        {
+            var name when name.Contains("Command", StringComparison.OrdinalIgnoreCase) =>
+                $"Operations that modify {ExtractFeatureName(name).ToLower()} data (Create, Update, Delete)",
+            var name when name.Contains("Quer", StringComparison.OrdinalIgnoreCase) =>
+                $"Operations that retrieve {ExtractFeatureName(name).ToLower()} data (Get, List, Search)",
+            _ => $"{tagName} related operations",
+        };
 
     private static string ExtractFeatureName(string tagName)
     {

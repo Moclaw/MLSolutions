@@ -1,9 +1,9 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using MinimalAPI.Attributes;
 using MinimalAPI.OpenApi;
-using System.Reflection;
 
 namespace MinimalAPI;
 
@@ -74,7 +74,13 @@ public static partial class Register
         services.AddSingleton(versioning);
 
         // Add enhanced OpenAPI documentation with versioning
-        services.AddOpenAPIDocument(title, version, description, versioningOptions: versioning, assemblies);
+        services.AddOpenAPIDocument(
+            title,
+            version,
+            description,
+            versioningOptions: versioning,
+            assemblies
+        );
 
         return services;
     }
@@ -92,7 +98,10 @@ public static partial class Register
         params Assembly[] assemblies
     )
     {
-        var versioning = versioningOptions ?? app.Services.GetService<VersioningOptions>() ?? new DefaultVersioningOptions();
+        var versioning =
+            versioningOptions
+            ?? app.Services.GetService<VersioningOptions>()
+            ?? new DefaultVersioningOptions();
 
         // Find all endpoint classes (classes deriving from EndpointBase)
         var endpointTypes = assemblies
@@ -117,18 +126,26 @@ public static partial class Register
             foreach (var method in methods)
             {
                 // Get HTTP method attribute
-                if (method
+                if (
+                    method
                         .GetCustomAttributes()
-                        .FirstOrDefault(a => a is MinimalAPI.Attributes.HttpMethodAttribute) is not MinimalAPI.Attributes.HttpMethodAttribute httpMethodAttr || string.IsNullOrEmpty(httpMethodAttr.Route))
+                        .FirstOrDefault(a => a is MinimalAPI.Attributes.HttpMethodAttribute)
+                        is not MinimalAPI.Attributes.HttpMethodAttribute httpMethodAttr
+                    || string.IsNullOrEmpty(httpMethodAttr.Route)
+                )
                     continue;
 
                 // Get version from ApiVersion attribute or use default
-                var apiVersionAttr = method.GetCustomAttribute<ApiVersionAttribute>() ??
-                                   endpointType.GetCustomAttribute<ApiVersionAttribute>();
+                var apiVersionAttr =
+                    method.GetCustomAttribute<ApiVersionAttribute>()
+                    ?? endpointType.GetCustomAttribute<ApiVersionAttribute>();
                 var endpointVersion = apiVersionAttr?.Version ?? versioning.DefaultVersion;
 
                 // Generate versioned route template
-                var routeTemplate = versioning.GetVersionedRoute(httpMethodAttr.Route, endpointVersion);
+                var routeTemplate = versioning.GetVersionedRoute(
+                    httpMethodAttr.Route,
+                    endpointVersion
+                );
 
                 // Create the endpoint handler with versioning support
                 var handler = app.MapMethods(
@@ -139,11 +156,16 @@ public static partial class Register
                         // Validate version if required
                         if (!ValidateVersion(context, versioning, endpointVersion))
                         {
-                            return Results.BadRequest($"API version {endpointVersion} is not supported");
+                            return Results.BadRequest(
+                                $"API version {endpointVersion} is not supported"
+                            );
                         }
 
                         // Create endpoint instance from service provider
-                        if (ActivatorUtilities.CreateInstance(serviceProvider, endpointType) is not MinimalAPI.Endpoints.EndpointAbstractBase endpoint)
+                        if (
+                            ActivatorUtilities.CreateInstance(serviceProvider, endpointType)
+                            is not MinimalAPI.Endpoints.EndpointAbstractBase endpoint
+                        )
                             return Results.StatusCode(500);
 
                         // Set HttpContext and configure endpoint definition
@@ -153,11 +175,15 @@ public static partial class Register
                         var requestType = GetRequestType(endpointType) ?? typeof(object);
                         var responseType = GetResponseType(endpointType) ?? typeof(object);
 
-                        endpoint.Definition = new EndpointDefinition(endpointType, requestType, responseType)
+                        endpoint.Definition = new EndpointDefinition(
+                            endpointType,
+                            requestType,
+                            responseType
+                        )
                         {
                             RouteTemplate = routeTemplate,
                             Version = versioning,
-                            Verbs = [httpMethodAttr.Method]
+                            Verbs = [httpMethodAttr.Method],
                         };
 
                         // Execute the endpoint
@@ -169,16 +195,21 @@ public static partial class Register
                 );
 
                 // Add endpoint metadata for OpenAPI documentation
-                handler.WithName($"{endpointType.Name}_{httpMethodAttr.Method}_{endpointVersion}")
-                       .WithTags(GenerateEndpointTags(endpointType, endpointVersion))
-                       .WithOpenApi();
+                handler
+                    .WithName($"{endpointType.Name}_{httpMethodAttr.Method}_{endpointVersion}")
+                    .WithTags(GenerateEndpointTags(endpointType, endpointVersion))
+                    .WithOpenApi();
             }
         }
 
         return app;
     }
 
-    private static bool ValidateVersion(HttpContext context, VersioningOptions versioning, int endpointVersion)
+    private static bool ValidateVersion(
+        HttpContext context,
+        VersioningOptions versioning,
+        int endpointVersion
+    )
     {
         // Extract version from request based on strategy
         var requestVersion = ExtractVersionFromRequest(context, versioning);
@@ -190,7 +221,8 @@ public static partial class Register
         }
 
         // Validate that requested version matches endpoint version
-        return requestVersion == endpointVersion && versioning.SupportedVersions.Contains(endpointVersion);
+        return requestVersion == endpointVersion
+            && versioning.SupportedVersions.Contains(endpointVersion);
     }
 
     private static int? ExtractVersionFromRequest(HttpContext context, VersioningOptions versioning)
@@ -199,15 +231,20 @@ public static partial class Register
         if (versioning.ReadingStrategy.HasFlag(VersionReadingStrategy.UrlSegment))
         {
             var version = versioning.ExtractVersionFromRoute(context.Request.Path);
-            if (version.HasValue) return version;
+            if (version.HasValue)
+                return version;
         }
 
         // Query parameter version
         if (versioning.ReadingStrategy.HasFlag(VersionReadingStrategy.QueryString))
         {
-            var queryVersion = context.Request.Query[versioning.QueryParameterName].FirstOrDefault();
-            if (!string.IsNullOrEmpty(queryVersion) &&
-                decimal.TryParse(queryVersion, out var qVersion))
+            var queryVersion = context
+                .Request.Query[versioning.QueryParameterName]
+                .FirstOrDefault();
+            if (
+                !string.IsNullOrEmpty(queryVersion)
+                && decimal.TryParse(queryVersion, out var qVersion)
+            )
             {
                 return (int)qVersion;
             }
@@ -216,9 +253,13 @@ public static partial class Register
         // Header version
         if (versioning.ReadingStrategy.HasFlag(VersionReadingStrategy.Header))
         {
-            var headerVersion = context.Request.Headers[versioning.VersionHeaderName].FirstOrDefault();
-            if (!string.IsNullOrEmpty(headerVersion) &&
-                decimal.TryParse(headerVersion, out var hVersion))
+            var headerVersion = context
+                .Request.Headers[versioning.VersionHeaderName]
+                .FirstOrDefault();
+            if (
+                !string.IsNullOrEmpty(headerVersion)
+                && decimal.TryParse(headerVersion, out var hVersion)
+            )
             {
                 return (int)hVersion;
             }
@@ -235,7 +276,9 @@ public static partial class Register
             baseType = baseType.BaseType;
         }
 
-        return baseType?.IsGenericType == true ? baseType.GetGenericArguments().FirstOrDefault() : null;
+        return baseType?.IsGenericType == true
+            ? baseType.GetGenericArguments().FirstOrDefault()
+            : null;
     }
 
     private static Type? GetResponseType(Type endpointType)
@@ -258,18 +301,20 @@ public static partial class Register
     private static string[] GenerateEndpointTags(Type endpointType, int endpointVersion)
     {
         var tags = new List<string>();
-        
+
         // Extract feature from namespace
         var namespaceParts = endpointType.Namespace?.Split('.') ?? Array.Empty<string>();
 
         // Find "Endpoints" part in namespace
-        var endpointsIndex = Array.FindIndex(namespaceParts, part => 
-            part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase));
-            
+        var endpointsIndex = Array.FindIndex(
+            namespaceParts,
+            part => part.Equals("Endpoints", StringComparison.OrdinalIgnoreCase)
+        );
+
         if (endpointsIndex >= 0 && endpointsIndex + 1 < namespaceParts.Length)
         {
             var featureName = namespaceParts[endpointsIndex + 1]; // e.g., "S3", "Todos", "AutofacDemo"
-            
+
             // Add operation type if available (Commands, Queries, etc.)
             if (endpointsIndex + 2 < namespaceParts.Length)
             {
@@ -290,10 +335,10 @@ public static partial class Register
             {
                 typeName = typeName.Substring(0, typeName.Length - 8); // Remove "Endpoint" suffix
             }
-            
+
             tags.Add(typeName);
         }
-        
+
         return tags.ToArray();
     }
 }
