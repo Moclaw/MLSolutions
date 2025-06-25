@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Services.AWS.S3;
+using Services.AWS.SecretsManager;
 using Services.Autofac.Extensions;
 
 namespace sample.Application
@@ -16,6 +17,10 @@ namespace sample.Application
         {
             // Register AWS S3 services with default configuration section "AWS:S3"
             services.AddS3Services(configuration);
+            
+            // Register AWS Secrets Manager services with default configuration section "AWS:SecretsManager"
+            services.AddSecretsManagerServices(configuration);
+            
             return services;
         }        /// <summary>
         /// Register Application services with Autofac

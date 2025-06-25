@@ -52,6 +52,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinimalAPI", "src\Infrastru
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services.AWS.S3", "src\Infrastructure\Services\Services.AWS.S3\Services.AWS.S3.csproj", "{4ABEA83E-2011-488D-AAA3-B1FB25FCB5C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services.AWS.SecretsManager", "src\Infrastructure\Services\Services.AWS.SecretsManager\Services.AWS.SecretsManager.csproj", "{8F2E4B1C-3A5D-4E9F-B1C2-7D8E9F0A1B2C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -126,6 +128,10 @@ Global
 		{4ABEA83E-2011-488D-AAA3-B1FB25FCB5C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4ABEA83E-2011-488D-AAA3-B1FB25FCB5C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4ABEA83E-2011-488D-AAA3-B1FB25FCB5C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F2E4B1C-3A5D-4E9F-B1C2-7D8E9F0A1B2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F2E4B1C-3A5D-4E9F-B1C2-7D8E9F0A1B2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F2E4B1C-3A5D-4E9F-B1C2-7D8E9F0A1B2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F2E4B1C-3A5D-4E9F-B1C2-7D8E9F0A1B2C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -151,6 +157,7 @@ Global
 		{4A11BC9D-2294-446E-9984-2C9AB4DF7E43} = {50428BF0-8ECA-4CC0-B3B8-5EF33CA794AC}
 		{D1F0EC03-4B08-423D-817B-E8731A705298} = {25187D69-D414-4DE9-9181-1225E3B087EA}
 		{4ABEA83E-2011-488D-AAA3-B1FB25FCB5C7} = {25187D69-D414-4DE9-9181-1225E3B087EA}
+		{8F2E4B1C-3A5D-4E9F-B1C2-7D8E9F0A1B2C} = {25187D69-D414-4DE9-9181-1225E3B087EA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7089FC7-79A1-4CAA-AC88-1A189B1D840E}

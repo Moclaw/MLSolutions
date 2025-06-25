@@ -40,6 +40,7 @@ A comprehensive .NET framework for building scalable, maintainable enterprise ap
 | **Moclawr.Services.Autofac** | v2.1.0 | Autofac dependency injection container integration |
 | **Moclawr.DotNetCore.CAP** | v2.1.0 | Event-driven messaging and distributed transactions |
 | **Moclawr.Services.AWS.S3** | v1.0.0 | AWS S3 cloud storage integration with LocalStack support |
+| **Moclawr.Services.AWS.SecretsManager** | v2.0.0 | AWS Secrets Manager integration for secure secret management |
 
 ## 🛠 Installation
 
@@ -264,6 +265,7 @@ The framework includes a comprehensive **Todo List CRUD Application** demonstrat
 - **Advanced Filtering**: Search, pagination, sorting, and filtering
 - **API Versioning**: Multiple version strategies with comprehensive examples
 - **File Storage**: AWS S3 integration with LocalStack for development
+- **Secrets Management**: AWS Secrets Manager integration for secure configuration
 - **Rich Documentation**: Interactive SwaggerUI with detailed endpoint documentation
 - **Health Monitoring**: Database and service health checks
 - **Structured Logging**: Request/response logging with Serilog

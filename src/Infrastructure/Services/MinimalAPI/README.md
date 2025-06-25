@@ -455,6 +455,7 @@ Seamless integration with the complete Moclawr framework:
 - **Moclawr.EfCore**: Repository patterns and Entity Framework integration
 - **Moclawr.Services.Caching**: Response caching for API endpoints
 - **Moclawr.Services.AWS.S3**: File storage integration
+- **Moclawr.Services.AWS.SecretsManager**: Secure configuration and secret management
 - **Moclawr.Services.Autofac**: Enhanced dependency injection and service discovery
 
 ## License

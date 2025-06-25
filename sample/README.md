@@ -1,6 +1,6 @@
-# Todo List CRUD Implementation with S3 Integration
+# Todo List CRUD Implementation with AWS Services Integration
 
-This project implements a complete CRUD (Create, Read, Update, Delete) functionality for a Todo List application using the MinimalAPI pattern with a clean architecture approach, now including AWS S3 integration for file storage capabilities.
+This project implements a complete CRUD (Create, Read, Update, Delete) functionality for a Todo List application using the MinimalAPI pattern with a clean architecture approach, now including AWS S3 integration for file storage capabilities and AWS Secrets Manager for secure configuration management.
 
 ## Architecture
 
@@ -19,6 +19,7 @@ The solution follows a clean architecture pattern with the following layers:
 - **Update Todo**: Modify a todo item's properties, including marking as completed
 - **Delete Todo**: Remove a todo item from the system
 - **S3 File Storage**: Integrated AWS S3 service with LocalStack support for development
+- **Secrets Management**: Integrated AWS Secrets Manager for secure configuration and sensitive data management
 
 ## API Versioning
 
@@ -112,6 +113,16 @@ Default version is v1.0 when no version is specified and `AssumeDefaultVersionWh
 | GET    | /api/s3/url/{key}     | Get presigned URL for file       | v1, v2   |
 | POST   | /api/s3/upload        | Upload file to S3                | v1, v2   |
 | DELETE | /api/s3/{key}         | Delete file from S3              | v1, v2   |
+
+### AWS Secrets Manager
+| Method | Endpoint              | Description                      | Versions |
+|--------|-----------------------|----------------------------------|----------|
+| GET    | /api/secrets          | List secrets                     | v1       |
+| GET    | /api/secrets/{name}   | Get secret value                 | v1       |
+| POST   | /api/secrets          | Create new secret                | v1       |
+| PUT    | /api/secrets/{name}   | Update secret value              | v1       |
+| DELETE | /api/secrets/{name}   | Delete secret                    | v1       |
+| POST   | /api/secrets/batch    | Get multiple secrets             | v1       |
 
 ### Common Query Parameters
 | Parameter    | Description                                       | Default    |
@@ -254,6 +265,71 @@ curl -X DELETE "https://localhost:5001/api/s3/documents/file.pdf" \
   -H "Accept: application/json;version=1.0"
 ```
 
+## AWS Secrets Manager Integration
+
+The application includes AWS Secrets Manager integration for secure configuration and sensitive data management. The Secrets Manager service is automatically configured with caching support and LocalStack compatibility for development.
+
+### Available Secrets Manager Operations
+- Create, read, update, and delete secrets
+- Batch secret retrieval
+- List secrets with metadata
+- Version control and staged access
+- Built-in caching for improved performance
+- Strong typing support for JSON secrets
+
+### Secrets Manager API Usage Examples
+
+#### Create a secret
+```bash
+curl -X POST "https://localhost:5001/api/secrets" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "secretName": "database-password",
+    "secretValue": "super-secure-password",
+    "description": "Database connection password"
+  }'
+```
+
+#### Get a secret value
+```bash
+curl -X GET "https://localhost:5001/api/secrets/database-password"
+```
+
+#### Update a secret
+```bash
+curl -X PUT "https://localhost:5001/api/secrets/database-password" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "secretName": "database-password",
+    "secretValue": "new-secure-password",
+    "description": "Updated database password"
+  }'
+```
+
+#### List all secrets
+```bash
+curl -X GET "https://localhost:5001/api/secrets"
+```
+
+#### Get multiple secrets in batch
+```bash
+curl -X POST "https://localhost:5001/api/secrets/batch" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "secretNames": ["database-password", "api-key", "smtp-password"]
+  }'
+```
+
+#### Delete a secret
+```bash
+curl -X DELETE "https://localhost:5001/api/secrets/database-password" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "secretName": "database-password",
+    "recoveryWindowInDays": 7
+  }'
+```
+
 ## Implementation Details
 
 This implementation uses:
@@ -262,5 +338,6 @@ This implementation uses:
 - MediatR for CQRS pattern implementation
 - MinimalAPI pattern with comprehensive versioning support
 - AWS S3 SDK with LocalStack support for file storage
+- AWS Secrets Manager SDK with caching and LocalStack support
 - Flexible version reading strategies (Query, Header, URL, MediaType)
 - Custom request binding for HTTP context

@@ -23,6 +23,7 @@ The following package versions in the MLSolutions repository and related package
 > - Moclawr.Services.External
 > - Moclawr.DotNetCore.CAP
 > - Services.AWS.S3
+> - Services.AWS.SecretsManager
 
 Older versions are not supported unless otherwise noted.
 
