@@ -21,9 +21,7 @@ builder.AddSerilog(configuration, appName);
 builder.UseAutofacServiceProvider(containerBuilder =>
 {
     // Register application and infrastructure services with Autofac
-    containerBuilder
-        .AddApplicationServices()
-        .AddInfrastructureServices();
+    containerBuilder.AddApplicationServices().AddInfrastructureServices();
 });
 
 // Configure versioning options with enhanced settings
@@ -38,16 +36,17 @@ var versioningOptions = new DefaultVersioningOptions
     AssumeDefaultVersionWhenUnspecified = true,
     QueryParameterName = "version",
     VersionHeaderName = "X-API-Version",
-    
+
     // Enhanced SwaggerUI settings
     GenerateSwaggerDocs = true,
     SwaggerDocTitle = "Todo API with Autofac",
-    SwaggerDocDescription = "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR, CQRS pattern, and Autofac dependency injection"
+    SwaggerDocDescription =
+        "Comprehensive API for Todo Management with CRUD operations, built using MinimalAPI framework with MediatR, CQRS pattern, and Autofac dependency injection",
 };
 
 // Register other services
-builder.Services
-    .AddCorsServices(configuration)
+builder
+    .Services.AddCorsServices(configuration)
     .AddMinimalApiWithSwaggerUI(
         title: "Todo API with Autofac",
         version: "v1",
@@ -58,10 +57,11 @@ builder.Services
         licenseName: "MIT License",
         licenseUrl: "https://opensource.org/licenses/MIT",
         versioningOptions: versioningOptions,
-        assemblies: [
+        assemblies:
+        [
             typeof(Program).Assembly,
             typeof(sample.Application.Register).Assembly,
-            typeof(sample.Infrastructure.Register).Assembly
+            typeof(sample.Infrastructure.Register).Assembly,
         ]
     )
     .AddGlobalExceptionHandling(appName)
