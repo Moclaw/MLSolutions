@@ -99,7 +99,7 @@ app.UseCorsServices(configuration);
 app.UseGlobalExceptionHandling();
 
 // Configure ARM Elastic
-app.UseElasticApm(configuration);
+// app.UseElasticApm(configuration);
 
 app.UseRouting();
 
